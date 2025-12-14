@@ -1,0 +1,126 @@
+/* Notion Style Extract */
+html {
+	-webkit-print-color-adjust: exact;
+}
+* {
+	box-sizing: border-box;
+	-webkit-print-color-adjust: exact;
+}
+
+html, body {
+	margin: 0;
+	padding: 0;
+    width: 100%;
+    height: 100%;
+}
+
+@media only screen {
+	body {
+		margin: 0 auto;
+        padding: 40px 20px;
+		max-width: 900px;
+		color: rgb(55, 53, 47);
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+        line-height: 1.5;
+        white-space: pre-wrap;
+	}
+}
+
+a, a.visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+h1, h2, h3 {
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+
+.page-title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 0.75em;
+}
+
+h1 { font-size: 1.875rem; margin-top: 1.875rem; }
+h2 { font-size: 1.5rem; margin-top: 1.5rem; }
+h3 { font-size: 1.25rem; margin-top: 1.25rem; }
+
+.callout {
+	border-radius: 10px;
+	padding: 1rem;
+    margin: 1rem 0;
+}
+
+figure {
+	margin: 1.25em 0;
+	page-break-inside: avoid;
+}
+
+figcaption {
+	opacity: 0.5;
+	font-size: 85%;
+	margin-top: 0.5em;
+    text-align: center;
+}
+
+img {
+	max-width: 100%;
+    border-radius: 4px;
+}
+
+/* Lists */
+ul, ol {
+    margin: 0;
+    margin-block-start: 0.6em;
+    margin-block-end: 0.6em;
+    padding-inline-start: 1.7em;
+}
+
+li { margin-bottom: 0.2em; }
+
+/* Colors */
+.highlight-gray_background { background: rgba(240, 239, 237, 1); }
+.highlight-yellow_background { background: rgba(249, 243, 220, 1); }
+.highlight-red_background { background: rgba(252, 233, 231, 1); }
+.highlight-teal_background { background: rgba(232, 241, 236, 1); }
+.highlight-blue { color: rgba(56, 125, 201, 1); }
+.highlight-red { color: rgba(207, 81, 72, 1); }
+.highlight-teal { color: rgba(80, 148, 110, 1); }
+
+/* Tables and Properties */
+.properties {
+    width: 100%;
+    border-top: 1px solid rgba(55, 53, 47, 0.09);
+    border-bottom: 1px solid rgba(55, 53, 47, 0.09);
+    margin-bottom: 2em;
+}
+.property-row th {
+    padding: 8px 0;
+    width: 120px;
+    color: rgba(55, 53, 47, 0.6);
+    font-weight: normal;
+    text-align: left;
+    vertical-align: top;
+}
+.property-row td {
+    padding: 8px 0;
+}
+.icon {
+    display: inline-flex;
+    margin-right: 6px;
+}
+
+/* Blockquotes & Callouts */
+blockquote {
+    border-left: 3px solid currentcolor;
+    padding-left: 1em;
+    margin-left: 0;
+    opacity: 0.8;
+}
+
+/* Utility */
+.sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Arial", sans-serif; }
