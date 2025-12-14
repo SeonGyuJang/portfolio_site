@@ -223,10 +223,10 @@
         </div>
     </section>
 
-    <section id="skills" style="background-color: #fcfcfc;">
+    <section id="skills">
         <div class="container">
             <h2 class="section-title fade-in">Tech Stacks</h2>
-            <p style="text-align:center; color:#666; margin-bottom:40px;" class="fade-in">클릭하여 숙련도를 확인하세요.</p>
+            <p class="section-subtitle fade-in">클릭하여 숙련도를 확인하세요.</p>
             
             <div class="skills-wrapper fade-in">
                 <div class="skill-category">
@@ -425,7 +425,7 @@
         </div>
     </section>
 
-    <section id="awards" style="background-color: #fcfcfc;">
+    <section id="awards">
         <div class="container">
             <h2 class="section-title fade-in">Awards</h2>
             <div class="awards-list fade-in">
@@ -454,21 +454,21 @@
                     <i class="fas fa-star award-icon"></i>
                 </div>
             </div>
-            <p style="text-align: center; margin-top: 20px; color: #999;">* 클릭하여 상세 내용을 확인하세요.</p>
+            <p class="section-note">* 클릭하여 상세 내용을 확인하세요.</p>
         </div>
     </section>
 
     <section id="academic">
         <div class="container fade-in">
             <h2 class="section-title">Academic & Certifications</h2>
-            
-            <h3 style="margin-bottom: 20px; color: var(--primary-color);">🧑🏼‍💻 학회 활동 및 논문</h3>
-            <table class="paper-table" style="margin-bottom: 50px;">
+
+            <h3 class="academic-subtitle">🧑🏼‍💻 학회 활동 및 논문</h3>
+            <table class="paper-table">
                 <thead>
                     <tr>
-                        <th style="width: 20%">Date</th>
+                        <th class="col-date">Date</th>
                         <th>Title / Description</th>
-                        <th style="width: 15%">Link</th>
+                        <th class="col-link">Link</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -485,7 +485,7 @@
                 </tbody>
             </table>
 
-            <h3 style="margin-bottom: 20px; color: var(--primary-color);">📖 보유 자격증</h3>
+            <h3 class="academic-subtitle">📖 보유 자격증</h3>
             <table class="cert-table">
                 <thead>
                     <tr>
@@ -510,7 +510,7 @@
         </div>
     </section>
 
-    <section id="gallery" style="background-color: #f8f9fa;">
+    <section id="gallery">
         <div class="container">
             <h2 class="section-title fade-in">Activity Log</h2>
             
@@ -565,9 +565,9 @@
     <div id="awardModal" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeModal()">&times;</span>
-            <h3 id="modalTitle" style="font-size: 1.5rem; margin-bottom: 15px; color: var(--secondary-color);">Award Title</h3>
-            <hr style="margin-bottom: 20px; border: 0; border-top: 1px solid #eee;">
-            <div id="modalDesc" style="line-height: 1.8; color: #555;">
+            <h3 id="modalTitle" class="modal-title">Award Title</h3>
+            <hr class="modal-divider">
+            <div id="modalDesc" class="modal-description">
                 <p><strong>수상 내역:</strong> <span id="m-award">대상</span></p>
                 <p><strong>수여 기관:</strong> <span id="m-org">기관명</span></p>
                 <p><strong>일자:</strong> <span id="m-date">2024.00.00</span></p>
