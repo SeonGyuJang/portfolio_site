@@ -1167,6 +1167,22 @@ header {
     background: rgba(255, 255, 255, 0.06);
     transform: translateY(-2px);
 }
+.award-content {
+    flex: 1;
+}
+.award-name {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    font-size: 1rem;
+    display: block;
+    margin-bottom: 6px;
+}
+.award-desc {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+    margin: 0;
+    line-height: 1.4;
+}
 .award-item span {
     color: rgba(255, 255, 255, 0.9);
     font-weight: 500;
@@ -1174,7 +1190,25 @@ header {
 .award-icon {
     color: #FFD700;
     font-size: 1.5rem;
-    margin-right: 15px;
+    margin-left: 15px;
+    flex-shrink: 0;
+}
+
+/* Certificate Button */
+.cert-btn {
+    background: linear-gradient(135deg, #007AFF 0%, #5E5CE6 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.cert-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.4);
 }
 
 /* Modal Styles - Dark Theme */
