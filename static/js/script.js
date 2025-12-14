@@ -231,7 +231,7 @@ window.onclick = function(event) {
 // 5. Skills Toggle Logic
 function toggleSkill(card) {
     const isActive = card.classList.contains('active');
-    
+
     // 다른 열린 카드들 닫기
     document.querySelectorAll('.skill-card').forEach(c => {
         c.classList.remove('active');
@@ -243,11 +243,11 @@ function toggleSkill(card) {
         const level = card.getAttribute('data-level');
         const fill = card.querySelector('.progress-fill');
         const text = card.querySelector('.progress-text');
-        
+
         setTimeout(() => {
             fill.style.width = level + '%';
         }, 100);
-        
+
         let count = 0;
         const interval = setInterval(() => {
             if (count >= level) clearInterval(interval);
@@ -257,4 +257,23 @@ function toggleSkill(card) {
             }
         }, 10);
     }
+}
+
+// 6. Tab Switching Logic for About Me Section
+function switchTab(tabId) {
+    // Remove active class from all tab buttons
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    // Remove active class from all tab panels
+    document.querySelectorAll('.tab-panel').forEach(panel => {
+        panel.classList.remove('active');
+    });
+
+    // Add active class to clicked button
+    event.target.closest('.tab-button').classList.add('active');
+
+    // Show the selected tab panel
+    document.getElementById(tabId).classList.add('active');
 }

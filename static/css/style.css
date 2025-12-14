@@ -494,8 +494,8 @@ header {
 
 /* KU Logo */
 .ku-logo {
-    width: 40px;
-    height: 40px;
+    width: 55px;
+    height: 55px;
     object-fit: contain;
     opacity: 0.4;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -512,8 +512,10 @@ header {
 /* Scroll Mouse Animation in Center */
 .scroll-emoji-container {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
+    gap: 12px;
     padding: 0 16px;
 }
 .scroll-mouse-icon {
@@ -542,6 +544,13 @@ header {
 @keyframes bounce {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-6px); }
+}
+.scroll-explore-text {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
 }
 
 /* Apple-style Scroll Indicator */
@@ -754,6 +763,121 @@ header {
 .nationality-org {
     font-size: 1rem;
     color: rgba(255, 255, 255, 0.7);
+    line-height: 1.5;
+}
+
+/* Tab Navigation */
+.tab-navigation {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 6px;
+    border-radius: 16px;
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+}
+.tab-button {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: transparent;
+    border: none;
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+.tab-button:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.9);
+}
+.tab-button.active {
+    background: linear-gradient(135deg, #007AFF 0%, #5E5CE6 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+}
+.tab-button i {
+    font-size: 1rem;
+}
+
+/* Tab Content Wrapper */
+.tab-content-wrapper {
+    margin-bottom: 32px;
+}
+.tab-panel {
+    display: none;
+    animation: fadeIn 0.4s ease-in-out;
+}
+.tab-panel.active {
+    display: block;
+}
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Info Card for Basic Info Tab */
+.info-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.info-card-item {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.info-card-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+.info-card-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, rgba(0, 122, 255, 0.2) 0%, rgba(94, 92, 230, 0.2) 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.info-card-icon i {
+    font-size: 1.3rem;
+    color: #007AFF;
+}
+.info-card-content {
+    flex: 1;
+}
+.info-card-content h4 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.info-card-content p {
+    font-size: 1rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
     line-height: 1.5;
 }
 

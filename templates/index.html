@@ -80,6 +80,7 @@
                     <div class="scroll-mouse-icon">
                         <div class="scroll-wheel-icon"></div>
                     </div>
+                    <span class="scroll-explore-text">Scroll to Explore</span>
                 </div>
 
                 <!-- Right 3 Icons -->
@@ -87,15 +88,6 @@
                     <i class="fas fa-chart-line" title="Data Analysis"></i>
                     <i class="fas fa-brain" title="AI/ML"></i>
                     <img src="/static/images/fab_ku.png" alt="Korea University" class="ku-logo" title="Korea University">
-                </div>
-            </div>
-        </div>
-
-        <div class="scroll-down">
-            <span class="scroll-text">Scroll to Explore</span>
-            <div class="scroll-indicator">
-                <div class="scroll-mouse">
-                    <div class="scroll-wheel"></div>
                 </div>
             </div>
         </div>
@@ -109,37 +101,64 @@
                     <img src="/static/images/profile.jpg" alt="장선규 프로필 사진" class="profile-img">
                 </div>
                 <div class="profile-right">
-                    <!-- Current Position -->
-                    <div class="current-position">
-                        <div class="position-badge">
+                    <!-- Tab Navigation -->
+                    <div class="tab-navigation">
+                        <button class="tab-button active" onclick="switchTab('basic-info')">
+                            <i class="fas fa-info-circle"></i>
+                            <span>기본 정보</span>
+                        </button>
+                        <button class="tab-button" onclick="switchTab('current-position')">
                             <i class="fas fa-briefcase"></i>
                             <span>Current Main Position</span>
-                        </div>
-                        <div class="position-card">
-                            <div class="position-icon">
-                                <i class="fas fa-graduation-cap"></i>
-                            </div>
-                            <div class="position-content">
-                                <h3 class="position-title">부총학생회장</h3>
-                                <p class="position-org">고려대학교 세종캠퍼스 제38대 총학생회 '비범'</p>
-                                <p class="position-period">2025.12 ~ 현재</p>
-                            </div>
-                        </div>
+                        </button>
                     </div>
 
-                    <!-- Nationality Section -->
-                    <div class="nationality-section">
-                        <div class="nationality-badge">
-                            <i class="fas fa-flag"></i>
-                            <span>Nationality</span>
-                        </div>
-                        <div class="nationality-card">
-                            <div class="nationality-icon">
-                                <i class="fas fa-globe-asia"></i>
+                    <!-- Tab Content -->
+                    <div class="tab-content-wrapper">
+                        <!-- Basic Info Tab -->
+                        <div id="basic-info" class="tab-panel active">
+                            <div class="info-card">
+                                <div class="info-card-item">
+                                    <div class="info-card-icon">
+                                        <i class="fas fa-flag"></i>
+                                    </div>
+                                    <div class="info-card-content">
+                                        <h4>국적</h4>
+                                        <p>대한민국 (Republic of Korea)</p>
+                                    </div>
+                                </div>
+                                <div class="info-card-item">
+                                    <div class="info-card-icon">
+                                        <i class="fas fa-university"></i>
+                                    </div>
+                                    <div class="info-card-content">
+                                        <h4>대학</h4>
+                                        <p>고려대학교 세종캠퍼스</p>
+                                    </div>
+                                </div>
+                                <div class="info-card-item">
+                                    <div class="info-card-icon">
+                                        <i class="fas fa-graduation-cap"></i>
+                                    </div>
+                                    <div class="info-card-content">
+                                        <h4>전공</h4>
+                                        <p>디지털경영전공</p>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="nationality-content">
-                                <h3 class="nationality-title">대한민국</h3>
-                                <p class="nationality-org">Republic of Korea</p>
+                        </div>
+
+                        <!-- Current Position Tab -->
+                        <div id="current-position" class="tab-panel">
+                            <div class="position-card">
+                                <div class="position-icon">
+                                    <i class="fas fa-graduation-cap"></i>
+                                </div>
+                                <div class="position-content">
+                                    <h3 class="position-title">부총학생회장</h3>
+                                    <p class="position-org">고려대학교 세종캠퍼스 제38대 총학생회 '비범'</p>
+                                    <p class="position-period">2025.12 ~ 현재</p>
+                                </div>
                             </div>
                         </div>
                     </div>
