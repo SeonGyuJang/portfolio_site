@@ -700,6 +700,35 @@ header {
     font-weight: 600;
 }
 
+/* Basic Info Items */
+.basic-info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.basic-info-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+.basic-info-item:first-child {
+    padding-top: 0;
+}
+.basic-info-label {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.basic-info-value {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 500;
+    text-align: right;
+}
+
 /* Nationality Section */
 .nationality-section {
     margin-bottom: 32px;
