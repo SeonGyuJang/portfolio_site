@@ -140,7 +140,7 @@ header {
 
 /* --- 5. [APPLE-INSPIRED] Hero Section (Clean & Premium) --- */
 #home {
-    height: 100vh;
+    min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -149,7 +149,7 @@ header {
     background: #000000;
     color: white;
     text-align: center;
-    padding-top: 0;
+    padding: 80px 0 40px; /* Top padding for nav clearance, flexbox handles centering */
 }
 
 /* Particles.js Container - Disabled for cleaner look */
@@ -215,7 +215,7 @@ header {
     position: relative;
     z-index: 10;
     max-width: 980px;
-    padding: 100px 20px 60px; /* Proper padding for vertical centering */
+    padding: 0 20px; /* Minimal padding, parent handles vertical centering */
     margin: 0 auto;
     animation: fadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -1123,9 +1123,13 @@ footer p {
     }
 
     /* Hero Section Mobile */
+    #home {
+        padding: 60px 0 30px; /* Mobile nav clearance */
+    }
+
     .hero-content {
         max-width: 100%;
-        padding: 80px 20px 40px; /* Adjusted for mobile proper centering */
+        padding: 0 20px; /* Minimal padding on mobile */
     }
 
     .status-badge {
