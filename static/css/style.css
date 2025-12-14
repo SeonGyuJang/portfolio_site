@@ -962,12 +962,41 @@ header {
 }
 
 /* --- 7. Timeline (History) - Dark Theme --- */
+.history-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-top: 40px;
+}
+
+.history-section {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 30px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.3s ease;
+}
+
+.history-section:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(0, 122, 255, 0.3);
+    transform: translateY(-2px);
+}
+
 .history-section h3 {
     font-size: 1.5rem;
-    margin: 40px 0 20px;
+    margin: 0 0 30px 0;
     padding-left: 15px;
     border-left: 3px solid #007AFF;
     color: rgba(255, 255, 255, 0.95);
+}
+
+/* Responsive: Stack vertically on tablets and mobile */
+@media (max-width: 992px) {
+    .history-grid {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
 }
 .timeline {
     position: relative;
