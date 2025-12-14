@@ -492,28 +492,56 @@ header {
     transform: translateY(-3px) scale(1.08);
 }
 
-/* Scroll Emoji Animation in Center */
+/* KU Logo */
+.ku-logo {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    opacity: 0.4;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    padding: 8px;
+    filter: brightness(0) invert(1);
+}
+.ku-logo:hover {
+    opacity: 1;
+    filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(0, 122, 255, 0.6));
+    transform: translateY(-3px) scale(1.08);
+}
+
+/* Scroll Mouse Animation in Center */
 .scroll-emoji-container {
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 0 16px;
 }
-.scroll-emoji {
-    font-size: 2rem;
-    animation: bounceDown 2s ease-in-out infinite;
-    display: inline-block;
-    filter: drop-shadow(0 0 8px rgba(0, 122, 255, 0.3));
+.scroll-mouse-icon {
+    width: 24px;
+    height: 36px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-radius: 12px;
+    position: relative;
+    animation: bounce 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
-@keyframes bounceDown {
-    0%, 100% {
-        transform: translateY(0);
-        opacity: 1;
-    }
-    50% {
-        transform: translateY(12px);
-        opacity: 0.7;
-    }
+.scroll-wheel-icon {
+    width: 3px;
+    height: 8px;
+    background: rgba(255,255,255,0.7);
+    border-radius: 2px;
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: scroll 2s ease-in-out infinite;
+}
+@keyframes scroll {
+    0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(12px); }
+}
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
 }
 
 /* Apple-style Scroll Indicator */
@@ -573,8 +601,8 @@ header {
 /* --- 6. About Me (Profile) - Dark Theme --- */
 .profile-grid {
     display: grid;
-    grid-template-columns: 300px 1fr;
-    gap: 50px;
+    grid-template-columns: 380px 1fr;
+    gap: 40px;
     align-items: stretch; /* Changed to stretch so both columns have equal height */
 }
 .profile-left {
@@ -1340,8 +1368,17 @@ footer p {
         font-size: 1.5rem;
         padding: 6px;
     }
-    .scroll-emoji {
-        font-size: 1.6rem;
+    .ku-logo {
+        width: 32px;
+        height: 32px;
+    }
+    .scroll-mouse-icon {
+        width: 20px;
+        height: 30px;
+    }
+    .scroll-wheel-icon {
+        width: 2px;
+        height: 6px;
     }
 
     .scroll-down {
