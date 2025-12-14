@@ -1,6 +1,98 @@
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // 1. Scroll Animation (Intersection Observer)
+
+    // 1. Particles.js Configuration
+    if (typeof particlesJS !== 'undefined' && document.getElementById('particles-js')) {
+        particlesJS('particles-js', {
+            particles: {
+                number: {
+                    value: 80,
+                    density: {
+                        enable: true,
+                        value_area: 800
+                    }
+                },
+                color: {
+                    value: ['#862633', '#00205B', '#ffd700']
+                },
+                shape: {
+                    type: 'circle',
+                    stroke: {
+                        width: 0,
+                        color: '#000000'
+                    }
+                },
+                opacity: {
+                    value: 0.3,
+                    random: true,
+                    anim: {
+                        enable: true,
+                        speed: 1,
+                        opacity_min: 0.1,
+                        sync: false
+                    }
+                },
+                size: {
+                    value: 3,
+                    random: true,
+                    anim: {
+                        enable: true,
+                        speed: 2,
+                        size_min: 0.1,
+                        sync: false
+                    }
+                },
+                line_linked: {
+                    enable: true,
+                    distance: 150,
+                    color: '#ffffff',
+                    opacity: 0.2,
+                    width: 1
+                },
+                move: {
+                    enable: true,
+                    speed: 2,
+                    direction: 'none',
+                    random: true,
+                    straight: false,
+                    out_mode: 'out',
+                    bounce: false,
+                    attract: {
+                        enable: true,
+                        rotateX: 600,
+                        rotateY: 1200
+                    }
+                }
+            },
+            interactivity: {
+                detect_on: 'canvas',
+                events: {
+                    onhover: {
+                        enable: true,
+                        mode: 'grab'
+                    },
+                    onclick: {
+                        enable: true,
+                        mode: 'push'
+                    },
+                    resize: true
+                },
+                modes: {
+                    grab: {
+                        distance: 140,
+                        line_linked: {
+                            opacity: 0.5
+                        }
+                    },
+                    push: {
+                        particles_nb: 4
+                    }
+                }
+            },
+            retina_detect: true
+        });
+    }
+
+    // 2. Scroll Animation (Intersection Observer)
     const observerOptions = {
         threshold: 0.1
     };
@@ -17,16 +109,17 @@ document.addEventListener('DOMContentLoaded', () => {
         observer.observe(el);
     });
 
-    // 2. Typing Effect Logic (Hero Section)
+    // 3. Enhanced Typing Effect Logic
     const texts = [
-        "Digital Business Major", 
-        "Data Researcher", 
-        "Student Leader", 
-        "Challenge Seeker"
+        "Data Researcher",
+        "Digital Business Major",
+        "AI/ML Enthusiast",
+        "Student Leader",
+        "Problem Solver"
     ];
-    
+
     const typingSpan = document.querySelector('.typing-text');
-    
+
     if (typingSpan) {
         let textIndex = 0;
         let charIndex = 0;
@@ -35,11 +128,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function type() {
             const currentText = texts[textIndex];
-            
+
             if (isDeleting) {
                 typingSpan.textContent = currentText.substring(0, charIndex - 1);
                 charIndex--;
-                typeSpeed = 50; 
+                typeSpeed = 50;
             } else {
                 typingSpan.textContent = currentText.substring(0, charIndex + 1);
                 charIndex++;
@@ -48,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!isDeleting && charIndex === currentText.length) {
                 isDeleting = true;
-                typeSpeed = 2000; // 문장 완성 후 대기 시간
+                typeSpeed = 2000;
             } else if (isDeleting && charIndex === 0) {
                 isDeleting = false;
                 textIndex = (textIndex + 1) % texts.length;
@@ -58,7 +151,42 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(type, typeSpeed);
         }
 
-        setTimeout(type, 1000); // 1초 후 시작
+        setTimeout(type, 1500);
+    }
+
+    // 4. Stats Counter Animation
+    const statNumbers = document.querySelectorAll('.stat-number');
+    let hasAnimated = false;
+
+    const statsObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !hasAnimated) {
+                hasAnimated = true;
+                statNumbers.forEach(stat => {
+                    const target = parseInt(stat.getAttribute('data-target'));
+                    const duration = 2000;
+                    const increment = target / (duration / 16);
+                    let current = 0;
+
+                    const updateCounter = () => {
+                        current += increment;
+                        if (current < target) {
+                            stat.textContent = Math.ceil(current);
+                            requestAnimationFrame(updateCounter);
+                        } else {
+                            stat.textContent = target;
+                        }
+                    };
+
+                    setTimeout(() => updateCounter(), 500);
+                });
+            }
+        });
+    }, { threshold: 0.5 });
+
+    const heroContent = document.querySelector('.hero-content');
+    if (heroContent) {
+        statsObserver.observe(heroContent);
     }
 });
 

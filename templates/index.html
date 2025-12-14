@@ -2,33 +2,88 @@
 
 {% block content %}
     <section id="home">
+        <!-- Particle Background -->
+        <div id="particles-js"></div>
+
+        <!-- Enhanced Background Animation -->
         <div class="hero-bg-animation">
             <div class="glow-circle circle-1"></div>
             <div class="glow-circle circle-2"></div>
+            <div class="glow-circle circle-3"></div>
+            <div class="gradient-overlay"></div>
         </div>
 
+        <!-- Grid Pattern Background -->
+        <div class="grid-pattern"></div>
+
         <div class="container hero-content fade-in">
-            <h2 class="hero-greeting">Hello, I'm</h2>
-            <h1 class="hero-title">장선규 <span class="highlight-dot">.</span></h1>
-            
+            <!-- Status Badge -->
+            <div class="status-badge">
+                <span class="pulse-dot"></span>
+                Available for Opportunities
+            </div>
+
+            <h2 class="hero-greeting">안녕하세요,</h2>
+            <h1 class="hero-title">
+                저는 <span class="highlight-text">장선규</span>입니다<span class="highlight-dot">.</span>
+            </h1>
+
             <div class="typing-wrapper">
-                <span class="typing-text"></span><span class="cursor">|</span>
+                <span class="typing-prefix">I'm a </span>
+                <span class="typing-text"></span>
+                <span class="cursor">|</span>
             </div>
 
             <p class="hero-subtitle">
-                성장과 도전을 멈추지 않으며,<br>
-                선한 영향력을 주는 <strong>데이터 연구자</strong>가 되는 것이 목표입니다.
+                데이터로 세상을 이해하고, 기술로 가치를 창출하는<br>
+                <strong>차세대 데이터 연구자</strong>
             </p>
 
+            <!-- Stats Display -->
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <div class="stat-number" data-target="15">0</div>
+                    <div class="stat-label">Projects</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" data-target="6">0</div>
+                    <div class="stat-label">Awards</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" data-target="10">0</div>
+                    <div class="stat-label">Activities</div>
+                </div>
+            </div>
+
             <div class="hero-btn-group">
-                <a href="#about" class="btn btn-primary">More About Me</a>
-                <a href="#projects" class="btn btn-outline">View Projects</a>
+                <a href="#about" class="btn btn-primary">
+                    <i class="fas fa-user"></i> About Me
+                </a>
+                <a href="#projects" class="btn btn-outline">
+                    <i class="fas fa-code"></i> View Projects
+                </a>
+                <a href="#contact" class="btn btn-glass">
+                    <i class="fas fa-envelope"></i> Contact
+                </a>
+            </div>
+
+            <!-- Tech Stack Icons -->
+            <div class="tech-icons">
+                <i class="fab fa-python" title="Python"></i>
+                <i class="fas fa-database" title="SQL"></i>
+                <i class="fab fa-swift" title="Swift"></i>
+                <i class="fas fa-chart-line" title="Data Analysis"></i>
+                <i class="fas fa-brain" title="AI/ML"></i>
             </div>
         </div>
 
         <div class="scroll-down">
-            <span class="scroll-text">Scroll Down</span>
-            <i class="fas fa-chevron-down"></i>
+            <span class="scroll-text">Scroll to Explore</span>
+            <div class="scroll-indicator">
+                <div class="scroll-mouse">
+                    <div class="scroll-wheel"></div>
+                </div>
+            </div>
         </div>
     </section>
 
