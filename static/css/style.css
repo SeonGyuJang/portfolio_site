@@ -215,7 +215,8 @@ header {
     position: relative;
     z-index: 10;
     max-width: 980px;
-    padding: 40px 20px 0; /* Reduced top padding since badge is now fixed */
+    padding: 100px 20px 60px; /* Proper padding for vertical centering */
+    margin: 0 auto;
     animation: fadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 @keyframes fadeInUp {
@@ -223,13 +224,8 @@ header {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Status Badge - Fixed at Top Below Navigation */
+/* Status Badge - Inline with proper spacing */
 .status-badge {
-    position: fixed;
-    top: 72px; /* Below 56px nav + 16px spacing */
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 999; /* Below nav (1000) but above everything else */
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -243,6 +239,7 @@ header {
     font-weight: 500;
     letter-spacing: 0.3px;
     color: rgba(255,255,255,0.9);
+    margin-bottom: 32px; /* Space between badge and greeting */
     animation: fadeIn 0.8s ease-out 0.5s both;
 }
 .pulse-dot {
@@ -1128,13 +1125,13 @@ footer p {
     /* Hero Section Mobile */
     .hero-content {
         max-width: 100%;
-        padding: 60px 20px 0;
+        padding: 80px 20px 40px; /* Adjusted for mobile proper centering */
     }
 
     .status-badge {
         font-size: 0.7rem;
         padding: 5px 14px;
-        margin-bottom: 20px;
+        margin-bottom: 24px;
     }
     .pulse-dot {
         width: 5px;
