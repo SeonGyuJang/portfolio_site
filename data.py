@@ -204,7 +204,7 @@ portfolio_data = {
             'title': '셔틀버스/식단표 트래킹 웹사이트',
             'desc': '고려대학교 세종캠퍼스 학생들을 위한 실시간 정보 제공 서비스',
             'period': '2024.11 ~ ing',
-            'url': 'https://www.kus-bus.site/',
+            'url': 'https://kus-bus-app-feb0ef7b8941.herokuapp.com/',
             'icon': 'fas fa-bus'
         },
         {
@@ -223,7 +223,7 @@ portfolio_data = {
         {'name': 'DB 금융경제 공모전', 'icon': 'fas fa-award'},
         {'name': '2024 T-SUM 데이터분석/AI 경진대회', 'icon': 'fas fa-trophy'},
         {'name': '2024 세종시 기업분석 경진대회', 'icon': 'fas fa-trophy'},
-        {'name': '2025 하계 한국데이마이닝학회', 'icon': 'fas fa-star'}
+        {'name': '2025 하계 한국데이마이닝학회', 'icon': 'fas fa-star'},
     ],
 
     # Academic & Certifications
