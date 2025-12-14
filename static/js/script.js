@@ -111,11 +111,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 3. Enhanced Typing Effect Logic
     const texts = [
-        "Data Researcher",
         "Digital Business Major",
-        "AI/ML Enthusiast",
-        "Student Leader",
-        "Problem Solver"
+        "AI Developer",
+        "Data Researcher",
+        "Tech Strategist",
+        "Problem Solver",
+        "Value Creator",
+        "Passionate Learner"
     ];
 
     const typingSpan = document.querySelector('.typing-text');
