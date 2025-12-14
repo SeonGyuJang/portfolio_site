@@ -30,8 +30,9 @@
 
             <div class="typing-wrapper">
                 <span class="typing-prefix">I'm a </span>
-                <span class="typing-text"></span>
-                <span class="cursor">|</span>
+                <span class="typing-text-container">
+                    <span class="typing-text"></span><span class="cursor">|</span>
+                </span>
             </div>
 
             <p class="hero-subtitle">
@@ -202,9 +203,9 @@
     <section id="history">
         <div class="container">
             <h2 class="section-title fade-in">Experience & Education</h2>
-            
-            <div class="fade-in">
-                <div class="history-section">
+
+            <div class="history-grid fade-in">
+                <div class="history-section history-current">
                     <h3>🚀 Current Activities (Active)</h3>
                     <div class="timeline">
                         <div class="timeline-item">
@@ -219,7 +220,7 @@
                         </div>
                         <div class="timeline-item">
                             <span class="timeline-date">2025.12.06 ~ ing</span>
-                            <div class="timeline-title">제38대 총학생회 ‘비범’ 부총학생회장</div>
+                            <div class="timeline-title">제38대 총학생회 '비범' 부총학생회장</div>
                             <div class="timeline-desc">고려대학교 세종캠퍼스</div>
                         </div>
                         <div class="timeline-item">
@@ -235,12 +236,12 @@
                     </div>
                 </div>
 
-                <div class="history-section">
+                <div class="history-section history-past">
                     <h3>🏁 Past Activities</h3>
                     <div class="timeline">
                         <div class="timeline-item">
                             <span class="timeline-date">2025.01.01 ~ 2025.11.07</span>
-                            <div class="timeline-title">제45대 총동아리연합회 ‘파란’ 기획국 국장</div>
+                            <div class="timeline-title">제45대 총동아리연합회 '파란' 기획국 국장</div>
                         </div>
                         <div class="timeline-item">
                             <span class="timeline-date">2025.01.01 ~ 2025.07.01</span>
@@ -253,7 +254,7 @@
                         </div>
                         <div class="timeline-item">
                             <span class="timeline-date">2024.03.27 ~ 2024.12.31</span>
-                            <div class="timeline-title">데이터분석 및 인공지능 학회 ‘PRISM’ 1기 학회장</div>
+                            <div class="timeline-title">데이터분석 및 인공지능 학회 'PRISM' 1기 학회장</div>
                             <div class="timeline-desc">고려대학교 세종캠퍼스 크림슨브레인 소속</div>
                         </div>
                         <div class="timeline-item">
@@ -262,7 +263,7 @@
                         </div>
                         <div class="timeline-item">
                             <span class="timeline-date">2024.03.22 ~ 2024.12.31</span>
-                            <div class="timeline-title">제44대 총동아리연합회 ’동심‘ 홍보국 국원</div>
+                            <div class="timeline-title">제44대 총동아리연합회 '동심' 홍보국 국원</div>
                         </div>
                         <div class="timeline-item">
                             <span class="timeline-date">2020.03 ~ 2023.02</span>
@@ -738,6 +739,117 @@
                         <p class="card-date">ongoing</p>
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact">
+        <div class="container">
+            <h2 class="section-title fade-in">Get In Touch</h2>
+            <p class="contact-subtitle fade-in">
+                함께 성장하고 가치를 만들어갈 기회를 기다립니다.
+            </p>
+
+            <div class="contact-grid fade-in">
+                <a href="mailto:dsng3419@korea.ac.kr" class="contact-card-link">
+                    <div class="contact-card">
+                        <div class="contact-icon-wrapper">
+                            <div class="contact-icon-bg email-bg"></div>
+                            <i class="fas fa-envelope contact-icon"></i>
+                        </div>
+                        <h3 class="contact-card-title">Email</h3>
+                        <p class="contact-card-desc">프로젝트 협업 및 문의</p>
+                        <div class="contact-link">
+                            dsng3419@korea.ac.kr
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="https://github.com/SeonGyuJang" target="_blank" class="contact-card-link">
+                    <div class="contact-card">
+                        <div class="contact-icon-wrapper">
+                            <div class="contact-icon-bg github-bg"></div>
+                            <i class="fab fa-github contact-icon"></i>
+                        </div>
+                        <h3 class="contact-card-title">GitHub</h3>
+                        <p class="contact-card-desc">코드와 프로젝트 확인</p>
+                        <div class="contact-link">
+                            @SeonGyuJang
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="https://www.kaggle.com/seongyujang04" target="_blank" class="contact-card-link">
+                    <div class="contact-card">
+                        <div class="contact-icon-wrapper">
+                            <div class="contact-icon-bg kaggle-bg"></div>
+                            <i class="fab fa-kaggle contact-icon"></i>
+                        </div>
+                        <h3 class="contact-card-title">Kaggle</h3>
+                        <p class="contact-card-desc">데이터 분석 포트폴리오</p>
+                        <div class="contact-link">
+                            seongyujang04
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="https://blog.naver.com/ergosphere29" target="_blank" class="contact-card-link">
+                    <div class="contact-card">
+                        <div class="contact-icon-wrapper">
+                            <div class="contact-icon-bg blog-bg"></div>
+                            <i class="fas fa-blog contact-icon"></i>
+                        </div>
+                        <h3 class="contact-card-title">Blog</h3>
+                        <p class="contact-card-desc">학습 기록과 인사이트</p>
+                        <div class="contact-link">
+                            Naver Blog
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="https://www.instagram.com/ditdah_ditdit_0616" target="_blank" class="contact-card-link">
+                    <div class="contact-card">
+                        <div class="contact-icon-wrapper">
+                            <div class="contact-icon-bg instagram-bg"></div>
+                            <i class="fab fa-instagram contact-icon"></i>
+                        </div>
+                        <h3 class="contact-card-title">Instagram</h3>
+                        <p class="contact-card-desc">일상과 활동 공유</p>
+                        <div class="contact-link">
+                            @ditdah_ditdit_0616
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="https://www.google.com/maps/place/고려대학교+세종캠퍼스" target="_blank" class="contact-card-link">
+                    <div class="contact-card">
+                        <div class="contact-icon-wrapper">
+                            <div class="contact-icon-bg location-bg"></div>
+                            <i class="fas fa-map-marker-alt contact-icon"></i>
+                        </div>
+                        <h3 class="contact-card-title">Location</h3>
+                        <p class="contact-card-desc">활동 기반</p>
+                        <div class="contact-location">
+                            <span>고려대학교 세종캠퍼스</span>
+                            <span class="location-detail">세종특별자치시</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="contact-footer fade-in">
+                <p class="contact-footer-text">
+                    <i class="fas fa-heart" style="color: #ff3b30;"></i>
+                    Made with passion by SeonGyu Jang
+                </p>
+                <p class="contact-footer-copyright">
+                    © 2025 SeonGyu Jang. All rights reserved.
+                </p>
             </div>
         </div>
     </section>
