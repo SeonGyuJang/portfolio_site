@@ -215,7 +215,7 @@ header {
     position: relative;
     z-index: 10;
     max-width: 980px;
-    padding: 80px 20px 0;
+    padding: 120px 20px 0; /* Increased top padding to avoid nav overlap */
     animation: fadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 @keyframes fadeInUp {
@@ -460,6 +460,7 @@ header {
     gap: 20px;
     justify-content: center;
     margin-top: 56px;
+    margin-bottom: 80px; /* Added margin-bottom to prevent overlap with scroll indicator */
     padding: 16px;
     background: rgba(255,255,255,0.03);
     backdrop-filter: blur(20px);
@@ -485,7 +486,7 @@ header {
 /* Apple-style Scroll Indicator */
 .scroll-down {
     position: absolute;
-    bottom: 48px;
+    bottom: 32px; /* Adjusted for better spacing */
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -552,6 +553,78 @@ header {
     background-color: #1a1a1a;
     border: 0.5px solid rgba(255, 255, 255, 0.1);
 }
+/* Current Position Section */
+.current-position {
+    margin-bottom: 32px;
+}
+.position-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #007AFF 0%, #5E5CE6 100%);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+}
+.position-badge i {
+    font-size: 0.85rem;
+}
+.position-card {
+    display: flex;
+    gap: 20px;
+    padding: 24px;
+    background: linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(94, 92, 230, 0.05) 100%);
+    border: 1px solid rgba(0, 122, 255, 0.3);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.position-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 122, 255, 0.2);
+    border-color: rgba(0, 122, 255, 0.5);
+}
+.position-icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, #007AFF 0%, #5E5CE6 100%);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.position-icon i {
+    font-size: 2rem;
+    color: white;
+}
+.position-content {
+    flex: 1;
+}
+.position-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+}
+.position-org {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 6px;
+    line-height: 1.5;
+}
+.position-period {
+    font-size: 0.85rem;
+    color: #007AFF;
+    font-weight: 600;
+}
+
 .info-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -1022,6 +1095,26 @@ footer p {
     /* Profile */
     .profile-grid { grid-template-columns: 1fr; }
     .profile-img { height: 300px; }
+
+    /* Current Position Mobile */
+    .position-card {
+        flex-direction: column;
+        gap: 16px;
+        padding: 20px;
+    }
+    .position-icon {
+        width: 56px;
+        height: 56px;
+    }
+    .position-icon i {
+        font-size: 1.6rem;
+    }
+    .position-title {
+        font-size: 1.3rem;
+    }
+    .position-org {
+        font-size: 0.9rem;
+    }
 
     /* Hero Section Mobile */
     .hero-content {
