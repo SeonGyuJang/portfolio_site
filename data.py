@@ -27,13 +27,13 @@ portfolio_data = {
 
     # Hero Section
     'hero': {
-        'status_badge': 'Available for Opportunities',
+        'status_badge': '"Promising interdisciplinary talent',
         'greeting': '안녕하세요,',
         'title': '저는 장선규입니다.',
         'typing_prefix': "I'm a ",
-        'typing_texts': ['Problem Solver', 'Data Researcher', 'AI Developer', 'Student Leader'],
-        'subtitle': '데이터로 세상을 이해하고, 기술로 가치를 창출하는',
-        'subtitle_strong': '차세대 데이터 연구자',
+        'typing_texts': ['Digital Business Major', 'AI Developer', 'Data Researcher', 'Tech Strategist'],
+        'subtitle': '성장과 도전을 멈추지 않으며, 선한 영향력을 주는',
+        'subtitle_strong': '인공지능 연구자',
         'stats': [
             {'number': 15, 'label': 'Projects'},
             {'number': 6, 'label': 'Awards'},
