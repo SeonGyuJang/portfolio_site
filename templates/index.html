@@ -2,33 +2,94 @@
 
 {% block content %}
     <section id="home">
+        <!-- Particle Background -->
+        <div id="particles-js"></div>
+
+        <!-- Enhanced Background Animation -->
         <div class="hero-bg-animation">
             <div class="glow-circle circle-1"></div>
             <div class="glow-circle circle-2"></div>
+            <div class="glow-circle circle-3"></div>
+            <div class="gradient-overlay"></div>
         </div>
 
+        <!-- Grid Pattern Background -->
+        <div class="grid-pattern"></div>
+
         <div class="container hero-content fade-in">
-            <h2 class="hero-greeting">Hello, I'm</h2>
-            <h1 class="hero-title">장선규 <span class="highlight-dot">.</span></h1>
-            
+            <!-- Status Badge -->
+            <div class="status-badge">
+                <span class="pulse-dot"></span>
+                Promising interdisciplinary talent
+            </div>
+
+            <h2 class="hero-greeting">안녕하세요,</h2>
+            <h1 class="hero-title">
+                저는 <span class="highlight-text">장선규</span>입니다<span class="highlight-dot">.</span>
+            </h1>
+
             <div class="typing-wrapper">
-                <span class="typing-text"></span><span class="cursor">|</span>
+                <span class="typing-prefix">I'm a </span>
+                <span class="typing-text"></span>
+                <span class="cursor">|</span>
             </div>
 
             <p class="hero-subtitle">
-                성장과 도전을 멈추지 않으며,<br>
-                선한 영향력을 주는 <strong>데이터 연구자</strong>가 되는 것이 목표입니다.
+                성장과 도전을 멈추지 않으며, 선한 영향력을 주는 <strong>인공지능 연구자</strong>
             </p>
 
-            <div class="hero-btn-group">
-                <a href="#about" class="btn btn-primary">More About Me</a>
-                <a href="#projects" class="btn btn-outline">View Projects</a>
+            <!-- Stats Display -->
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <div class="stat-number" data-target="15">0</div>
+                    <div class="stat-label">Projects</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" data-target="6">0</div>
+                    <div class="stat-label">Awards</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" data-target="10">0</div>
+                    <div class="stat-label">Activities</div>
+                </div>
             </div>
-        </div>
 
-        <div class="scroll-down">
-            <span class="scroll-text">Scroll Down</span>
-            <i class="fas fa-chevron-down"></i>
+            <div class="hero-btn-group">
+                <a href="#about" class="btn btn-primary">
+                    <i class="fas fa-user"></i> About Me
+                </a>
+                <a href="#projects" class="btn btn-outline">
+                    <i class="fas fa-code"></i> View Projects
+                </a>
+                <a href="#contact" class="btn btn-glass">
+                    <i class="fas fa-envelope"></i> Contact
+                </a>
+            </div>
+
+            <!-- Tech Stack Icons -->
+            <div class="tech-icons">
+                <!-- Left 3 Icons -->
+                <div class="tech-icons-left">
+                    <i class="fab fa-python" title="Python"></i>
+                    <i class="fas fa-database" title="SQL"></i>
+                    <i class="fab fa-swift" title="Swift"></i>
+                </div>
+
+                <!-- Scroll Animation in Center -->
+                <div class="scroll-emoji-container">
+                    <div class="scroll-mouse-icon">
+                        <div class="scroll-wheel-icon"></div>
+                    </div>
+                    <span class="scroll-explore-text">Scroll to Explore</span>
+                </div>
+
+                <!-- Right 3 Icons -->
+                <div class="tech-icons-right">
+                    <i class="fas fa-chart-line" title="Data Analysis"></i>
+                    <i class="fas fa-brain" title="AI/ML"></i>
+                    <img src="/static/images/fab_ku.png" alt="Korea University" class="ku-logo" title="Korea University">
+                </div>
+            </div>
         </div>
     </section>
 
@@ -37,9 +98,58 @@
             <h2 class="section-title fade-in">About Me</h2>
             <div class="profile-grid fade-in">
                 <div class="profile-left">
-                    <img src="https://via.placeholder.com/400x500?text=Profile+Photo" alt="장선규 프로필 사진" class="profile-img">
+                    <img src="/static/images/profile.jpg" alt="장선규 프로필 사진" class="profile-img">
                 </div>
                 <div class="profile-right">
+                    <!-- Tab Navigation -->
+                    <div class="tab-navigation">
+                        <button class="tab-button active" onclick="switchTab('basic-info')">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Basic Information</span>
+                        </button>
+                        <button class="tab-button" onclick="switchTab('current-position')">
+                            <i class="fas fa-briefcase"></i>
+                            <span>Current Main Position</span>
+                        </button>
+                    </div>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content-wrapper">
+                        <!-- Basic Info Tab -->
+                        <div id="basic-info" class="tab-panel active">
+                            <div class="position-card">
+                                <div class="position-content">
+                                    <div class="basic-info-item">
+                                        <span class="basic-info-label">국적</span>
+                                        <span class="basic-info-value">대한민국 (Republic of Korea)</span>
+                                    </div>
+                                    <div class="basic-info-item">
+                                        <span class="basic-info-label">대학</span>
+                                        <span class="basic-info-value">고려대학교 세종캠퍼스 디지털경영전공</span>
+                                    </div>
+                                    <div class="basic-info-item">
+                                        <span class="basic-info-label">GPA</span>
+                                        <span class="basic-info-value">3.86 / 4.50</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Current Position Tab -->
+                        <div id="current-position" class="tab-panel">
+                            <div class="position-card">
+                                <div class="position-icon">
+                                    <i class="fas fa-graduation-cap"></i>
+                                </div>
+                                <div class="position-content">
+                                    <h3 class="position-title">부총학생회장</h3>
+                                    <p class="position-org">고려대학교 세종캠퍼스 제38대 총학생회 '비범'</p>
+                                    <p class="position-period">2025.12 ~ 현재</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="info-list">
                         <div class="info-item">
                             <i class="far fa-calendar-alt"></i>
@@ -168,16 +278,16 @@
         </div>
     </section>
 
-    <section id="skills" style="background-color: #fcfcfc;">
+    <section id="skills">
         <div class="container">
             <h2 class="section-title fade-in">Tech Stacks</h2>
-            <p style="text-align:center; color:#666; margin-bottom:40px;" class="fade-in">클릭하여 숙련도를 확인하세요.</p>
+            <p class="section-subtitle fade-in">클릭하여 숙련도를 확인하세요.</p>
             
             <div class="skills-wrapper fade-in">
                 <div class="skill-category">
                     <h3>💻 Coding</h3>
                     <div class="skill-list">
-                        <div class="skill-card" onclick="toggleSkill(this)" data-level="90">
+                        <div class="skill-card" onclick="toggleSkill(this)" data-level="95">
                             <div class="skill-header">
                                 <i class="fab fa-python skill-icon"></i>
                                 <span class="skill-name">Python</span>
@@ -188,7 +298,7 @@
                                 <span class="progress-text">0%</span>
                             </div>
                         </div>
-                        <div class="skill-card" onclick="toggleSkill(this)" data-level="85">
+                        <div class="skill-card" onclick="toggleSkill(this)" data-level="80">
                             <div class="skill-header">
                                 <i class="fas fa-database skill-icon"></i>
                                 <span class="skill-name">SQL</span>
@@ -199,7 +309,7 @@
                                 <span class="progress-text">0%</span>
                             </div>
                         </div>
-                         <div class="skill-card" onclick="toggleSkill(this)" data-level="70">
+                         <div class="skill-card" onclick="toggleSkill(this)" data-level="60">
                             <div class="skill-header">
                                 <i class="fab fa-swift skill-icon"></i>
                                 <span class="skill-name">Swift</span>
@@ -210,7 +320,7 @@
                                 <span class="progress-text">0%</span>
                             </div>
                         </div>
-                        <div class="skill-card" onclick="toggleSkill(this)" data-level="75">
+                        <div class="skill-card" onclick="toggleSkill(this)" data-level="60">
                             <div class="skill-header">
                                 <i class="fas fa-chart-bar skill-icon"></i>
                                 <span class="skill-name">R</span>
@@ -249,7 +359,7 @@
                                 <span class="progress-text">0%</span>
                             </div>
                         </div>
-                         <div class="skill-card" onclick="toggleSkill(this)" data-level="85">
+                         <div class="skill-card" onclick="toggleSkill(this)" data-level="80">
                             <div class="skill-header">
                                 <i class="fas fa-users skill-icon"></i>
                                 <span class="skill-name">Teams</span>
@@ -277,7 +387,7 @@
                                 <span class="progress-text">0%</span>
                             </div>
                         </div>
-                        <div class="skill-card" onclick="toggleSkill(this)" data-level="85">
+                        <div class="skill-card" onclick="toggleSkill(this)" data-level="90">
                             <div class="skill-header">
                                 <i class="fas fa-palette skill-icon"></i>
                                 <span class="skill-name">Miricanvas</span>
@@ -288,7 +398,7 @@
                                 <span class="progress-text">0%</span>
                             </div>
                         </div>
-                         <div class="skill-card" onclick="toggleSkill(this)" data-level="95">
+                         <div class="skill-card" onclick="toggleSkill(this)" data-level="100">
                             <div class="skill-header">
                                 <i class="fas fa-file-powerpoint skill-icon"></i>
                                 <span class="skill-name">MS Office</span>
@@ -305,7 +415,7 @@
                  <div class="skill-category">
                     <h3>⚙️ OS</h3>
                      <div class="skill-list">
-                        <div class="skill-card" onclick="toggleSkill(this)" data-level="80">
+                        <div class="skill-card" onclick="toggleSkill(this)" data-level="100">
                             <div class="skill-header">
                                 <i class="fab fa-windows skill-icon"></i>
                                 <span class="skill-name">Windows</span>
@@ -316,7 +426,7 @@
                                 <span class="progress-text">0%</span>
                             </div>
                         </div>
-                        <div class="skill-card" onclick="toggleSkill(this)" data-level="70">
+                        <div class="skill-card" onclick="toggleSkill(this)" data-level="80">
                             <div class="skill-header">
                                 <i class="fab fa-linux skill-icon"></i>
                                 <span class="skill-name">Linux</span>
@@ -327,7 +437,7 @@
                                 <span class="progress-text">0%</span>
                             </div>
                         </div>
-                         <div class="skill-card" onclick="toggleSkill(this)" data-level="95">
+                         <div class="skill-card" onclick="toggleSkill(this)" data-level="100">
                             <div class="skill-header">
                                 <i class="fab fa-apple skill-icon"></i>
                                 <span class="skill-name">macOS</span>
@@ -352,9 +462,9 @@
                     <div class="project-img"><i class="fas fa-bus"></i></div>
                     <div class="project-info">
                         <h3>셔틀버스/식단표 트래킹 웹사이트</h3>
-                        <p>고려대학교 세종캠퍼스 학생들을 위한 실시간 정보 제공 서비스</p>
+                        <p>고려대학교 세종캠퍼스 학생들을 위한 실시간 셔틀버스 정보 제공 서비스</p>
                         <p class="timeline-date">2024.11 ~ ing</p>
-                        <a href="https://www.kus-bus.site/" target="_blank" class="btn">View Project</a>
+                        <a href="https://kus-bus-app-feb0ef7b8941.herokuapp.com/" target="_blank" class="btn">View Project</a>
                     </div>
                 </div>
                 <div class="project-card">
@@ -370,92 +480,217 @@
         </div>
     </section>
 
-    <section id="awards" style="background-color: #fcfcfc;">
+    <section id="awards">
         <div class="container">
             <h2 class="section-title fade-in">Awards</h2>
             <div class="awards-list fade-in">
-                <div class="award-item" onclick="openModal('충청ICT ML/DL 과정 발표회', '세부 내용을 여기에 입력하세요.')">
-                    <span>충청ICT ML/DL 과정 발표회</span>
+                <div class="award-item" onclick="openAwardModal(0)">
+                    <div class="award-content">
+                        <span class="award-name">충청ICT ML/DL 과정 발표회 (은상)</span>
+                        <p class="award-desc">Computer Vision을 이용한 도로 상태 판단 AI</p>
+                    </div>
                     <i class="fas fa-trophy award-icon"></i>
                 </div>
-                <div class="award-item" onclick="openModal('창업경진대회 (고려대, 세종)', '세부 내용을 여기에 입력하세요.')">
-                    <span>창업경진대회 (고려대, 세종)</span>
+                <div class="award-item" onclick="openAwardModal(1)">
+                    <div class="award-content">
+                        <span class="award-name">충청ICT ML/DL 과정 발표회 (동상)</span>
+                        <p class="award-desc">Computer Vision을 이용한 CCTV 영상 분석</p>
+                    </div>
                     <i class="fas fa-trophy award-icon"></i>
                 </div>
-                <div class="award-item" onclick="openModal('DB 금융경제 공모전', '세부 내용을 여기에 입력하세요.')">
-                    <span>DB 금융경제 공모전</span>
+                <div class="award-item" onclick="openAwardModal(2)">
+                    <div class="award-content">
+                        <span class="award-name">창업경진대회 (고려대학교)</span>
+                        <p class="award-desc">JooInJang 캐릭터를 이용한 브랜딩 사업</p>
+                    </div>
+                    <i class="fas fa-trophy award-icon"></i>
+                </div>
+                <div class="award-item" onclick="openAwardModal(3)">
+                    <div class="award-content">
+                        <span class="award-name">고려대학교 & 한국발명진흥회 연구 과제 수행</span>
+                        <p class="award-desc">수직농장 AI제어 시스템 적용 및 생육 이미지 데이터 활용</p>
+                    </div>
+                    <i class="fas fa-lightbulb award-icon"></i>
+                </div>
+                <div class="award-item" onclick="openAwardModal(4)">
+                    <div class="award-content">
+                        <span class="award-name">DB 금융경제 공모전</span>
+                        <p class="award-desc">블록체인 이상거래 탐지방법 제언</p>
+                    </div>
                     <i class="fas fa-award award-icon"></i>
                 </div>
-                <div class="award-item" onclick="openModal('2024 T-SUM 데이터분석/인공지능 경진대회', '세부 내용을 여기에 입력하세요.')">
-                    <span>2024 T-SUM 데이터분석/AI 경진대회</span>
+                <div class="award-item" onclick="openAwardModal(5)">
+                    <div class="award-content">
+                        <span class="award-name">2024 T-SUM 데이터분석/인공지능 경진대회</span>
+                        <p class="award-desc">킥보드 주행 영상 분석을 통한 객체 탐지 AI 개발</p>
+                    </div>
                     <i class="fas fa-trophy award-icon"></i>
                 </div>
-                <div class="award-item" onclick="openModal('2024 세종시 기업분석 경진대회', '세부 내용을 여기에 입력하세요.')">
-                    <span>2024 세종시 기업분석 경진대회</span>
+                <div class="award-item" onclick="openAwardModal(6)">
+                    <div class="award-content">
+                        <span class="award-name">2024 KUS-TUDY</span>
+                        <p class="award-desc">파이썬을 활용한 Business Data Analytics</p>
+                    </div>
                     <i class="fas fa-trophy award-icon"></i>
                 </div>
-                <div class="award-item" onclick="openModal('2025 하계 한국데이마이닝학회', '세부 내용을 여기에 입력하세요.')">
-                    <span>2025 하계 한국데이마이닝학회</span>
+                <div class="award-item" onclick="openAwardModal(7)">
+                    <div class="award-content">
+                        <span class="award-name">2024 산학협력친화형PBL 수강 후기 공모전</span>
+                        <p class="award-desc">데이터분석과 AI를 통해 선한 영향력 끼치는 개발자에 다가가다</p>
+                    </div>
+                    <i class="fas fa-trophy award-icon"></i>
+                </div>
+                <div class="award-item" onclick="openAwardModal(8)">
+                    <div class="award-content">
+                        <span class="award-name">2024 세종시 기업분석 경진대회</span>
+                        <p class="award-desc">주식회사 서북에 대한 분석</p>
+                    </div>
+                    <i class="fas fa-trophy award-icon"></i>
+                </div>
+                <div class="award-item" onclick="openAwardModal(9)">
+                    <div class="award-content">
+                        <span class="award-name">2024 R&SD 성과공유회</span>
+                        <p class="award-desc">(주)팜킷 - TableOCR 연계 식품 챗봇 프로세스 개발</p>
+                    </div>
+                    <i class="fas fa-trophy award-icon"></i>
+                </div>
+                <div class="award-item" onclick="openAwardModal(10)">
+                    <div class="award-content">
+                        <span class="award-name">2024 기업기술혁신PBL</span>
+                        <p class="award-desc">(주)팜킷 - TableOCR 연계 식품 챗봇 프로세스 개발</p>
+                    </div>
+                    <i class="fas fa-trophy award-icon"></i>
+                </div>
+                <div class="award-item" onclick="openAwardModal(11)">
+                    <div class="award-content">
+                        <span class="award-name">2025 하계 한국데이터마이닝학회</span>
+                        <p class="award-desc">Controlling Informational Freedom in Large Language Models</p>
+                    </div>
                     <i class="fas fa-star award-icon"></i>
                 </div>
             </div>
-            <p style="text-align: center; margin-top: 20px; color: #999;">* 클릭하여 상세 내용을 확인하세요.</p>
+            <p class="section-note">* 클릭하여 상세 내용 및 증빙 자료를 확인하세요.</p>
         </div>
     </section>
 
     <section id="academic">
         <div class="container fade-in">
             <h2 class="section-title">Academic & Certifications</h2>
-            
-            <h3 style="margin-bottom: 20px; color: var(--primary-color);">🧑🏼‍💻 학회 활동 및 논문</h3>
-            <table class="paper-table" style="margin-bottom: 50px;">
-                <thead>
-                    <tr>
-                        <th style="width: 20%">Date</th>
-                        <th>Title / Description</th>
-                        <th style="width: 15%">Link</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>2024.03 ~ 12</td>
-                        <td>고려대 세종 PRISM 학회 활동 (1기 학회장)</td>
-                        <td><a href="#" class="paper-link">View</a></td>
-                    </tr>
-                    <tr>
-                        <td>YYYY.MM.DD</td>
-                        <td>(논문 제목을 입력하세요)</td>
-                        <td><a href="#" class="paper-link">PDF</a></td>
-                    </tr>
-                </tbody>
-            </table>
 
-            <h3 style="margin-bottom: 20px; color: var(--primary-color);">📖 보유 자격증</h3>
+            <h3 class="academic-subtitle">🧑🏼‍💻 학회 활동 및 논문</h3>
+            <div class="papers-list">
+                <div class="paper-item" onclick="openPaperModal(0)">
+                    <div class="paper-content">
+                        <span class="paper-name">고려대학교(세종) 크림슨브레인소속 데이터분석 및 인공지능학회 'PRISM' 1기 학회장</span>
+                        <p class="paper-desc">데이터분석 및 인공지능 학회 'PRISM'에서 1기 학회장으로 활동</p>
+                    </div>
+                    <div class="paper-meta">
+                        <span class="paper-date">2024.03 ~ 2024.12</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                <div class="paper-item" onclick="openPaperModal(1)">
+                    <div class="paper-content">
+                        <span class="paper-name">2023 한국IT서비스학회 춘계학술대회 참여 및 교육이수</span>
+                        <p class="paper-desc">한국IT서비스학회 춘계학술대회 참여</p>
+                    </div>
+                    <div class="paper-meta">
+                        <span class="paper-date">2023.05.24</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                <div class="paper-item" onclick="openPaperModal(2)">
+                    <div class="paper-content">
+                        <span class="paper-name">2024 한국데이터마이닝학회 춘계학술대회 참여</span>
+                        <p class="paper-desc">한국데이터마이닝학회 춘계학술대회 참여</p>
+                    </div>
+                    <div class="paper-meta">
+                        <span class="paper-date">2024.05.30</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                <div class="paper-item" onclick="openPaperModal(3)">
+                    <div class="paper-content">
+                        <span class="paper-name">2024 한국데이터마이닝학회 추계학술대회 참여</span>
+                        <p class="paper-desc">한국데이터마이닝학회 추계학술대회 참여</p>
+                    </div>
+                    <div class="paper-meta">
+                        <span class="paper-date">2024.11.22 ~ 2024.11.23</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                <div class="paper-item" onclick="openPaperModal(4)">
+                    <div class="paper-content">
+                        <span class="paper-name">2025 한국데이터마이닝학회 하계학술대회 참여 및 발표</span>
+                        <p class="paper-desc">한국데이터마이닝학회 하계학술대회 참여</p>
+                    </div>
+                    <div class="paper-meta">
+                        <span class="paper-date">2025.08.28 ~ 2025.08.30</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                <div class="paper-item" onclick="openPaperModal(5)">
+                    <div class="paper-content">
+                        <span class="paper-name">Moral Alignment in Large Language Models</span>
+                        <p class="paper-desc">KDMS2025 포스터 발표 - 언어적 프레이밍과 도메인 페르소나의 영향</p>
+                    </div>
+                    <div class="paper-meta">
+                        <span class="paper-date">2025.08.29</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                <div class="paper-item" onclick="openPaperModal(6)">
+                    <div class="paper-content">
+                        <span class="paper-name">Controlling Informational Freedom in LLMs</span>
+                        <p class="paper-desc">KDMS2025 포스터 발표 - 자유도 프롬프팅을 통한 정보 자유도 제어</p>
+                    </div>
+                    <div class="paper-meta">
+                        <span class="paper-date">2025.08.29</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                <div class="paper-item" onclick="openPaperModal(7)">
+                    <div class="paper-content">
+                        <span class="paper-name">Cross-Linguistic Moral Preferences in LLMs</span>
+                        <p class="paper-desc">MDPI Electronics 게재 논문 - 언어 간 도덕적 선호도 연구</p>
+                    </div>
+                    <div class="paper-meta">
+                        <span class="paper-date">2025.12.11</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+            </div>
+            <p class="section-note">* 클릭하여 상세 내용 및 관련 자료를 확인하세요.</p>
+
+            <h3 class="academic-subtitle">📖 보유 자격증</h3>
             <table class="cert-table">
                 <thead>
                     <tr>
                         <th>Date</th>
                         <th>Certificate Name</th>
                         <th>Issuer</th>
+                        <th>증명서</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>YYYY.MM.DD</td>
-                        <td>(자격증 명을 입력하세요)</td>
-                        <td>(발행기관)</td>
+                        <td>2023.09.08</td>
+                        <td>ADsP(데이터분석준전문가)</td>
+                        <td>한국데이터산업진흥원</td>
+                        <td><button class="cert-btn" onclick="openCertModal(0)">보기</button></td>
                     </tr>
-                      <tr>
-                        <td>YYYY.MM.DD</td>
-                        <td>(자격증 명을 입력하세요)</td>
-                        <td>(발행기관)</td>
+                    <tr>
+                        <td>2024.03.29</td>
+                        <td>SQLD(SQL개발자)</td>
+                        <td>한국데이터산업진흥원</td>
+                        <td><button class="cert-btn" onclick="openCertModal(1)">보기</button></td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </section>
 
-    <section id="gallery" style="background-color: #f8f9fa;">
+    <section id="gallery">
         <div class="container">
             <h2 class="section-title fade-in">Activity Log</h2>
             
@@ -509,16 +744,416 @@
 
     <div id="awardModal" class="modal">
         <div class="modal-content">
-            <span class="close-modal" onclick="closeModal()">&times;</span>
-            <h3 id="modalTitle" style="font-size: 1.5rem; margin-bottom: 15px; color: var(--secondary-color);">Award Title</h3>
-            <hr style="margin-bottom: 20px; border: 0; border-top: 1px solid #eee;">
-            <div id="modalDesc" style="line-height: 1.8; color: #555;">
-                <p><strong>수상 내역:</strong> <span id="m-award">대상</span></p>
-                <p><strong>수여 기관:</strong> <span id="m-org">기관명</span></p>
-                <p><strong>일자:</strong> <span id="m-date">2024.00.00</span></p>
-                <br>
-                <p><strong>상세 설명:</strong><br>이 프로젝트는 ... (여기에 상세 설명을 기술합니다)</p>
+            <span class="close-modal" onclick="closeAwardModal()">&times;</span>
+            <h3 id="modalTitle" class="modal-title">Award Title</h3>
+            <hr class="modal-divider">
+
+            <!-- Image Slider -->
+            <div class="modal-image-slider" id="imageSlider">
+                <div class="slider-container">
+                    <button class="slider-btn prev" onclick="changeSlide(-1)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div class="slider-images" id="sliderImages">
+                        <!-- Images will be dynamically inserted here -->
+                    </div>
+                    <button class="slider-btn next" onclick="changeSlide(1)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                <div class="slider-dots" id="sliderDots">
+                    <!-- Dots will be dynamically inserted here -->
+                </div>
+            </div>
+
+            <div id="modalDesc" class="modal-description">
+                <p><strong>주제:</strong> <span id="m-subject"></span></p>
+                <p><strong>수상:</strong> <span id="m-award"></span></p>
+                <p><strong>날짜:</strong> <span id="m-date"></span></p>
+                <p id="m-org-wrapper" style="display: none;"><strong>수여 기관:</strong> <span id="m-org"></span></p>
+                <div id="m-desc-wrapper" style="display: none;">
+                    <br>
+                    <p><strong>상세 설명:</strong></p>
+                    <p id="m-description"></p>
+                </div>
             </div>
         </div>
     </div>
+
+    <div id="certModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeCertModal()">&times;</span>
+            <h3 id="certModalTitle" class="modal-title">자격증 증명서</h3>
+            <hr class="modal-divider">
+
+            <!-- Certificate Image -->
+            <div class="cert-image-container">
+                <img id="certImage" src="" alt="Certificate" style="width: 100%; max-height: 600px; object-fit: contain;">
+            </div>
+        </div>
+    </div>
+
+    <div id="paperModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closePaperModal()">&times;</span>
+            <h3 id="paperModalTitle" class="modal-title">학회 활동 / 논문</h3>
+            <hr class="modal-divider">
+
+            <!-- Image Slider for Papers -->
+            <div class="modal-image-slider" id="paperImageSlider">
+                <div class="slider-container">
+                    <button class="slider-btn prev" onclick="changePaperSlide(-1)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div class="slider-images" id="paperSliderImages">
+                        <!-- Images will be dynamically inserted here -->
+                    </div>
+                    <button class="slider-btn next" onclick="changePaperSlide(1)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                <div class="slider-dots" id="paperSliderDots">
+                    <!-- Dots will be dynamically inserted here -->
+                </div>
+            </div>
+
+            <div id="paperModalDesc" class="modal-description">
+                <p><strong>기간:</strong> <span id="p-date"></span></p>
+                <p><strong>설명:</strong> <span id="p-description"></span></p>
+                <div id="p-link-wrapper" style="display: none;">
+                    <br>
+                    <p><strong>논문 링크:</strong></p>
+                    <a id="p-link" href="#" target="_blank" class="paper-modal-link">
+                        <i class="fas fa-external-link-alt"></i> 논문 보기
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Awards data
+        const awardsData = [
+            {
+                name: '충청ICT ML/DL 과정 발표회 (은상)',
+                subject: 'Computer Vision을 이용한 도로 상태 판단 AI',
+                award: '은상',
+                date: '2023.11.12',
+                organization: '',
+                description: '',
+                images: ['static/images/awards/ICT_3.jpg', 'static/images/awards/ICT_2.png']
+            },
+            {
+                name: '충청ICT ML/DL 과정 발표회 (동상)',
+                subject: 'Computer Vision을 이용한 CCTV 영상 분석',
+                award: '동상',
+                date: '2023.11.12',
+                organization: '',
+                description: '',
+                images: ['static/images/awards/ICT_3.jpg', 'static/images/awards/ICT_1.png']
+            },
+            {
+                name: '창업경진대회 (고려대학교)',
+                subject: 'JooInJang 캐릭터를 이용한 브랜딩 사업',
+                award: '우수상',
+                date: '2023.12.08',
+                organization: '',
+                description: '',
+                images: ['/static/images/awards/JooInJang_2.png', '/static/images/awards/JooInJang_5.jpg', '/static/images/awards/JooInJang_6.jpg', '/static/images/awards/JooInJang_1.jpg']
+            },
+            {
+                name: '고려대학교 & 한국발명진흥회 연구 과제 수행',
+                subject: '수직농장 AI제어 시스템 적용 및 생육 이미지 데이터 활용',
+                award: '사업 진행',
+                date: '2023.08.16 ~ 2023.12.10',
+                organization: '',
+                description: '',
+                images: ['/static/images/awards/KIPA.png']
+            },
+            {
+                name: 'DB 금융경제 공모전',
+                subject: '종합적 블록체인 이상거래 탐지방법 제언 ─ 암호화폐 거래의 사용자별 행동 패턴 분석 규칙을 기반으로',
+                award: '출품 완료',
+                date: '2024.02.28',
+                organization: '',
+                description: '',
+                images: ['/static/images/awards/DB_2.png', '/static/images/awards/DB_1.png']
+            },
+            {
+                name: '2024 T-SUM 데이터분석/인공지능 경진대회',
+                subject: '킥보드 주행 영상 분석을 통한 객체 탐지 인공지능 개발',
+                award: '대상 및 우수멘토상',
+                date: '2024.06.07',
+                organization: '',
+                description: '',
+                images: ['static/images/awards/TSUM.jpg']
+            },
+            {
+                name: '2024 KUS-TUDY',
+                subject: '파이썬을 활용한 Business Data Analytics',
+                award: '최우수상',
+                date: '2024.06.17',
+                organization: '',
+                description: '',
+                images: ['static/images/awards/KUSTUDY.png']
+            },
+            {
+                name: '2024 산학협력친화형PBL 수강 후기 공모전',
+                subject: '데이터분석과 인공지능을 통해 선한 영향력 끼치는 개발자에 다가가다',
+                award: '은상',
+                date: '2024.07.05',
+                organization: '',
+                description: '',
+                images: ['static/images/awards/PBL.jpeg']
+            },
+            {
+                name: '2024 세종시 기업분석 경진대회',
+                subject: '주식회사 서북에 대한 분석',
+                award: '최우수상',
+                date: '2024.10.08',
+                organization: '',
+                description: '',
+                images: ['static/images/awards/SEJONG_C.jpeg','static/images/awards/SEJONG_A.jpeg','static/images/awards/SEJONG_B.png']
+            },
+            {
+                name: '2024 R&SD 성과공유회',
+                subject: '(주)팜킷 - 이커머스 전력과 테크놀로지, TableOCR 연계 식품 챗봇 프로세스 개발',
+                award: '우수상',
+                date: '2024.10.25',
+                organization: '',
+                description: '',
+                images: []
+            },
+            {
+                name: '2024 기업기술혁신PBL',
+                subject: '(주)팜킷 - 이커머스 전력과 테크놀로지, TableOCR 연계 식품 챗봇 프로세스 개발',
+                award: '우수상',
+                date: '2024.12.20',
+                organization: '',
+                description: '',
+                images: []
+            },
+            {
+                name: '2025 하계 한국데이터마이닝학회',
+                subject: 'Controlling Informational Freedom in Large Language Models via Degree of Freedom Prompting',
+                award: '최우수논문상',
+                date: '2025.08.28',
+                organization: '',
+                description: '',
+                images: ['static/images/awards/DATA.png']
+            }
+        ];
+
+        // Certificates data
+        const certificatesData = [
+            {
+                name: 'ADsP(데이터분석준전문가)',
+                image: '/static/images/awards/ADsP.png'
+            },
+            {
+                name: 'SQLD(SQL개발자)',
+                image: '/static/images/awards/SQLD.png'
+            }
+        ];
+
+        // Papers data
+        const papersData = [
+            {
+                name: '고려대학교(세종) 크림슨브레인소속 데이터분석 및 인공지능학회 \'PRISM\' 1기 학회장',
+                date: '2024.03 ~ 2024.12',
+                description: '데이터분석 및 인공지능 학회에서 1기 학회장으로 활동하며 학회원들과 함께 다양한 프로젝트 및 스터디를 진행했습니다.',
+                paperLink: '',
+                images: ['static/images/academic/DOF/PRISM.jpeg']
+            },
+            {
+                name: '2023 한국IT서비스학회 춘계학술대회 참여 및 교육이수',
+                date: '2023.05.24',
+                description: '한국IT서비스학회 춘계학술대회에 참여하여 IT 서비스 분야의 최신 연구 동향을 학습하였습니다.',
+                paperLink: '',
+                images: ['static/images/academic/DOF/IT_service.png']
+            },
+            {
+                name: '2024 한국데이터마이닝학회 춘계학술대회 참여',
+                date: '2024.05.30',
+                description: '한국데이터마이닝학회 춘계학술대회에 참여하여 데이터마이닝 및 AI 분야의 최신 연구를 접하였습니다.',
+                paperLink: '',
+                images: ['static/images/academic/DOF/KDMS2024_C.png']
+            },
+            {
+                name: '2024 한국데이터마이닝학회 추계학술대회 참여',
+                date: '2024.11.22 ~ 2024.11.23',
+                description: '한국데이터마이닝학회 추계학술대회에 참여하여 데이터마이닝 및 AI 분야의 연구 발표를 청강하였습니다.',
+                paperLink: '',
+                images: ['static/images/academic/DOF/KDMS2024_CC.png']
+            },
+            {
+                name: '2025 한국데이터마이닝학회 하계학술대회 참여',
+                date: '2025.08.28 ~ 2025.08.30',
+                description: '한국데이터마이닝학회 하계학술대회에 참여하여 최신 데이터마이닝 연구 및 AI 분야를 학습하고, 포스터발표를 진행하였습니다.',
+                paperLink: '',
+                images: ['static/images/academic/DOF/KDMS2025_CC.png']
+            },
+            {
+                name: 'Moral Alignment in Large Language Models : Effects of Linguistic Framing and Domain Personas',
+                date: '2025.08.29',
+                description: 'KDMS2025 포스터 발표 - 대규모 언어 모델에서의 도덕적 정렬에 대한 언어적 프레이밍과 도메인 페르소나의 영향을 연구하였습니다.',
+                paperLink: '',
+                images: ['static/images/academic/DOF/MORAL.png']
+            },
+            {
+                name: 'Controlling Informational Freedom in Large Language Models via Degree of Freedom Prompting',
+                date: '2025.08.29',
+                description: 'KDMS2025 포스터 발표 - 자유도 프롬프팅을 통해 대규모 언어 모델의 정보 자유도를 제어하는 방법론을 제시하였습니다.',
+                paperLink: '',
+                images: ['static/images/academic/DOF/DOF.png']
+            },
+            {
+                name: 'Cross-Linguistic Moral Preferences in Large Langugage Modles: Enidence from Distributive Justice Scenarios and Domain Persona Interventions',
+                date: '2025.12.11',
+                description: 'MDPI Electronics 게재 논문 - 대규모 언어 모델에서의 언어 간 도덕적 선호도에 대한 분배 정의 시나리오 및 도메인 페르소나 개입 연구를 진행하였습니다.',
+                paperLink: '',
+                images: ['static/images/academic/DOF/MDPI-2.png','static/images/academic/DOF/MDPI-1.png']
+            }
+        ];
+
+        // Certificate modal functions
+        function openCertModal(index) {
+            const cert = certificatesData[index];
+            document.getElementById('certModalTitle').textContent = cert.name;
+            document.getElementById('certImage').src = cert.image;
+            document.getElementById('certModal').style.display = 'flex';
+        }
+
+        function closeCertModal() {
+            document.getElementById('certModal').style.display = 'none';
+        }
+
+        // Paper modal functions
+        let currentPaperSlide = 0;
+        let currentPaperImages = [];
+
+        function openPaperModal(index) {
+            const paper = papersData[index];
+
+            // Set title and details
+            document.getElementById('paperModalTitle').textContent = paper.name;
+            document.getElementById('p-date').textContent = paper.date;
+            document.getElementById('p-description').textContent = paper.description;
+
+            // Show/hide paper link if provided
+            const linkWrapper = document.getElementById('p-link-wrapper');
+            if (paper.paperLink && paper.paperLink.trim() !== '') {
+                document.getElementById('p-link').href = paper.paperLink;
+                linkWrapper.style.display = 'block';
+            } else {
+                linkWrapper.style.display = 'none';
+            }
+
+            // Setup image slider
+            currentPaperImages = paper.images || [];
+            currentPaperSlide = 0;
+            setupPaperImageSlider();
+
+            // Show modal
+            document.getElementById('paperModal').style.display = 'flex';
+        }
+
+        function setupPaperImageSlider() {
+            const sliderContainer = document.getElementById('paperImageSlider');
+            const sliderImages = document.getElementById('paperSliderImages');
+            const sliderDots = document.getElementById('paperSliderDots');
+
+            // Clear existing content
+            sliderImages.innerHTML = '';
+            sliderDots.innerHTML = '';
+
+            if (currentPaperImages.length === 0) {
+                // Show default icon if no images
+                sliderImages.innerHTML = `
+                    <div class="slider-image active">
+                        <div class="default-award-icon">
+                            <i class="fas fa-file-alt"></i>
+                            <p>첨부 자료 없음</p>
+                        </div>
+                    </div>
+                `;
+                sliderContainer.style.display = 'block';
+                document.querySelectorAll('#paperImageSlider .slider-btn').forEach(btn => btn.style.display = 'none');
+            } else {
+                // Show images
+                currentPaperImages.forEach((img, index) => {
+                    const imgDiv = document.createElement('div');
+                    imgDiv.className = 'slider-image' + (index === 0 ? ' active' : '');
+                    imgDiv.innerHTML = `<img src="${img}" alt="Paper Image ${index + 1}">`;
+                    sliderImages.appendChild(imgDiv);
+
+                    // Create dot
+                    const dot = document.createElement('span');
+                    dot.className = 'slider-dot' + (index === 0 ? ' active' : '');
+                    dot.onclick = () => goToPaperSlide(index);
+                    sliderDots.appendChild(dot);
+                });
+
+                sliderContainer.style.display = 'block';
+
+                // Show/hide navigation buttons
+                const showButtons = currentPaperImages.length > 1;
+                document.querySelectorAll('#paperImageSlider .slider-btn').forEach(btn => {
+                    btn.style.display = showButtons ? 'flex' : 'none';
+                });
+            }
+        }
+
+        function changePaperSlide(direction) {
+            if (currentPaperImages.length <= 1) return;
+
+            currentPaperSlide += direction;
+
+            if (currentPaperSlide >= currentPaperImages.length) {
+                currentPaperSlide = 0;
+            } else if (currentPaperSlide < 0) {
+                currentPaperSlide = currentPaperImages.length - 1;
+            }
+
+            updatePaperSlider();
+        }
+
+        function goToPaperSlide(index) {
+            currentPaperSlide = index;
+            updatePaperSlider();
+        }
+
+        function updatePaperSlider() {
+            // Update images
+            const images = document.querySelectorAll('#paperSliderImages .slider-image');
+            images.forEach((img, index) => {
+                img.classList.toggle('active', index === currentPaperSlide);
+            });
+
+            // Update dots
+            const dots = document.querySelectorAll('#paperSliderDots .slider-dot');
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentPaperSlide);
+            });
+        }
+
+        function closePaperModal() {
+            document.getElementById('paperModal').style.display = 'none';
+            currentPaperSlide = 0;
+            currentPaperImages = [];
+        }
+
+        // Close modal on outside click
+        window.addEventListener('click', function(event) {
+            const certModal = document.getElementById('certModal');
+            const paperModal = document.getElementById('paperModal');
+
+            if (event.target === certModal) {
+                closeCertModal();
+            }
+            if (event.target === paperModal) {
+                closePaperModal();
+            }
+        });
+    </script>
 {% endblock %}
