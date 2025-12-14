@@ -484,56 +484,14 @@
         <div class="container">
             <h2 class="section-title fade-in">Awards</h2>
             <div class="awards-list fade-in">
-                <div class="award-item" onclick="openModal('충청ICT ML/DL 과정 발표회', '세부 내용을 여기에 입력하세요.')">
-                    <span>충청ICT ML/DL 과정 발표회</span>
-                    <i class="fas fa-trophy award-icon"></i>
+                {% for award in data.awards %}
+                <div class="award-item" onclick="openAwardModal({{ loop.index0 }})">
+                    <span>{{ award.name }}</span>
+                    <i class="{{ award.icon }} award-icon"></i>
                 </div>
-                <div class="award-item" onclick="openModal('충청ICT ML/DL 과정 발표회', '세부 내용을 여기에 입력하세요.')">
-                    <span>충청ICT ML/DL 과정 발표회</span>
-                    <i class="fas fa-trophy award-icon"></i>
-                </div>
-                <div class="award-item" onclick="openModal('창업경진대회 (고려대, 세종)', '세부 내용을 여기에 입력하세요.')">
-                    <span>창업경진대회 (고려대, 세종)</span>
-                    <i class="fas fa-trophy award-icon"></i>
-                </div>
-                <div class="award-item" onclick="openModal('창업경진대회 (고려대, 세종)', '세부 내용을 여기에 입력하세요.')">
-                    <span>창업경진대회 (고려대, 세종)</span>
-                    <i class="fas fa-trophy award-icon"></i>
-                </div>
-                <div class="award-item" onclick="openModal('DB 금융경제 공모전', '세부 내용을 여기에 입력하세요.')">
-                    <span>DB 금융경제 공모전</span>
-                    <i class="fas fa-award award-icon"></i>
-                </div>
-                <div class="award-item" onclick="openModal('2024 T-SUM 데이터분석/인공지능 경진대회', '세부 내용을 여기에 입력하세요.')">
-                    <span>2024 T-SUM 데이터분석/AI 경진대회</span>
-                    <i class="fas fa-trophy award-icon"></i>
-                </div>
-                <div class="award-item" onclick="openModal('2024 T-SUM 데이터분석/인공지능 경진대회', '세부 내용을 여기에 입력하세요.')">
-                    <span>2024 T-SUM 데이터분석/AI 경진대회</span>
-                    <i class="fas fa-trophy award-icon"></i>
-                </div>
-                <div class="award-item" onclick="openModal('2024 T-SUM 데이터분석/인공지능 경진대회', '세부 내용을 여기에 입력하세요.')">
-                    <span>2024 T-SUM 데이터분석/AI 경진대회</span>
-                    <i class="fas fa-trophy award-icon"></i>
-                </div>
-                <div class="award-item" onclick="openModal('2024 세종시 기업분석 경진대회', '세부 내용을 여기에 입력하세요.')">
-                    <span>2024 세종시 기업분석 경진대회</span>
-                    <i class="fas fa-trophy award-icon"></i>
-                </div>
-                <div class="award-item" onclick="openModal('2025 하계 한국데이마이닝학회', '세부 내용을 여기에 입력하세요.')">
-                    <span>2025 하계 한국데이마이닝학회</span>
-                    <i class="fas fa-star award-icon"></i>
-                </div>
-                 <div class="award-item" onclick="openModal('2025 하계 한국데이마이닝학회', '세부 내용을 여기에 입력하세요.')">
-                    <span>2025 하계 한국데이마이닝학회</span>
-                    <i class="fas fa-star award-icon"></i>
-                </div>
-                 <div class="award-item" onclick="openModal('2025 하계 한국데이마이닝학회', '세부 내용을 여기에 입력하세요.')">
-                    <span>2025 하계 한국데이마이닝학회</span>
-                    <i class="fas fa-star award-icon"></i>
-                </div>
+                {% endfor %}
             </div>
-            <p class="section-note">* 클릭하여 상세 내용을 확인하세요.</p>
+            <p class="section-note">* 클릭하여 상세 내용 및 증빙 자료를 확인하세요.</p>
         </div>
     </section>
 
@@ -643,16 +601,44 @@
 
     <div id="awardModal" class="modal">
         <div class="modal-content">
-            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <span class="close-modal" onclick="closeAwardModal()">&times;</span>
             <h3 id="modalTitle" class="modal-title">Award Title</h3>
             <hr class="modal-divider">
+
+            <!-- Image Slider -->
+            <div class="modal-image-slider" id="imageSlider">
+                <div class="slider-container">
+                    <button class="slider-btn prev" onclick="changeSlide(-1)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div class="slider-images" id="sliderImages">
+                        <!-- Images will be dynamically inserted here -->
+                    </div>
+                    <button class="slider-btn next" onclick="changeSlide(1)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                <div class="slider-dots" id="sliderDots">
+                    <!-- Dots will be dynamically inserted here -->
+                </div>
+            </div>
+
             <div id="modalDesc" class="modal-description">
-                <p><strong>수상 내역:</strong> <span id="m-award">대상</span></p>
-                <p><strong>수여 기관:</strong> <span id="m-org">기관명</span></p>
-                <p><strong>일자:</strong> <span id="m-date">2024.00.00</span></p>
-                <br>
-                <p><strong>상세 설명:</strong><br>이 프로젝트는 ... (여기에 상세 설명을 기술합니다)</p>
+                <p><strong>주제:</strong> <span id="m-subject"></span></p>
+                <p><strong>수상:</strong> <span id="m-award"></span></p>
+                <p><strong>날짜:</strong> <span id="m-date"></span></p>
+                <p id="m-org-wrapper" style="display: none;"><strong>수여 기관:</strong> <span id="m-org"></span></p>
+                <div id="m-desc-wrapper" style="display: none;">
+                    <br>
+                    <p><strong>상세 설명:</strong></p>
+                    <p id="m-description"></p>
+                </div>
             </div>
         </div>
     </div>
+
+    <script>
+        // Awards data from backend
+        const awardsData = {{ data.awards | tojson | safe }};
+    </script>
 {% endblock %}

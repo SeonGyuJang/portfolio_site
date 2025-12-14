@@ -207,24 +207,135 @@ function filterGallery(category, btn) {
     });
 }
 
-// 4. Modal Logic
+// 4. Award Modal Logic with Image Slider
 const modal = document.getElementById('awardModal');
-const mTitle = document.getElementById('modalTitle');
-const mDesc = document.getElementById('modalDesc');
+let currentSlide = 0;
+let currentAwardImages = [];
 
-function openModal(title, content) {
-    if (mTitle) mTitle.textContent = title;
-    // content 인자를 사용하여 내용 변경 로직 추가 가능
-    if (modal) modal.style.display = 'flex';
+function openAwardModal(index) {
+    const award = awardsData[index];
+
+    // Set title and details
+    document.getElementById('modalTitle').textContent = award.name;
+    document.getElementById('m-subject').textContent = award.subject;
+    document.getElementById('m-award').textContent = award.award;
+    document.getElementById('m-date').textContent = award.date;
+
+    // Show/hide organization if provided
+    const orgWrapper = document.getElementById('m-org-wrapper');
+    if (award.organization && award.organization.trim() !== '') {
+        document.getElementById('m-org').textContent = award.organization;
+        orgWrapper.style.display = 'block';
+    } else {
+        orgWrapper.style.display = 'none';
+    }
+
+    // Show/hide description if provided
+    const descWrapper = document.getElementById('m-desc-wrapper');
+    if (award.description && award.description.trim() !== '') {
+        document.getElementById('m-description').textContent = award.description;
+        descWrapper.style.display = 'block';
+    } else {
+        descWrapper.style.display = 'none';
+    }
+
+    // Setup image slider
+    currentAwardImages = award.images || [];
+    currentSlide = 0;
+    setupImageSlider();
+
+    // Show modal
+    modal.style.display = 'flex';
 }
 
-function closeModal() {
-    if (modal) modal.style.display = 'none';
+function setupImageSlider() {
+    const sliderContainer = document.getElementById('imageSlider');
+    const sliderImages = document.getElementById('sliderImages');
+    const sliderDots = document.getElementById('sliderDots');
+
+    // Clear existing content
+    sliderImages.innerHTML = '';
+    sliderDots.innerHTML = '';
+
+    if (currentAwardImages.length === 0) {
+        // Show default icon if no images
+        sliderImages.innerHTML = `
+            <div class="slider-image active">
+                <div class="default-award-icon">
+                    <i class="fas fa-award"></i>
+                    <p>증빙 자료 없음</p>
+                </div>
+            </div>
+        `;
+        sliderContainer.style.display = 'block';
+        document.querySelectorAll('.slider-btn').forEach(btn => btn.style.display = 'none');
+    } else {
+        // Show images
+        currentAwardImages.forEach((img, index) => {
+            const imgDiv = document.createElement('div');
+            imgDiv.className = 'slider-image' + (index === 0 ? ' active' : '');
+            imgDiv.innerHTML = `<img src="${img}" alt="Award Certificate ${index + 1}">`;
+            sliderImages.appendChild(imgDiv);
+
+            // Create dot
+            const dot = document.createElement('span');
+            dot.className = 'slider-dot' + (index === 0 ? ' active' : '');
+            dot.onclick = () => goToSlide(index);
+            sliderDots.appendChild(dot);
+        });
+
+        sliderContainer.style.display = 'block';
+
+        // Show/hide navigation buttons
+        const showButtons = currentAwardImages.length > 1;
+        document.querySelectorAll('.slider-btn').forEach(btn => {
+            btn.style.display = showButtons ? 'flex' : 'none';
+        });
+    }
+}
+
+function changeSlide(direction) {
+    if (currentAwardImages.length <= 1) return;
+
+    currentSlide += direction;
+
+    if (currentSlide >= currentAwardImages.length) {
+        currentSlide = 0;
+    } else if (currentSlide < 0) {
+        currentSlide = currentAwardImages.length - 1;
+    }
+
+    updateSlider();
+}
+
+function goToSlide(index) {
+    currentSlide = index;
+    updateSlider();
+}
+
+function updateSlider() {
+    // Update images
+    const images = document.querySelectorAll('.slider-image');
+    images.forEach((img, index) => {
+        img.classList.toggle('active', index === currentSlide);
+    });
+
+    // Update dots
+    const dots = document.querySelectorAll('.slider-dot');
+    dots.forEach((dot, index) => {
+        dot.classList.toggle('active', index === currentSlide);
+    });
+}
+
+function closeAwardModal() {
+    modal.style.display = 'none';
+    currentSlide = 0;
+    currentAwardImages = [];
 }
 
 window.onclick = function(event) {
     if (event.target == modal) {
-        closeModal();
+        closeAwardModal();
     }
 }
 

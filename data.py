@@ -218,12 +218,126 @@ portfolio_data = {
 
     # Awards
     'awards': [
-        {'name': '충청ICT ML/DL 과정 발표회', 'icon': 'fas fa-trophy'},
-        {'name': '창업경진대회 (고려대, 세종)', 'icon': 'fas fa-trophy'},
-        {'name': 'DB 금융경제 공모전', 'icon': 'fas fa-award'},
-        {'name': '2024 T-SUM 데이터분석/AI 경진대회', 'icon': 'fas fa-trophy'},
-        {'name': '2024 세종시 기업분석 경진대회', 'icon': 'fas fa-trophy'},
-        {'name': '2025 하계 한국데이마이닝학회', 'icon': 'fas fa-star'},
+        {
+            'name': '충청ICT ML/DL 과정 발표회 (은상)',
+            'subject': 'Computer Vision을 이용한 도로 상태 판단 AI',
+            'award': '은상',
+            'date': '2023.11.12',
+            'icon': 'fas fa-trophy',
+            'organization': '',
+            'description': '',
+            'images': []
+        },
+        {
+            'name': '충청ICT ML/DL 과정 발표회 (동상)',
+            'subject': 'Computer Vision을 이용한 CCTV 영상 분석',
+            'award': '동상',
+            'date': '2023.11.12',
+            'icon': 'fas fa-trophy',
+            'organization': '',
+            'description': '',
+            'images': []
+        },
+        {
+            'name': '창업경진대회 (고려대학교)',
+            'subject': 'JooInJang 캐릭터를 이용한 브랜딩 사업',
+            'award': '우수상',
+            'date': '2023.12.08',
+            'icon': 'fas fa-trophy',
+            'organization': '',
+            'description': '',
+            'images': []
+        },
+        {
+            'name': '고려대학교 & 한국발명진흥회 연구 과제 수행',
+            'subject': '수직농장 AI제어 시스템 적용 및 생육 이미지 데이터 활용',
+            'award': '사업 진행',
+            'date': '2023.08.16 ~ 2023.12.10',
+            'icon': 'fas fa-lightbulb',
+            'organization': '',
+            'description': '',
+            'images': []
+        },
+        {
+            'name': 'DB 금융경제 공모전',
+            'subject': '종합적 블록체인 이상거래 탐지방법 제언 ─ 암호화폐 거래의 사용자별 행동 패턴 분석 규칙을 기반으로',
+            'award': '출품 완료',
+            'date': '2024.02.28',
+            'icon': 'fas fa-award',
+            'organization': '',
+            'description': '',
+            'images': []
+        },
+        {
+            'name': '2024 T-SUM 데이터분석/인공지능 경진대회',
+            'subject': '킥보드 주행 영상 분석을 통한 객체 탐지 인공지능 개발',
+            'award': '대상 및 우수멘토상',
+            'date': '2024.06.07',
+            'icon': 'fas fa-trophy',
+            'organization': '',
+            'description': '',
+            'images': []
+        },
+        {
+            'name': '2024 KUS-TUDY',
+            'subject': '파이썬을 활용한 Business Data Analytics',
+            'award': '최우수상',
+            'date': '2024.06.17',
+            'icon': 'fas fa-trophy',
+            'organization': '',
+            'description': '',
+            'images': []
+        },
+        {
+            'name': '2024 산학협력친화형PBL 수강 후기 공모전',
+            'subject': '데이터분석과 인공지능을 통해 선한 영향력 끼치는 개발자에 다가가다',
+            'award': '은상',
+            'date': '2024.07.05',
+            'icon': 'fas fa-trophy',
+            'organization': '',
+            'description': '',
+            'images': []
+        },
+        {
+            'name': '2024 세종시 기업분석 경진대회',
+            'subject': '주식회사 서북에 대한 분석',
+            'award': '최우수상',
+            'date': '2024.10.08',
+            'icon': 'fas fa-trophy',
+            'organization': '',
+            'description': '',
+            'images': []
+        },
+        {
+            'name': '2024 R&SD 성과공유회',
+            'subject': '(주)팜킷 - 이커머스 전력과 테크놀로지, TableOCR 연계 식품 챗봇 프로세스 개발',
+            'award': '우수상',
+            'date': '2024.10.25',
+            'icon': 'fas fa-trophy',
+            'organization': '',
+            'description': '',
+            'images': []
+        },
+        {
+            'name': '2024 기업기술혁신PBL',
+            'subject': '(주)팜킷 - 이커머스 전력과 테크놀로지, TableOCR 연계 식품 챗봇 프로세스 개발',
+            'award': '우수상',
+            'date': '2024.12.20',
+            'icon': 'fas fa-trophy',
+            'organization': '',
+            'description': '',
+            'images': []
+        },
+        {
+            'name': '2025 하계 한국데이터마이닝학회',
+            'subject': 'Controlling Informational Freedom in Large Language Models via Degree of Freedom Prompting',
+            'award': '최우수논문상',
+            'date': '2025.08.28',
+            'icon': 'fas fa-star',
+            'organization': '',
+            'description': '',
+            'images': []
+        }
     ],
 
     # Academic & Certifications
