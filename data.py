@@ -1,4 +1,3 @@
-# 이모지 및 아이콘 매핑
 icons = {
     'Python': 'fab fa-python', 'SQL': 'fas fa-database', 'Swift': 'fab fa-swift', 'R': 'fas fa-chart-bar',
     'HTML/CSS': 'fab fa-html5', 'JS': 'fab fa-js',
@@ -12,7 +11,7 @@ portfolio_data = {
     'site_title': '장선규 | Portfolio',
     'hero': {
         'title': '안녕하세요, 장선규입니다.',
-        'typing_text': ['Data Researcher', 'Project Manager', 'Student Leader', 'Challenge Seeker'], # 타이핑 효과 텍스트
+        'typing_text': ['Digital Business Major', 'AI Developer', 'Data Researcher', 'Tech Strategist'],
         'subtitle': '성장과 도전을 멈추지 않으며, 선한 영향력을 주는 연구자가 되는 것이 목표입니다.'
     },
     'about': {
@@ -35,25 +34,25 @@ portfolio_data = {
     # 스킬 데이터와 숙련도 (0~100%)
     'skills': {
         'Coding': [
-            {'name': 'Python', 'level': 90, 'icon': icons['Python']},
-            {'name': 'SQL', 'level': 85, 'icon': icons['SQL']},
-            {'name': 'Swift', 'level': 70, 'icon': icons['Swift']},
-            {'name': 'R', 'level': 75, 'icon': icons['R']},
+            {'name': 'Python', 'level': 100, 'icon': icons['Python']},
+            {'name': 'SQL', 'level': 70, 'icon': icons['SQL']},
+            {'name': 'Swift', 'level': 65, 'icon': icons['Swift']},
+            {'name': 'R', 'level': 60, 'icon': icons['R']},
         ],
         'OA': [
-            {'name': 'Excel', 'level': 95, 'icon': icons['Excel']},
-            {'name': 'PowerPoint', 'level': 95, 'icon': icons['PowerPoint']},
-            {'name': 'Word', 'level': 90, 'icon': icons['Word']},
+            {'name': 'Excel', 'level': 90, 'icon': icons['Excel']},
+            {'name': 'PowerPoint', 'level': 90, 'icon': icons['PowerPoint']},
+            {'name': 'Word', 'level': 100, 'icon': icons['Word']},
         ],
         'Collaboration': [
-            {'name': 'Notion', 'level': 95, 'icon': icons['Notion']},
-            {'name': 'Slack', 'level': 90, 'icon': icons['Slack']},
-            {'name': 'Teams', 'level': 85, 'icon': icons['Teams']},
+            {'name': 'Notion', 'level': 100, 'icon': icons['Notion']},
+            {'name': 'Slack', 'level': 80, 'icon': icons['Slack']},
+            {'name': 'Teams', 'level': 100, 'icon': icons['Teams']},
         ],
         'Design & OS': [
-            {'name': 'Figma', 'level': 80, 'icon': icons['Figma']},
-            {'name': 'macOS', 'level': 95, 'icon': icons['macOS']},
-            {'name': 'Linux', 'level': 70, 'icon': icons['Linux']},
+            {'name': 'Figma', 'level': 70, 'icon': icons['Figma']},
+            {'name': 'macOS', 'level': 100, 'icon': icons['macOS']},
+            {'name': 'Linux', 'level': 80, 'icon': icons['Linux']},
         ]
     },
     # 현재 진행중인 프로젝트
