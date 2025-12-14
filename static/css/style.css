@@ -1832,6 +1832,17 @@ footer p {
     margin-bottom: 80px;
 }
 
+.contact-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.contact-card-link:hover {
+    transform: scale(1.02);
+}
+
 .contact-card {
     background: rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(20px);
