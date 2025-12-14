@@ -653,6 +653,7 @@ header {
     display: flex;
     gap: 20px;
     padding: 24px;
+    min-height: 148px;
     background: linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(94, 92, 230, 0.05) 100%);
     border: 1px solid rgba(0, 122, 255, 0.3);
     border-radius: 20px;
@@ -680,6 +681,10 @@ header {
 }
 .position-content {
     flex: 1;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 .position-title {
     font-size: 1.5rem;
