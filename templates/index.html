@@ -578,56 +578,89 @@
             <h2 class="section-title">Academic & Certifications</h2>
 
             <h3 class="academic-subtitle">🧑🏼‍💻 학회 활동 및 논문</h3>
-            <table class="paper-table">
-                <thead>
-                    <tr>
-                        <th class="col-date">Date</th>
-                        <th>Title / Description</th>
-                        <th class="col-link">Link</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>2023.05.24</td>
-                        <td>2023 한국IT서비스학회 춘계학술대회 참여 및 교육이수</td>
-                        <td><a href="#" class="paper-link">View</a></td>
-                    <tr>
-                    <tr>
-                        <td>2024.05.30</td>
-                        <td>2024 한국데이터마이닝학회 춘계학술대회 참여</td>
-                        <td><a href="#" class="paper-link">View</a></td>
-                    <tr>
-                    <tr>
-                        <td>2024.11.22 ~ 2024.11.23</td>
-                        <td>2024 한국데이터마이닝학회 추계학술대회 참여</td>
-                        <td><a href="#" class="paper-link">View</a></td>
-                    <tr>
-                        <td>2024.03 ~ 2024.12</td>
-                        <td>고려대학교(세종) 크림슨브레인소속 데이터분석 및 인공지능학회 'PRISM' 1기 학회장</td>
-                        <td><a href="#" class="paper-link">View</a></td>
-                    </tr>
-                    <tr>
-                        <td>2025.08.28 ~ 2025.08.30</td>
-                        <td>2025 한국데이터마이닝학회 하계학술대회 참여</td>
-                        <td><a href="#" class="paper-link">PDF</a></td>
-                    </tr>                
-                    <tr>
-                        <td>2025.08.29</td>
-                        <td>(KDMS2025 - Poster Presentation) Moral Alignment in Large Language Models : Effects of Linguistic Framing and Domain Personas</td>
-                        <td><a href="#" class="paper-link">PDF</a></td>
-                    </tr>
-                    <tr>
-                        <td>2025.08.29</td>
-                        <td>(KDMS2025 - Poster Presentation) Controlling Informational Freedom in Large Language Models via Degree of Freedom Prompting</td>
-                        <td><a href="#" class="paper-link">PDF</a></td>
-                    </tr>
-                    <tr>
-                        <td>2025.12.11</td>
-                        <td>(MDPI electronics - Paper) Cross-Linguistic Moral Preferences in Large Langugage Modles: Enidence from Distributive Justice Scenarios and Domain Persona Interventions</td>
-                        <td><a href="#" class="paper-link">PDF</a></td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="papers-list">
+                <div class="paper-item" onclick="openPaperModal(0)">
+                    <div class="paper-content">
+                        <span class="paper-name">고려대학교(세종) 크림슨브레인소속 데이터분석 및 인공지능학회 'PRISM' 1기 학회장</span>
+                        <p class="paper-desc">데이터분석 및 인공지능 학회에서 1기 학회장으로 활동</p>
+                    </div>
+                    <div class="paper-meta">
+                        <span class="paper-date">2024.03 ~ 12</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                <div class="paper-item" onclick="openPaperModal(1)">
+                    <div class="paper-content">
+                        <span class="paper-name">2023 한국IT서비스학회 춘계학술대회 참여 및 교육이수</span>
+                        <p class="paper-desc">한국IT서비스학회 춘계학술대회 참여</p>
+                    </div>
+                    <div class="paper-meta">
+                        <span class="paper-date">2023.05.24</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                <div class="paper-item" onclick="openPaperModal(2)">
+                    <div class="paper-content">
+                        <span class="paper-name">2024 한국데이터마이닝학회 춘계학술대회 참여</span>
+                        <p class="paper-desc">한국데이터마이닝학회 춘계학술대회 참여</p>
+                    </div>
+                    <div class="paper-meta">
+                        <span class="paper-date">2024.05.30</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                <div class="paper-item" onclick="openPaperModal(3)">
+                    <div class="paper-content">
+                        <span class="paper-name">2024 한국데이터마이닝학회 추계학술대회 참여</span>
+                        <p class="paper-desc">한국데이터마이닝학회 추계학술대회 참여</p>
+                    </div>
+                    <div class="paper-meta">
+                        <span class="paper-date">2024.11.22 ~ 23</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                <div class="paper-item" onclick="openPaperModal(4)">
+                    <div class="paper-content">
+                        <span class="paper-name">2025 한국데이터마이닝학회 하계학술대회 참여</span>
+                        <p class="paper-desc">한국데이터마이닝학회 하계학술대회 참여</p>
+                    </div>
+                    <div class="paper-meta">
+                        <span class="paper-date">2025.08.28 ~ 30</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                <div class="paper-item" onclick="openPaperModal(5)">
+                    <div class="paper-content">
+                        <span class="paper-name">Moral Alignment in Large Language Models</span>
+                        <p class="paper-desc">KDMS2025 포스터 발표 - 언어적 프레이밍과 도메인 페르소나의 영향</p>
+                    </div>
+                    <div class="paper-meta">
+                        <span class="paper-date">2025.08.29</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                <div class="paper-item" onclick="openPaperModal(6)">
+                    <div class="paper-content">
+                        <span class="paper-name">Controlling Informational Freedom in LLMs</span>
+                        <p class="paper-desc">KDMS2025 포스터 발표 - 자유도 프롬프팅을 통한 정보 자유도 제어</p>
+                    </div>
+                    <div class="paper-meta">
+                        <span class="paper-date">2025.08.29</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                <div class="paper-item" onclick="openPaperModal(7)">
+                    <div class="paper-content">
+                        <span class="paper-name">Cross-Linguistic Moral Preferences in LLMs</span>
+                        <p class="paper-desc">MDPI Electronics 게재 논문 - 언어 간 도덕적 선호도 연구</p>
+                    </div>
+                    <div class="paper-meta">
+                        <span class="paper-date">2025.12.11</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+            </div>
+            <p class="section-note">* 클릭하여 상세 내용 및 관련 자료를 확인하세요.</p>
 
             <h3 class="academic-subtitle">📖 보유 자격증</h3>
             <table class="cert-table">
@@ -760,6 +793,44 @@
         </div>
     </div>
 
+    <div id="paperModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closePaperModal()">&times;</span>
+            <h3 id="paperModalTitle" class="modal-title">학회 활동 / 논문</h3>
+            <hr class="modal-divider">
+
+            <!-- Image Slider for Papers -->
+            <div class="modal-image-slider" id="paperImageSlider">
+                <div class="slider-container">
+                    <button class="slider-btn prev" onclick="changePaperSlide(-1)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div class="slider-images" id="paperSliderImages">
+                        <!-- Images will be dynamically inserted here -->
+                    </div>
+                    <button class="slider-btn next" onclick="changePaperSlide(1)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                <div class="slider-dots" id="paperSliderDots">
+                    <!-- Dots will be dynamically inserted here -->
+                </div>
+            </div>
+
+            <div id="paperModalDesc" class="modal-description">
+                <p><strong>기간:</strong> <span id="p-date"></span></p>
+                <p><strong>설명:</strong> <span id="p-description"></span></p>
+                <div id="p-link-wrapper" style="display: none;">
+                    <br>
+                    <p><strong>논문 링크:</strong></p>
+                    <a id="p-link" href="#" target="_blank" class="paper-modal-link">
+                        <i class="fas fa-external-link-alt"></i> 논문 보기
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Awards data
         const awardsData = [
@@ -885,6 +956,66 @@
             }
         ];
 
+        // Papers data
+        const papersData = [
+            {
+                name: '고려대학교(세종) 크림슨브레인소속 데이터분석 및 인공지능학회 \'PRISM\' 1기 학회장',
+                date: '2024.03 ~ 12',
+                description: '데이터분석 및 인공지능 학회에서 1기 학회장으로 활동하며 학회원들과 함께 다양한 프로젝트 및 스터디를 진행했습니다.',
+                paperLink: '',
+                images: []
+            },
+            {
+                name: '2023 한국IT서비스학회 춘계학술대회 참여 및 교육이수',
+                date: '2023.05.24',
+                description: '한국IT서비스학회 춘계학술대회에 참여하여 IT 서비스 분야의 최신 연구 동향을 학습하였습니다.',
+                paperLink: '',
+                images: []
+            },
+            {
+                name: '2024 한국데이터마이닝학회 춘계학술대회 참여',
+                date: '2024.05.30',
+                description: '한국데이터마이닝학회 춘계학술대회에 참여하여 데이터 마이닝 분야의 최신 연구를 접하였습니다.',
+                paperLink: '',
+                images: []
+            },
+            {
+                name: '2024 한국데이터마이닝학회 추계학술대회 참여',
+                date: '2024.11.22 ~ 23',
+                description: '한국데이터마이닝학회 추계학술대회에 참여하여 데이터 마이닝 및 AI 분야의 연구 발표를 청강하였습니다.',
+                paperLink: '',
+                images: []
+            },
+            {
+                name: '2025 한국데이터마이닝학회 하계학술대회 참여',
+                date: '2025.08.28 ~ 30',
+                description: '한국데이터마이닝학회 하계학술대회에 참여하여 최신 데이터 마이닝 연구를 학습하였습니다.',
+                paperLink: '',
+                images: []
+            },
+            {
+                name: 'Moral Alignment in Large Language Models : Effects of Linguistic Framing and Domain Personas',
+                date: '2025.08.29',
+                description: 'KDMS2025 포스터 발표 - 대규모 언어 모델에서의 도덕적 정렬에 대한 언어적 프레이밍과 도메인 페르소나의 영향을 연구하였습니다.',
+                paperLink: '',
+                images: []
+            },
+            {
+                name: 'Controlling Informational Freedom in Large Language Models via Degree of Freedom Prompting',
+                date: '2025.08.29',
+                description: 'KDMS2025 포스터 발표 - 자유도 프롬프팅을 통해 대규모 언어 모델의 정보 자유도를 제어하는 방법론을 제시하였습니다.',
+                paperLink: '',
+                images: []
+            },
+            {
+                name: 'Cross-Linguistic Moral Preferences in Large Langugage Modles: Enidence from Distributive Justice Scenarios and Domain Persona Interventions',
+                date: '2025.12.11',
+                description: 'MDPI Electronics 게재 논문 - 대규모 언어 모델에서의 언어 간 도덕적 선호도에 대한 분배 정의 시나리오 및 도메인 페르소나 개입 연구를 진행하였습니다.',
+                paperLink: '',
+                images: []
+            }
+        ];
+
         // Certificate modal functions
         function openCertModal(index) {
             const cert = certificatesData[index];
@@ -897,11 +1028,131 @@
             document.getElementById('certModal').style.display = 'none';
         }
 
+        // Paper modal functions
+        let currentPaperSlide = 0;
+        let currentPaperImages = [];
+
+        function openPaperModal(index) {
+            const paper = papersData[index];
+
+            // Set title and details
+            document.getElementById('paperModalTitle').textContent = paper.name;
+            document.getElementById('p-date').textContent = paper.date;
+            document.getElementById('p-description').textContent = paper.description;
+
+            // Show/hide paper link if provided
+            const linkWrapper = document.getElementById('p-link-wrapper');
+            if (paper.paperLink && paper.paperLink.trim() !== '') {
+                document.getElementById('p-link').href = paper.paperLink;
+                linkWrapper.style.display = 'block';
+            } else {
+                linkWrapper.style.display = 'none';
+            }
+
+            // Setup image slider
+            currentPaperImages = paper.images || [];
+            currentPaperSlide = 0;
+            setupPaperImageSlider();
+
+            // Show modal
+            document.getElementById('paperModal').style.display = 'flex';
+        }
+
+        function setupPaperImageSlider() {
+            const sliderContainer = document.getElementById('paperImageSlider');
+            const sliderImages = document.getElementById('paperSliderImages');
+            const sliderDots = document.getElementById('paperSliderDots');
+
+            // Clear existing content
+            sliderImages.innerHTML = '';
+            sliderDots.innerHTML = '';
+
+            if (currentPaperImages.length === 0) {
+                // Show default icon if no images
+                sliderImages.innerHTML = `
+                    <div class="slider-image active">
+                        <div class="default-award-icon">
+                            <i class="fas fa-file-alt"></i>
+                            <p>첨부 자료 없음</p>
+                        </div>
+                    </div>
+                `;
+                sliderContainer.style.display = 'block';
+                document.querySelectorAll('#paperImageSlider .slider-btn').forEach(btn => btn.style.display = 'none');
+            } else {
+                // Show images
+                currentPaperImages.forEach((img, index) => {
+                    const imgDiv = document.createElement('div');
+                    imgDiv.className = 'slider-image' + (index === 0 ? ' active' : '');
+                    imgDiv.innerHTML = `<img src="${img}" alt="Paper Image ${index + 1}">`;
+                    sliderImages.appendChild(imgDiv);
+
+                    // Create dot
+                    const dot = document.createElement('span');
+                    dot.className = 'slider-dot' + (index === 0 ? ' active' : '');
+                    dot.onclick = () => goToPaperSlide(index);
+                    sliderDots.appendChild(dot);
+                });
+
+                sliderContainer.style.display = 'block';
+
+                // Show/hide navigation buttons
+                const showButtons = currentPaperImages.length > 1;
+                document.querySelectorAll('#paperImageSlider .slider-btn').forEach(btn => {
+                    btn.style.display = showButtons ? 'flex' : 'none';
+                });
+            }
+        }
+
+        function changePaperSlide(direction) {
+            if (currentPaperImages.length <= 1) return;
+
+            currentPaperSlide += direction;
+
+            if (currentPaperSlide >= currentPaperImages.length) {
+                currentPaperSlide = 0;
+            } else if (currentPaperSlide < 0) {
+                currentPaperSlide = currentPaperImages.length - 1;
+            }
+
+            updatePaperSlider();
+        }
+
+        function goToPaperSlide(index) {
+            currentPaperSlide = index;
+            updatePaperSlider();
+        }
+
+        function updatePaperSlider() {
+            // Update images
+            const images = document.querySelectorAll('#paperSliderImages .slider-image');
+            images.forEach((img, index) => {
+                img.classList.toggle('active', index === currentPaperSlide);
+            });
+
+            // Update dots
+            const dots = document.querySelectorAll('#paperSliderDots .slider-dot');
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentPaperSlide);
+            });
+        }
+
+        function closePaperModal() {
+            document.getElementById('paperModal').style.display = 'none';
+            currentPaperSlide = 0;
+            currentPaperImages = [];
+        }
+
         // Close modal on outside click
         window.addEventListener('click', function(event) {
             const certModal = document.getElementById('certModal');
+            const paperModal = document.getElementById('paperModal');
+
             if (event.target === certModal) {
                 closeCertModal();
+            }
+            if (event.target === paperModal) {
+                closePaperModal();
             }
         });
     </script>

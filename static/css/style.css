@@ -1194,6 +1194,76 @@ header {
     flex-shrink: 0;
 }
 
+/* Papers List Styling */
+.papers-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+}
+.paper-item {
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.paper-item:hover {
+    border-color: rgba(0, 122, 255, 0.5);
+    background: rgba(255, 255, 255, 0.06);
+    transform: translateY(-2px);
+}
+.paper-content {
+    flex: 1;
+}
+.paper-name {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    font-size: 1rem;
+    display: block;
+    margin-bottom: 6px;
+}
+.paper-desc {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+    margin: 0;
+    line-height: 1.4;
+}
+.paper-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+.paper-date {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.85rem;
+}
+.paper-meta i {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.9rem;
+}
+.paper-modal-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #007AFF 0%, #5E5CE6 100%);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.paper-modal-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
+}
+
 /* Certificate Button */
 .cert-btn {
     background: linear-gradient(135deg, #007AFF 0%, #5E5CE6 100%);
