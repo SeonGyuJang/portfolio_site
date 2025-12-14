@@ -458,8 +458,9 @@ header {
 /* Tech Icons */
 .tech-icons {
     display: flex;
-    gap: 20px;
-    justify-content: center;
+    flex-direction: column;
+    gap: 24px;
+    align-items: center;
     margin-top: 56px;
     margin-bottom: 140px; /* Increased to prevent overlap with scroll indicator */
     padding: 16px;
@@ -468,9 +469,15 @@ header {
     border-radius: 20px;
     border: 0.5px solid rgba(255,255,255,0.1);
     animation: fadeIn 0.8s ease-out 0.8s both;
-    max-width: 400px;
+    max-width: 500px;
     margin-left: auto;
     margin-right: auto;
+}
+.tech-icons-row {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 .tech-icons i {
     font-size: 1.8rem;
@@ -482,6 +489,30 @@ header {
 .tech-icons i:hover {
     color: #007AFF;
     transform: translateY(-3px) scale(1.08);
+}
+
+/* Scroll Emoji Animation in Center */
+.scroll-emoji-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 8px;
+}
+.scroll-emoji {
+    font-size: 2rem;
+    animation: bounceDown 2s ease-in-out infinite;
+    display: inline-block;
+    filter: drop-shadow(0 0 8px rgba(0, 122, 255, 0.3));
+}
+@keyframes bounceDown {
+    0%, 100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    50% {
+        transform: translateY(12px);
+        opacity: 0.7;
+    }
 }
 
 /* Apple-style Scroll Indicator */
@@ -1206,15 +1237,21 @@ footer p {
     }
 
     .tech-icons {
-        gap: 12px;
-        flex-wrap: wrap;
+        gap: 16px;
         margin-top: 40px;
         padding: 12px;
         max-width: 100%;
     }
+    .tech-icons-row {
+        gap: 12px;
+        flex-wrap: wrap;
+    }
     .tech-icons i {
         font-size: 1.5rem;
         padding: 6px;
+    }
+    .scroll-emoji {
+        font-size: 1.6rem;
     }
 
     .scroll-down {
