@@ -1873,20 +1873,22 @@ footer p {
     }
 
     .hero-stats {
-        gap: 16px;
-        flex-wrap: wrap;
+        gap: 8px;
+        flex-wrap: nowrap;
         margin: 36px 0;
+        justify-content: space-between;
+        max-width: 100%;
     }
     .stat-item {
-        flex: 1 1 calc(50% - 8px);
-        min-width: 120px;
-        padding: 10px 16px;
+        flex: 1;
+        min-width: 0;
+        padding: 10px 8px;
     }
     .stat-number {
-        font-size: 2rem;
+        font-size: 1.6rem;
     }
     .stat-label {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
     }
 
     .hero-btn-group {
