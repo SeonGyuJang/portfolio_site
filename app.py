@@ -6,7 +6,7 @@ app = Flask(__name__)
 # 템플릿 폴더 내의 파일들을 스캔하여 활동 목록을 반환하는 함수
 def get_activities():
     activities = []
-    # Match template directory names (case-insensitive mapping to category keys)
+    # 실제 폴더 이름 (대소문자 주의)
     categories = ['Paper', 'Book', 'School', 'Study', 'reading']
     base_dir = os.path.join(app.root_path, 'templates')
     
@@ -18,12 +18,12 @@ def get_activities():
                     # 파일명에서 확장자 제거 및 언더바를 공백으로 변경하여 제목으로 사용
                     title = filename.replace('.html', '').replace('_', ' ')
                     activities.append({
+                        # URL에는 소문자로 내보냄 (예: Paper -> paper)
                         'category': category.lower(),
                         'filename': filename,
                         'title': title,
-                        # 각 카테고리별 아이콘 및 설명 매핑 (필요시 수정)
                         'icon': get_icon_for_category(category.lower()),
-                        'date': '2025.11' # 임시 날짜, 필요시 파일 메타데이터 등 활용 가능
+                        'date': '2025.11' # 임시 날짜
                     })
     return activities
 
@@ -49,8 +49,21 @@ def activity_detail(category, filename):
     if category not in ['paper', 'book', 'school', 'study', 'reading']:
         abort(404)
     
+    # [중요 수정] URL의 소문자 카테고리를 실제 폴더명(대소문자 포함)으로 매핑
+    # 리눅스(Heroku)는 대소문자를 구분하므로 이 과정이 필수입니다.
+    folder_mapping = {
+        'paper': 'Paper',
+        'book': 'Book',
+        'school': 'School',
+        'study': 'Study',
+        'reading': 'reading'
+    }
+    
+    real_folder_name = folder_mapping.get(category, category)
+    
     try:
-        return render_template(f'{category}/{filename}')
+        # 실제 폴더명을 사용하여 템플릿 렌더링
+        return render_template(f'{real_folder_name}/{filename}')
     except:
         abort(404)
 
