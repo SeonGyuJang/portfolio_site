@@ -927,12 +927,14 @@
             <div id="paperModalDesc" class="modal-description">
                 <p><strong>기간:</strong> <span id="p-date"></span></p>
                 <p><strong>설명:</strong> <span id="p-description"></span></p>
-                <div id="p-link-wrapper" style="display: none;">
-                    <br>
-                    <p><strong>논문 링크:</strong></p>
-                    <a id="p-link" href="#" target="_blank" class="paper-modal-link">
-                        <i class="fas fa-external-link-alt"></i> 논문 보기
-                    </a>
+                <div id="p-link-wrapper" class="paper-links-wrapper" style="display: none;">
+                    <div class="paper-links-header">
+                        <i class="fas fa-link"></i>
+                        <span>관련 링크</span>
+                    </div>
+                    <div id="p-links-container" class="paper-links-container">
+                        <!-- Links will be dynamically inserted here -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -1119,6 +1121,18 @@
                 date: '2025.12.11',
                 description: 'MDPI Electronics 게재 논문 - 대규모 언어 모델에서의 언어 간 도덕적 선호도에 대한 분배 정의 시나리오 및 도메인 페르소나 개입 연구를 진행하였습니다.',
                 paperLink: '',
+                links: [
+                    {
+                        url: 'https://www.mdpi.com/2079-9292/13/24/4911',
+                        title: 'MDPI 논문 전문 보기',
+                        icon: 'fas fa-file-pdf'
+                    },
+                    {
+                        url: 'https://www.mdpi.com/2079-9292/13/24/4911/pdf',
+                        title: 'PDF 다운로드',
+                        icon: 'fas fa-download'
+                    }
+                ],
                 images: ['static/images/academic/DOF/MDPI-2.png','static/images/academic/DOF/MDPI-1.png']
             }
         ];
@@ -1147,10 +1161,30 @@
             document.getElementById('p-date').textContent = paper.date;
             document.getElementById('p-description').textContent = paper.description;
 
-            // Show/hide paper link if provided
+            // Show/hide paper links if provided
             const linkWrapper = document.getElementById('p-link-wrapper');
-            if (paper.paperLink && paper.paperLink.trim() !== '') {
-                document.getElementById('p-link').href = paper.paperLink;
+            const linksContainer = document.getElementById('p-links-container');
+
+            // Clear existing links
+            linksContainer.innerHTML = '';
+
+            // Check if there are any links
+            const hasLinks = (paper.paperLink && paper.paperLink.trim() !== '') ||
+                           (paper.links && paper.links.length > 0);
+
+            if (hasLinks) {
+                // If using new links array format
+                if (paper.links && paper.links.length > 0) {
+                    paper.links.forEach(link => {
+                        const linkElement = createPaperLinkElement(link.url, link.title, link.icon);
+                        linksContainer.appendChild(linkElement);
+                    });
+                }
+                // Fallback to old single link format
+                else if (paper.paperLink && paper.paperLink.trim() !== '') {
+                    const linkElement = createPaperLinkElement(paper.paperLink, '논문 보기', 'fas fa-file-pdf');
+                    linksContainer.appendChild(linkElement);
+                }
                 linkWrapper.style.display = 'block';
             } else {
                 linkWrapper.style.display = 'none';
@@ -1163,6 +1197,30 @@
 
             // Show modal
             document.getElementById('paperModal').style.display = 'flex';
+        }
+
+        // Helper function to create link elements
+        function createPaperLinkElement(url, title, iconClass) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.target = '_blank';
+            link.className = 'paper-modal-link';
+            link.rel = 'noopener noreferrer';
+
+            const icon = document.createElement('i');
+            icon.className = iconClass || 'fas fa-external-link-alt';
+
+            const text = document.createElement('span');
+            text.textContent = title;
+
+            const arrow = document.createElement('i');
+            arrow.className = 'fas fa-arrow-right link-arrow';
+
+            link.appendChild(icon);
+            link.appendChild(text);
+            link.appendChild(arrow);
+
+            return link;
         }
 
         function setupPaperImageSlider() {
