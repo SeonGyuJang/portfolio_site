@@ -1618,7 +1618,6 @@ header {
     backdrop-filter: blur(20px);
     display: block !important;
     position: relative;
-    touch-action: pan-x; /* Enable horizontal touch scrolling */
 }
 
 /* Scrollbar Styling for Certificate Table */
@@ -2131,6 +2130,7 @@ footer p {
     .cert-table-wrapper {
         margin-bottom: 12px;
         overflow-x: scroll !important; /* Force scroll on mobile */
+        overflow-y: auto !important; /* Allow vertical scrolling on mobile */
         -webkit-overflow-scrolling: touch !important;
     }
 
