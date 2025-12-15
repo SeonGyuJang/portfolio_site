@@ -193,18 +193,22 @@ document.addEventListener('DOMContentLoaded', () => {
             if (entry.isIntersecting && !hasAnimated) {
                 hasAnimated = true;
                 statNumbers.forEach(stat => {
-                    const target = parseInt(stat.getAttribute('data-target'));
+                    // Support suffixes like '2+' by parsing numeric part and keeping suffix
+                    const targetAttr = stat.getAttribute('data-target') || '0';
+                    const match = targetAttr.toString().match(/^(\d+)(\D*)$/);
+                    const target = match ? parseInt(match[1], 10) : 0;
+                    const suffix = match ? match[2] : '';
                     const duration = 2000;
                     const increment = target / (duration / 16);
                     let current = 0;
 
                     const updateCounter = () => {
                         current += increment;
-                        if (current < target) {
-                            stat.textContent = Math.ceil(current);
+                            if (current < target) {
+                            stat.textContent = Math.ceil(current) + suffix;
                             requestAnimationFrame(updateCounter);
                         } else {
-                            stat.textContent = target;
+                            stat.textContent = target + suffix;
                         }
                     };
 
