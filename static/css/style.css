@@ -135,8 +135,38 @@ header {
     color: #ffffff;
 }
 
-/* Mobile Nav Toggle */
-.menu-toggle { display: none; font-size: 1.5rem; cursor: pointer; }
+/* Mobile Nav Toggle - Hamburger Menu */
+.menu-toggle {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    z-index: 1001;
+    transition: all 0.3s ease;
+}
+.menu-toggle span {
+    display: block;
+    width: 25px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 2px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.menu-toggle:hover span {
+    background: #007AFF;
+}
+.menu-toggle.active span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+.menu-toggle.active span:nth-child(2) {
+    opacity: 0;
+}
+.menu-toggle.active span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
 
 /* --- 5. [APPLE-INSPIRED] Hero Section (Clean & Premium) --- */
 #home {
@@ -360,6 +390,9 @@ header {
 .hero-subtitle strong {
     color: rgba(255,255,255,0.95);
     font-weight: 600;
+}
+.hero-subtitle .mobile-break {
+    display: none;
 }
 
 /* Hero Stats */
@@ -1620,7 +1653,63 @@ footer p {
 
 /* --- Mobile Responsive (Apple Style) --- */
 @media (max-width: 768px) {
-    .nav-menu { display: none; }
+    .menu-toggle {
+        display: flex;
+    }
+
+    .nav-menu {
+        display: none;
+        position: fixed;
+        top: 56px;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.98);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        flex-direction: column;
+        gap: 0;
+        padding: 20px 0;
+        border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .nav-menu.active {
+        display: flex;
+    }
+
+    .nav-menu a {
+        padding: 16px 24px;
+        font-size: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.2s ease;
+    }
+
+    .nav-menu a:last-child {
+        border-bottom: none;
+    }
+
+    .nav-menu a:hover,
+    .nav-menu a:active {
+        background: rgba(0, 122, 255, 0.1);
+        padding-left: 32px;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Mobile line break for hero subtitle */
+    .hero-subtitle .mobile-break {
+        display: inline;
+    }
 
     /* Navigation */
     .nav-inner {
