@@ -1428,6 +1428,8 @@ header {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap; /* Prevent button text wrapping */
+    min-width: fit-content; /* Ensure button doesn't shrink */
 }
 .cert-btn:hover {
     transform: translateY(-2px);
@@ -1602,15 +1604,43 @@ header {
 }
 
 /* --- 11. Certifications & Academic - Dark Theme --- */
-.cert-table, .paper-table {
+/* Certificate Table Wrapper for Horizontal Scroll */
+.cert-table-wrapper {
     width: 100%;
-    border-collapse: collapse;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    border-radius: 16px;
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
     background: rgba(255, 255, 255, 0.02);
     backdrop-filter: blur(20px);
-    border-radius: 16px;
-    overflow: hidden;
-    border: 0.5px solid rgba(255, 255, 255, 0.1);
 }
+
+/* Scrollbar Styling for Certificate Table */
+.cert-table-wrapper::-webkit-scrollbar {
+    height: 8px;
+}
+
+.cert-table-wrapper::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.cert-table-wrapper::-webkit-scrollbar-thumb {
+    background: rgba(0, 122, 255, 0.5);
+    border-radius: 10px;
+}
+
+.cert-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 122, 255, 0.7);
+}
+
+.cert-table, .paper-table {
+    width: 100%;
+    min-width: 600px; /* Minimum width to prevent excessive compression */
+    border-collapse: collapse;
+    background: transparent;
+}
+
 .cert-table th, .paper-table th {
     background: rgba(0, 122, 255, 0.1);
     text-align: left;
@@ -1618,13 +1648,17 @@ header {
     color: rgba(255, 255, 255, 0.95);
     font-weight: 600;
     font-size: 0.9rem;
+    white-space: nowrap; /* Prevent header text wrapping */
 }
+
 .cert-table td, .paper-table td {
     padding: 16px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     color: rgba(255, 255, 255, 0.8);
     font-size: 0.9rem;
+    white-space: nowrap; /* Prevent cell text wrapping */
 }
+
 .cert-table tr:last-child td, .paper-table tr:last-child td {
     border-bottom: none;
 }
@@ -2075,6 +2109,27 @@ footer p {
     .tab-button span {
         display: inline;
         white-space: nowrap;
+    }
+
+    /* Certificate Button Mobile */
+    .cert-btn {
+        font-size: 0.75rem; /* Reduce font size on mobile */
+        padding: 6px 12px; /* Adjust padding */
+    }
+
+    /* Certificate Table Mobile */
+    .cert-table-wrapper {
+        margin-bottom: 12px;
+    }
+
+    .cert-table {
+        font-size: 0.85rem;
+    }
+
+    .cert-table th,
+    .cert-table td {
+        padding: 12px;
+        font-size: 0.85rem;
     }
 }
 
