@@ -1326,6 +1326,7 @@ header {
     z-index: 2000;
     align-items: center;
     justify-content: center;
+    padding: 20px;
 }
 .modal-content {
     background: rgba(20, 20, 20, 0.95);
@@ -1334,26 +1335,38 @@ header {
     padding: 40px;
     width: 90%;
     max-width: 600px;
+    max-height: 90vh;
     border-radius: 20px;
     position: relative;
     animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     color: rgba(255, 255, 255, 0.9);
+    overflow-y: auto;
 }
 @keyframes slideUp {
     from { transform: translateY(50px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
 }
 .close-modal {
-    position: absolute;
-    top: 15px;
-    right: 20px;
+    position: sticky;
+    top: 0;
+    float: right;
+    margin: -20px -20px 10px 10px;
     font-size: 2rem;
     cursor: pointer;
     color: rgba(255, 255, 255, 0.5);
     transition: color 0.3s;
+    z-index: 10;
+    background: rgba(20, 20, 20, 0.95);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
 }
 .close-modal:hover {
     color: rgba(255, 255, 255, 0.9);
+    background: rgba(40, 40, 40, 0.95);
 }
 .modal-title {
     font-size: 1.5rem;
@@ -1616,6 +1629,58 @@ footer p {
     }
     .logo {
         font-size: 1.1rem;
+    }
+
+    /* Modal Mobile Optimization */
+    .modal {
+        padding: 10px;
+        align-items: flex-start;
+        padding-top: 20px;
+    }
+    .modal-content {
+        width: 100%;
+        max-width: 100%;
+        max-height: calc(100vh - 40px);
+        padding: 50px 20px 20px;
+        border-radius: 16px;
+        overflow-y: auto;
+    }
+    .close-modal {
+        position: fixed;
+        top: 30px;
+        right: 20px;
+        font-size: 1.8rem;
+        width: 36px;
+        height: 36px;
+        background: rgba(20, 20, 20, 0.98);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        margin: 0;
+    }
+    .modal-title {
+        font-size: 1.3rem;
+        margin-top: 10px;
+        padding-right: 40px;
+    }
+    .modal-image-slider {
+        margin-bottom: 20px;
+    }
+    .slider-images {
+        height: 300px;
+    }
+    .slider-btn {
+        width: 36px;
+        height: 36px;
+    }
+    .slider-btn.prev {
+        left: 5px;
+    }
+    .slider-btn.next {
+        right: 5px;
+    }
+    .modal-description {
+        font-size: 0.9rem;
+        line-height: 1.6;
     }
 
     /* Profile */
