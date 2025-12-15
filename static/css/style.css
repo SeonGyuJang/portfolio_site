@@ -1937,9 +1937,9 @@ footer p {
     }
 
     .status-badge {
-        font-size: 0.7rem;
-        padding: 5px 14px;
-        margin-bottom: 24px;
+        font-size: 0.65rem;
+        padding: 5px 12px;
+        margin-bottom: 20px;
     }
     .pulse-dot {
         width: 5px;
@@ -1947,25 +1947,27 @@ footer p {
     }
 
     .hero-greeting {
-        font-size: 1.2rem;
-        margin-bottom: 12px;
+        font-size: 1.1rem;
+        margin-bottom: 10px;
     }
 
     .hero-title {
-        font-size: 2.8rem;
-        line-height: 1.1;
-        margin-bottom: 20px;
+        font-size: 2.4rem;
+        line-height: 1.15;
+        margin-bottom: 16px;
     }
 
     .typing-wrapper {
-        font-size: 1.5rem;
-        min-height: 60px;
-        flex-direction: column;
-        gap: 8px;
-        margin: 20px 0 24px;
+        font-size: 1.2rem;
+        min-height: 50px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 16px 0 20px;
+        justify-content: center;
     }
     .typing-prefix {
-        font-size: 1.3rem;
+        font-size: 1.2rem;
     }
     .typing-text-container {
         min-width: auto;
@@ -1973,12 +1975,12 @@ footer p {
     }
     .typing-text {
         text-align: center;
-        font-size: 1.5rem;
+        font-size: 1.2rem;
     }
 
     .hero-subtitle {
-        font-size: 1.05rem;
-        margin-bottom: 36px;
+        font-size: 0.95rem;
+        margin-bottom: 32px;
         line-height: 1.5;
     }
 
@@ -2032,8 +2034,8 @@ footer p {
         padding: 6px;
     }
     .ku-logo {
-        width: 32px;
-        height: 32px;
+        width: 40px;
+        height: 40px;
     }
     .scroll-mouse-icon {
         width: 20px;
@@ -2056,6 +2058,24 @@ footer p {
 
     .info-list { grid-template-columns: 1fr; }
     .section-title { font-size: 1.8rem; }
+
+    /* Tab Navigation Mobile */
+    .tab-navigation {
+        gap: 8px;
+        padding: 4px;
+    }
+    .tab-button {
+        padding: 10px 12px;
+        font-size: 0.75rem;
+        gap: 6px;
+    }
+    .tab-button i {
+        font-size: 0.9rem;
+    }
+    .tab-button span {
+        display: inline;
+        white-space: nowrap;
+    }
 }
 
 /* --- Contact Section - Apple Style --- */
