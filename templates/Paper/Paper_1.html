@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adapted Large Language Models Can Outperform Medical Experts</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/notion.css') }}">
+</head>
+<body>
+    <article class="notion-page">
+        <header>
+            <div class="page-icon">📄</div>
+            <h1 class="page-title">Adapted Large Language Models Can Outperform Medical Experts in Clinical Text Summarization</h1>
+            
+            <table class="properties">
+                <tbody>
+                    <tr class="property-row">
+                        <th><i class="far fa-clock"></i> 생성일</th>
+                        <td>2024년 11월 27일</td>
+                    </tr>
+                    <tr class="property-row">
+                        <th><i class="fas fa-tag"></i> 태그</th>
+                        <td>
+                            <span class="tag tag-blue">Medical AI</span>
+                            <span class="tag tag-gray">LLM</span>
+                            <span class="tag tag-gray">Paper Review</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </header>
+
+        <div class="page-body">
+            <figure>
+                <img src="{{ url_for('static', filename='images/Paper_1/c140896e-d0c0-44fd-af6d-3819cdc58e35.png') }}" alt="Paper Header Image">
+            </figure>
+            
+            <div class="callout">
+                <div class="icon">🔥</div>
+                <div class="callout-content">
+                    <p><strong>PDF 정리본 (맥 환경 미리보기 권장)</strong></p>
+                    <p><a href="https://drive.google.com/file/d/1Zr5zC0XO3qpD0E0XvG4_VtmgJ0rSqgQb/view?usp=sharing" target="_blank">구글 드라이브에서 보기 <i class="fas fa-external-link-alt" style="font-size: 0.8em;"></i></a></p>
+                </div>
+            </div>
+
+            <h1>1. Abstract</h1>
+            <ul class="bulleted-list">
+                <li>본 연구에서는 <strong>방사선 보고서, 환자 질문, 경과 기록, 의사-환자 대화</strong>를 포함한 네 가지 다른 임상 요약 작업에 대해 8개의 LLM을 적용 및 평가함.</li>
+                <li>구문적, 의미적, 개념적 NLP 지표를 활용한 정량적 평가 결과, 모델 성능과 적응(Adaptation) 방법 간의 트레이드오프가 나타남.</li>
+                <li>대다수의 사례에서 최적화된 LLM의 요약이 의료 전문가의 요약에 비해 <strong>동등하거나(45%) 우수한(36%)</strong> 것으로 평가됨.</li>
+                <li>본 연구는 다중 작업에 걸쳐 임상 텍스트 요약에서 LLM이 의료 전문가를 능가할 수 있음을 보여주는 실증적 증거를 제공함.</li>
+            </ul>
+
+            <h1>2. Introduction</h1>
+            <p>높은 수준의 전문성을 가진 숙련된 의사들에게도 진단 보고서를 작성하거나 방대한 양의 텍스트 정보를 요약하는 데는 상당한 시간과 에너지가 소요됩니다. 이러한 복잡한 작업은 자연스럽게 오류 가능성을 초래합니다.</p>
+            
+            <div class="callout">
+                <div class="icon">💡</div>
+                <div class="callout-content">
+                    <p><span class="highlight-yellow_background">핵심 연구 질문:</span> 임상 문서화 업무량 감소를 위해 의료 분야에서 LLM을 신뢰할 수 있는가? LLM을 실제 업무에 투입하여도 무방한가?</p>
+                </div>
+            </div>
+
+            <hr/>
+
+            <figure>
+                <img src="{{ url_for('static', filename='images/Paper_1/image.png') }}" alt="Framework Diagram">
+                <figcaption>본 논문의 연구 프레임워크</figcaption>
+            </figure>
+
+            <h3>연구 프로세스</h3>
+            <ol class="numbered-list">
+                <li>여섯 개의 데이터셋으로 구성된 네 가지 상이한 요약 작업에 대해 LLM과 적응 방법의 각 유효한 조합을 정량적으로 평가한다.</li>
+                <li>열 명의 의사가 최적화 모델/방법의 요약을 의료 전문가의 요약과 비교하는 <strong>임상 독자 연구(Clinical Reader Study)</strong>를 수행한다.</li>
+                <li>잠재적 의료 위해를 정량화하고 허구 정보의 유형을 분류하기 위해 안전성 분석을 수행한다.</li>
+            </ol>
+            
+            <p style="margin-top: 20px;">
+                <span class="highlight-bold">결론적으로,</span> 본 논문은 다양한 문서 범위에서 임상 텍스트 요약에 대형 언어 모델(LLM)을 적용한 결과, <span class="highlight-blue">LLM이 의료 전문가를 능가할 수 있음</span>을 입증하였습니다.
+            </p>
+
+            <h1>3. Related Work & Data</h1>
+            
+            <h3>Datasets Overview</h3>
+            <figure>
+                <img src="{{ url_for('static', filename='images/Paper_1/image 1.png') }}" alt="Related Work Table">
+            </figure>
+            
+            <h3>Data Characteristics</h3>
+            <figure>
+                <img src="{{ url_for('static', filename='images/Paper_1/image 2.png') }}" alt="Data Characteristics">
+            </figure>
+
+            <h1>7. Conclusion</h1>
+            <div class="callout">
+                <div class="icon">✅</div>
+                <div class="callout-content">
+                    <ol class="numbered-list" style="margin: 0;">
+                        <li><strong>LLM의 적응 평가:</strong> 특정 작업 및 도메인에 모델을 적응시키는 것이 요약 품질을 크게 향상시킴.</li>
+                        <li><strong>임상 독자 연구 결과:</strong> LLM 요약이 의료 전문가 요약보다 <span class="highlight-red_background">완전성, 정확성, 간결성</span> 측면에서 선호됨.</li>
+                        <li><strong>안전성 분석의 시사점:</strong> LLM과 전문가 모두 허위 정보 생성 가능성이 존재하므로 지속적인 검증 필요.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </article>
+</body>
+</html>
