@@ -1606,13 +1606,19 @@ header {
 /* --- 11. Certifications & Academic - Dark Theme --- */
 /* Certificate Table Wrapper for Horizontal Scroll */
 .cert-table-wrapper {
-    width: 100%;
-    overflow-x: auto;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
     -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    -ms-overflow-style: -ms-autohiding-scrollbar;
     border-radius: 16px;
     border: 0.5px solid rgba(255, 255, 255, 0.1);
     background: rgba(255, 255, 255, 0.02);
     backdrop-filter: blur(20px);
+    display: block !important;
+    position: relative;
+    touch-action: pan-x; /* Enable horizontal touch scrolling */
 }
 
 /* Scrollbar Styling for Certificate Table */
@@ -1635,10 +1641,12 @@ header {
 }
 
 .cert-table, .paper-table {
-    width: 100%;
-    min-width: 600px; /* Minimum width to prevent excessive compression */
+    width: 100% !important;
+    min-width: 650px !important; /* Minimum width to prevent excessive compression */
     border-collapse: collapse;
     background: transparent;
+    table-layout: fixed;
+    display: table !important;
 }
 
 .cert-table th, .paper-table th {
@@ -1648,7 +1656,8 @@ header {
     color: rgba(255, 255, 255, 0.95);
     font-weight: 600;
     font-size: 0.9rem;
-    white-space: nowrap; /* Prevent header text wrapping */
+    white-space: nowrap !important; /* Prevent header text wrapping */
+    overflow: visible !important;
 }
 
 .cert-table td, .paper-table td {
@@ -1656,7 +1665,8 @@ header {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     color: rgba(255, 255, 255, 0.8);
     font-size: 0.9rem;
-    white-space: nowrap; /* Prevent cell text wrapping */
+    white-space: nowrap !important; /* Prevent cell text wrapping */
+    overflow: visible !important;
 }
 
 .cert-table tr:last-child td, .paper-table tr:last-child td {
@@ -2113,23 +2123,40 @@ footer p {
 
     /* Certificate Button Mobile */
     .cert-btn {
-        font-size: 0.75rem; /* Reduce font size on mobile */
-        padding: 6px 12px; /* Adjust padding */
+        font-size: 0.7rem !important; /* Reduce font size on mobile */
+        padding: 6px 10px !important; /* Adjust padding */
     }
 
     /* Certificate Table Mobile */
     .cert-table-wrapper {
         margin-bottom: 12px;
+        overflow-x: scroll !important; /* Force scroll on mobile */
+        -webkit-overflow-scrolling: touch !important;
     }
 
     .cert-table {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
+        min-width: 600px !important; /* Ensure table is wider than mobile screen */
     }
 
     .cert-table th,
     .cert-table td {
-        padding: 12px;
-        font-size: 0.85rem;
+        padding: 10px !important;
+        font-size: 0.8rem !important;
+        white-space: nowrap !important;
+    }
+
+    /* Add visual hint for scrollability */
+    .cert-table-wrapper::after {
+        content: "← 좌우로 스크롤하세요 →";
+        display: block;
+        text-align: center;
+        padding: 8px;
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.5);
+        background: rgba(0, 122, 255, 0.1);
+        border-radius: 0 0 16px 16px;
+        margin-top: -1px;
     }
 }
 
