@@ -1,6 +1,34 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // 1. Particles.js Configuration
+    // 1. Mobile Menu Toggle
+    const menuToggle = document.getElementById('menuToggle');
+    const navMenu = document.getElementById('navMenu');
+
+    if (menuToggle && navMenu) {
+        menuToggle.addEventListener('click', () => {
+            menuToggle.classList.toggle('active');
+            navMenu.classList.toggle('active');
+        });
+
+        // Close menu when clicking on a nav link
+        const navLinks = navMenu.querySelectorAll('a');
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                menuToggle.classList.remove('active');
+                navMenu.classList.remove('active');
+            });
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!menuToggle.contains(e.target) && !navMenu.contains(e.target)) {
+                menuToggle.classList.remove('active');
+                navMenu.classList.remove('active');
+            }
+        });
+    }
+
+    // 2. Particles.js Configuration
     if (typeof particlesJS !== 'undefined' && document.getElementById('particles-js')) {
         particlesJS('particles-js', {
             particles: {
@@ -165,18 +193,22 @@ document.addEventListener('DOMContentLoaded', () => {
             if (entry.isIntersecting && !hasAnimated) {
                 hasAnimated = true;
                 statNumbers.forEach(stat => {
-                    const target = parseInt(stat.getAttribute('data-target'));
+                    // Support suffixes like '2+' by parsing numeric part and keeping suffix
+                    const targetAttr = stat.getAttribute('data-target') || '0';
+                    const match = targetAttr.toString().match(/^(\d+)(\D*)$/);
+                    const target = match ? parseInt(match[1], 10) : 0;
+                    const suffix = match ? match[2] : '';
                     const duration = 2000;
                     const increment = target / (duration / 16);
                     let current = 0;
 
                     const updateCounter = () => {
                         current += increment;
-                        if (current < target) {
-                            stat.textContent = Math.ceil(current);
+                            if (current < target) {
+                            stat.textContent = Math.ceil(current) + suffix;
                             requestAnimationFrame(updateCounter);
                         } else {
-                            stat.textContent = target;
+                            stat.textContent = target + suffix;
                         }
                     };
 
