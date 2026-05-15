@@ -105,8 +105,11 @@
   font-size: 0.8rem;
   font-family: inherit;
   outline: none;
+  color-scheme: dark;
 }
 .ne-meta-input:focus { border-color: var(--ne-accent); }
+select.ne-meta-input { background: #1e2535; cursor: pointer; }
+select.ne-meta-input option { background: #1e2535; color: #e2e8f0; }
 .ne-meta-icon { width: 50px; text-align: center; font-size: 1.2rem; }
 
 /* ── Page header (icon + title) ── */
@@ -374,13 +377,20 @@ details[open] .ne-toggle-arrow { transform: rotate(90deg); }
   border: 1px solid rgba(255,255,255,.12);
   border-radius: 10px;
   padding: 6px;
-  width: 260px;
-  max-height: 340px;
-  overflow-y: auto;
-  box-shadow: 0 12px 40px rgba(0,0,0,.5);
+  width: 280px;
+  max-height: 380px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 40px rgba(0,0,0,.6);
   display: none;
 }
-#neSlashMenu.open { display: block; }
+#neSlashMenu.open { display: flex; }
+#slashList {
+  overflow-y: auto;
+  flex: 1;
+}
+#slashList::-webkit-scrollbar { width: 4px; }
+#slashList::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
 .slash-search {
   width: 100%;
   background: rgba(255,255,255,.06);
@@ -531,11 +541,6 @@ details[open] .ne-toggle-arrow { transform: rotate(90deg); }
 
       <!-- Meta bar -->
       <div class="ne-meta">
-        <div class="ne-meta-field" style="min-width:50px;max-width:60px">
-          <div class="ne-meta-label">아이콘</div>
-          <input class="ne-meta-input ne-meta-icon" id="metaIcon"
-                 value="{{ log.icon if log else '📄' }}" maxlength="4">
-        </div>
         <div class="ne-meta-field" style="flex:1;min-width:130px">
           <div class="ne-meta-label">카테고리</div>
           <select class="ne-meta-input" id="metaCategory">
@@ -681,7 +686,14 @@ const NE = (() => {
     document.addEventListener('selectionchange', onSelectionChange);
     document.addEventListener('mousedown', onDocMousedown);
     document.addEventListener('keydown', onDocKeydown);
-    document.addEventListener('scroll', hideAll, true);
+    // Only close on scroll outside the overlay panels
+    document.addEventListener('scroll', e => {
+      const inOverlay = e.target && e.target.closest &&
+        (e.target.closest('#neSlashMenu') ||
+         e.target.closest('#neColorPicker') ||
+         e.target.closest('#neEmojiPicker'));
+      if (!inOverlay) hideAll();
+    }, true);
   }
 
   // ── Utilities ──
@@ -979,14 +991,10 @@ const NE = (() => {
     // Sync HTML
     b.html = el.innerHTML;
 
-    // Slash detection
+    // Slash detection — only open if menu isn't already open
     const text = el.textContent;
-    if (text.endsWith('/')) {
+    if (text.endsWith('/') && !slashState) {
       openSlashMenu(id, el);
-    } else if (slashState && slashState.blockId === id) {
-      const query = text.slice(text.lastIndexOf('/') + 1);
-      slashState.query = query;
-      filterSlash(query);
     }
 
     schedulePreview();
@@ -1055,12 +1063,15 @@ const NE = (() => {
   // ── Slash menu ──
   function openSlashMenu(blockId, el) {
     slashState = { blockId, query: '' };
-    slashActive = -1;
+    slashActive = 0;
     filterSlash('');
     positionSlashMenu(el);
-    document.getElementById('neSlashMenu').classList.add('open');
-    document.getElementById('slashSearch').value = '';
-    document.getElementById('slashSearch').focus();
+    const menu = document.getElementById('neSlashMenu');
+    menu.classList.add('open');
+    const search = document.getElementById('slashSearch');
+    search.value = '';
+    // Focus the search without stealing caret from the block visually
+    requestAnimationFrame(() => search.focus());
   }
 
   function closeSlashMenu() {
@@ -1083,6 +1094,7 @@ const NE = (() => {
   }
 
   function filterSlash(q) {
+    if (slashState) slashState.query = q;
     const query = q.toLowerCase();
     slashFiltered = BLOCK_DEFS.filter(d =>
       d.label.toLowerCase().includes(query) ||
@@ -1115,10 +1127,13 @@ const NE = (() => {
   }
 
   function slashNav(dir) {
-    slashActive = Math.max(0, Math.min(slashFiltered.length - 1, slashActive + dir));
+    if (!slashFiltered.length) return;
+    slashActive = (slashActive + dir + slashFiltered.length) % slashFiltered.length;
     renderSlashList();
-    const active = document.querySelector('#slashList .slash-item.active');
-    if (active) active.scrollIntoView({ block: 'nearest' });
+    requestAnimationFrame(() => {
+      const active = document.querySelector('#slashList .slash-item.active');
+      if (active) active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
   }
 
   function applySlash() {
@@ -1129,21 +1144,40 @@ const NE = (() => {
 
   function applySlashType(type) {
     if (!slashState) return;
-    const { blockId } = slashState;
+    const { blockId, query } = slashState;
+    const b = blocks[blockIdx(blockId)];
     const el = getEditEl(blockId);
-    // Clear the slash character from content
-    if (el && el.textContent.includes('/')) {
-      // Remove everything from the last '/' onwards
-      const b = blocks[blockIdx(blockId)];
+
+    // Remove the trailing slash from the block (query was typed in the search box, not the block)
+    if (el) {
       const text = el.textContent;
       const slashPos = text.lastIndexOf('/');
       if (slashPos >= 0) {
-        el.textContent = text.substring(0, slashPos);
+        removeTrailingTextFrom(el, text.length - slashPos);
         if (b) b.html = el.innerHTML;
       }
     }
     closeSlashMenu();
     convertBlock(blockId, type);
+  }
+
+  // Remove `charCount` chars from the end of a contenteditable element's text
+  function removeTrailingTextFrom(el, charCount) {
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    let node;
+    while ((node = walker.nextNode())) nodes.push(node);
+    let toRemove = charCount;
+    for (let i = nodes.length - 1; i >= 0 && toRemove > 0; i--) {
+      const n = nodes[i];
+      if (n.nodeValue.length <= toRemove) {
+        toRemove -= n.nodeValue.length;
+        n.parentNode.removeChild(n);
+      } else {
+        n.nodeValue = n.nodeValue.slice(0, n.nodeValue.length - toRemove);
+        toRemove = 0;
+      }
+    }
   }
 
   // Expose for inline HTML
@@ -1224,10 +1258,21 @@ const NE = (() => {
     e.preventDefault();
     colorMode = mode;
     const cp = document.getElementById('neColorPicker');
+    // Toggle if same mode and already open
+    if (cp.classList.contains('open')) {
+      cp.classList.remove('open');
+      return;
+    }
     cp.classList.add('open');
     const rect = document.getElementById('neFormatBar').getBoundingClientRect();
-    cp.style.top  = (rect.bottom + 6) + 'px';
-    cp.style.left = rect.left + 'px';
+    let top  = rect.bottom + 6;
+    let left = rect.left;
+    const vpW = window.innerWidth;
+    const vpH = window.innerHeight;
+    if (left + 230 > vpW) left = vpW - 235;
+    if (top + 180 > vpH) top = rect.top - 185;
+    cp.style.top  = top  + 'px';
+    cp.style.left = left + 'px';
   }
 
   function applyColor(colorName) {
@@ -1282,23 +1327,40 @@ const NE = (() => {
 
   function showEmojiPicker(el) {
     const picker = document.getElementById('neEmojiPicker');
+    const isOpen = picker.classList.contains('open');
+    // Toggle: if already open, close it
+    if (isOpen) { picker.classList.remove('open'); return; }
     picker.classList.add('open');
     const rect = el.getBoundingClientRect();
-    picker.style.top  = (rect.bottom + 6) + 'px';
-    picker.style.left = rect.left + 'px';
+    let top  = rect.bottom + 6;
+    let left = rect.left;
+    const vpW = window.innerWidth;
+    const vpH = window.innerHeight;
+    if (left + 250 > vpW) left = vpW - 260;
+    if (top + 200 > vpH) top = rect.top - 200;
+    picker.style.top  = top  + 'px';
+    picker.style.left = left + 'px';
   }
 
   function setIcon(em) {
     document.getElementById('pageIconBtn').textContent = em;
-    document.getElementById('metaIcon').value = em;
     document.getElementById('neEmojiPicker').classList.remove('open');
+    schedulePreview();
   }
 
   // ── Global mouse/keyboard ──
   function onDocMousedown(e) {
-    // Close menus when clicking outside
-    if (!e.target.closest('#neSlashMenu') && !e.target.closest('#neEmojiPicker') && !e.target.closest('#neColorPicker') && !e.target.closest('#neFormatBar')) {
-      setTimeout(hideAll, 100);
+    // Overlay panels and their trigger buttons — clicks here should NOT close overlays
+    const inOverlay = e.target.closest(
+      '#neSlashMenu, #neEmojiPicker, #neColorPicker, #neFormatBar, .ne-page-icon-btn'
+    );
+    if (!inOverlay) {
+      // Close each popup independently — don't close slash menu if user is
+      // clicking inside the editor area (they might be refocusing a block)
+      const inEditor = e.target.closest('#neBlocksArea, .ne-page-header, .ne-meta');
+      if (!inEditor) closeSlashMenu();
+      document.getElementById('neColorPicker').classList.remove('open');
+      document.getElementById('neEmojiPicker').classList.remove('open');
     }
   }
 
