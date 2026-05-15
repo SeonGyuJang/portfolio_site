@@ -624,16 +624,24 @@ details[open] .ne-toggle-arrow { transform: rotate(90deg); }
 #neEmojiPicker {
   position: fixed; z-index: 10000;
   background: #252d3d; border: 1px solid rgba(255,255,255,.12);
-  border-radius: 10px; padding: 10px; width: 240px;
+  border-radius: 10px; padding: 12px; width: auto; max-width: 280px;
   box-shadow: 0 12px 40px rgba(0,0,0,.5); display: none;
+  overflow: hidden;
 }
 #neEmojiPicker.open { display: block; }
-.emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; }
-.emoji-btn {
-  font-size: 1.2rem; border: none; background: none; cursor: pointer;
-  border-radius: 4px; padding: 3px; transition: background .1s;
+.emoji-grid { 
+  display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; 
+  overflow-y: auto; max-height: 300px;
 }
-.emoji-btn:hover { background: rgba(255,255,255,.1); }
+.emoji-grid::-webkit-scrollbar { width: 5px; }
+.emoji-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 3px; }
+.emoji-btn {
+  font-size: 1.3rem; border: none; background: none; cursor: pointer;
+  border-radius: 6px; padding: 6px; transition: background .1s;
+  aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  line-height: 1;
+}
+.emoji-btn:hover { background: rgba(99,102,241,.25); }
 
 /* ── Image Library Modal ── */
 #neImageLibrary {

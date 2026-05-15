@@ -16,6 +16,8 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-please-change')
 
 SUPABASE_URL = os.environ.get('SUPABASE_URL', '').strip()
+if SUPABASE_URL and not SUPABASE_URL.endswith('/'):
+    SUPABASE_URL = SUPABASE_URL + '/'
 SUPABASE_KEY = os.environ.get('SUPABASE_KEY', '').strip()
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin1234')
 
