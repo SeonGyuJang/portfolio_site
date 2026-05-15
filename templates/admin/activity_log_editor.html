@@ -1,0 +1,696 @@
+{% extends "admin/base.html" %}
+{% block title %}Activity Log 에디터{% endblock %}
+{% block topbar_icon %}fas fa-pen-nib{% endblock %}
+{% block topbar_title %}Activity Log 에디터{% endblock %}
+{% block topbar_actions %}
+<button class="btn-admin btn-ghost btn-sm" onclick="togglePreview()">
+  <i class="fas fa-eye"></i> <span id="previewToggleText">미리보기</span>
+</button>
+<button class="btn-admin btn-primary btn-sm" onclick="saveLog()">
+  <i class="fas fa-save"></i> 저장
+</button>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+.editor-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+.editor-layout.split {
+  grid-template-columns: 1fr 1fr;
+}
+.editor-panel, .preview-panel {
+  background: #1e2535;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.panel-header {
+  padding: 12px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.02);
+}
+.editor-meta {
+  padding: 18px 22px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 12px;
+  align-items: end;
+}
+.meta-icon-input {
+  font-size: 2rem;
+  background: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  width: 56px;
+  text-align: center;
+  padding: 4px;
+}
+.editor-title-input {
+  width: 100%;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #fff;
+  padding: 8px 22px 16px;
+  font-family: inherit;
+}
+.editor-title-input::placeholder { color: rgba(255,255,255,0.2); }
+
+/* Blocks */
+.blocks-list { padding: 12px 22px; flex: 1; overflow-y: auto; }
+.block-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 3px 0;
+  border-radius: 6px;
+}
+.block-item:hover .block-controls { opacity: 1; }
+.block-controls {
+  opacity: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-top: 6px;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.block-drag-handle {
+  color: #475569;
+  cursor: grab;
+  padding: 4px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+.block-drag-handle:active { cursor: grabbing; }
+.block-del-btn {
+  color: #475569;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+.block-del-btn:hover { color: #ef4444; }
+
+.block-content { flex: 1; min-width: 0; }
+.block-type-badge {
+  font-size: 0.65rem;
+  color: #475569;
+  padding: 2px 5px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 3px;
+  margin-bottom: 4px;
+  display: inline-block;
+}
+.block-input {
+  width: 100%;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 7px 10px;
+  color: #e2e8f0;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 0.9rem;
+  resize: vertical;
+  transition: border-color 0.15s;
+  outline: none;
+  line-height: 1.6;
+  min-height: 36px;
+}
+.block-input:focus { border-color: rgba(99,102,241,0.4); background: rgba(255,255,255,0.05); }
+.block-input.heading1 { font-size: 1.5rem; font-weight: 700; min-height: 48px; }
+.block-input.heading2 { font-size: 1.2rem; font-weight: 600; min-height: 44px; }
+.block-input.heading3 { font-size: 1rem; font-weight: 600; min-height: 40px; }
+.block-input.code-block { font-family: 'Menlo','Monaco',monospace; font-size: 0.82rem; background: rgba(0,0,0,0.3); }
+.block-input.quote-block { border-left: 3px solid #6366f1; border-radius: 0 6px 6px 0; }
+.block-input.callout-block { background: rgba(255,255,255,0.055); }
+
+.block-row-2 { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start; }
+.block-icon-input {
+  font-size: 1.2rem;
+  background: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  width: 36px;
+  text-align: center;
+}
+
+.add-block-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 22px;
+  color: #475569;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.82rem;
+  width: 100%;
+  text-align: left;
+  transition: color 0.15s;
+  border-radius: 6px;
+  margin: 4px 0;
+}
+.add-block-btn:hover { color: #94a3b8; background: rgba(255,255,255,0.03); }
+
+/* Block type picker */
+.block-picker {
+  background: #252d3d;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 8px;
+  position: absolute;
+  z-index: 200;
+  width: 260px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  display: none;
+}
+.block-picker.show { display: block; }
+.picker-title { font-size: 0.7rem; color: #64748b; padding: 4px 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+.picker-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.picker-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  transition: all 0.1s;
+}
+.picker-item:hover { background: rgba(99,102,241,0.15); color: #e2e8f0; }
+.picker-item-icon { font-size: 1rem; width: 20px; text-align: center; }
+
+/* Preview panel */
+.preview-panel { min-height: 400px; }
+.preview-iframe {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: #191919;
+  min-height: 500px;
+}
+.preview-hidden { display: none; }
+
+/* Drag indicator */
+.drag-over { border-top: 2px solid #6366f1; }
+</style>
+{% endblock %}
+
+{% block content %}
+<form method="POST" action="{{ url_for('admin_activity_log_save') }}" id="logForm">
+  <input type="hidden" name="id" value="{{ log.id if log else '' }}">
+  <input type="hidden" name="blocks" id="blocksJson">
+
+  <div class="editor-layout" id="editorLayout">
+    <!-- EDITOR PANEL -->
+    <div class="editor-panel">
+      <div class="panel-header">
+        <i class="fas fa-pen-nib"></i> 에디터
+        <span style="margin-left:auto;font-size:0.72rem;color:#475569">블록을 클릭하여 편집하세요</span>
+      </div>
+
+      <!-- Meta info -->
+      <div class="editor-meta">
+        <div class="form-group">
+          <label class="form-label">카테고리</label>
+          <select name="category" id="metaCategory" class="form-select">
+            <option value="paper" {% if log and log.category=='paper' %}selected{% endif %}>논문</option>
+            <option value="study" {% if log and log.category=='study' %}selected{% endif %}>개인공부</option>
+            <option value="school" {% if log and log.category=='school' %}selected{% endif %}>학교생활</option>
+            <option value="book" {% if log and log.category=='book' %}selected{% endif %}>독서</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">날짜</label>
+          <input type="text" name="date_text" id="metaDate" class="form-input"
+                 value="{{ log.date_text if log else '' }}" placeholder="예: 2025.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">태그 (쉼표 구분)</label>
+          <input type="text" name="tags" id="metaTags" class="form-input"
+                 value="{{ (log.tags | join(', ')) if log and log.tags else '' }}"
+                 placeholder="LLM, Python, ...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">페이지 아이콘</label>
+          <input type="text" name="icon" id="metaIcon" class="form-input"
+                 value="{{ log.icon if log else '📄' }}" maxlength="4"
+                 style="text-align:center;font-size:1.4rem;width:60px">
+        </div>
+      </div>
+
+      <!-- Title -->
+      <div style="padding: 0 22px">
+        <input type="text" name="title" id="logTitle" class="editor-title-input"
+               placeholder="제목을 입력하세요..."
+               value="{{ log.title if log else '' }}" required>
+      </div>
+
+      <!-- Blocks -->
+      <div class="blocks-list" id="blocksList"></div>
+
+      <!-- Add Block -->
+      <div style="padding: 4px 22px 16px; position: relative;">
+        <button type="button" class="add-block-btn" id="addBlockBtn" onclick="showBlockPicker(event)">
+          <i class="fas fa-plus-circle"></i> 블록 추가
+        </button>
+        <div class="block-picker" id="blockPicker">
+          <div class="picker-title">블록 유형 선택</div>
+          <div class="picker-grid">
+            <div class="picker-item" onclick="addBlock('paragraph')"><span class="picker-item-icon">¶</span> 텍스트</div>
+            <div class="picker-item" onclick="addBlock('heading1')"><span class="picker-item-icon">H1</span> 제목1</div>
+            <div class="picker-item" onclick="addBlock('heading2')"><span class="picker-item-icon">H2</span> 제목2</div>
+            <div class="picker-item" onclick="addBlock('heading3')"><span class="picker-item-icon">H3</span> 제목3</div>
+            <div class="picker-item" onclick="addBlock('bulleted_list')"><span class="picker-item-icon">•</span> 불릿 목록</div>
+            <div class="picker-item" onclick="addBlock('numbered_list')"><span class="picker-item-icon">1.</span> 번호 목록</div>
+            <div class="picker-item" onclick="addBlock('callout')"><span class="picker-item-icon">💡</span> 콜아웃</div>
+            <div class="picker-item" onclick="addBlock('quote')"><span class="picker-item-icon">"</span> 인용구</div>
+            <div class="picker-item" onclick="addBlock('code')"><span class="picker-item-icon">&lt;/&gt;</span> 코드</div>
+            <div class="picker-item" onclick="addBlock('image')"><span class="picker-item-icon">🖼</span> 이미지</div>
+            <div class="picker-item" onclick="addBlock('divider')"><span class="picker-item-icon">─</span> 구분선</div>
+            <div class="picker-item" onclick="addBlock('toggle')"><span class="picker-item-icon">▶</span> 토글</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PREVIEW PANEL -->
+    <div class="preview-panel preview-hidden" id="previewPanel">
+      <div class="panel-header">
+        <i class="fas fa-eye"></i> 미리보기 (실제 사이트 표시 방식)
+        <button type="button" style="margin-left:auto;background:none;border:none;color:#475569;cursor:pointer;font-size:0.8rem" onclick="refreshPreview()">
+          <i class="fas fa-sync-alt"></i> 새로고침
+        </button>
+      </div>
+      <div id="previewContent" style="flex:1;overflow-y:auto;background:#191919;padding:20px 0"></div>
+    </div>
+  </div>
+</form>
+
+<script>
+// ── Block management ────────────────────────────────────────────────────────
+let blocks = [];
+let dragSrcIdx = null;
+
+const INITIAL_BLOCKS = {{ (log.blocks | tojson) if log and log.blocks else '[]' }};
+
+function init() {
+  blocks = Array.isArray(INITIAL_BLOCKS) ? INITIAL_BLOCKS.map(b => ({...b})) : [];
+  renderBlocks();
+}
+
+function genId() {
+  return Math.random().toString(36).substr(2,9);
+}
+
+function addBlock(type, afterIdx) {
+  const block = { id: genId(), type };
+  switch(type) {
+    case 'paragraph': block.content = ''; break;
+    case 'heading1': case 'heading2': case 'heading3': block.content = ''; break;
+    case 'bulleted_list': block.items = ['']; break;
+    case 'numbered_list': block.items = ['']; break;
+    case 'callout': block.icon = '💡'; block.content = ''; break;
+    case 'quote': block.content = ''; break;
+    case 'code': block.language = 'python'; block.content = ''; break;
+    case 'image': block.url = ''; block.caption = ''; break;
+    case 'divider': break;
+    case 'toggle': block.title = ''; block.content = ''; break;
+  }
+  if (afterIdx !== undefined) {
+    blocks.splice(afterIdx + 1, 0, block);
+  } else {
+    blocks.push(block);
+  }
+  hideBlockPicker();
+  renderBlocks();
+  // Focus new block
+  setTimeout(() => {
+    const newIdx = afterIdx !== undefined ? afterIdx + 1 : blocks.length - 1;
+    const input = document.querySelector(`[data-block-idx="${newIdx}"] .block-input`);
+    if (input) input.focus();
+  }, 50);
+}
+
+function removeBlock(idx) {
+  blocks.splice(idx, 1);
+  renderBlocks();
+}
+
+function updateBlockContent(idx, key, value) {
+  if (key === 'items') {
+    blocks[idx].items = value;
+  } else {
+    blocks[idx][key] = value;
+  }
+  updatePreviewDebounced();
+}
+
+function renderBlocks() {
+  const list = document.getElementById('blocksList');
+  list.innerHTML = blocks.map((block, idx) => renderBlock(block, idx)).join('');
+  attachDragEvents();
+  updatePreviewDebounced();
+}
+
+function renderBlock(block, idx) {
+  const type = block.type;
+  let inner = '';
+
+  if (type === 'divider') {
+    inner = `<div style="padding:10px 10px;"><hr style="border:0;border-top:1px solid rgba(255,255,255,0.12);margin:0"></div>`;
+  } else if (type === 'bulleted_list' || type === 'numbered_list') {
+    const items = block.items || [''];
+    const prefix = type === 'numbered_list' ? '1.' : '•';
+    inner = `
+      <div class="block-type-badge">${type === 'bulleted_list' ? '불릿 목록' : '번호 목록'}</div>
+      ${items.map((item, i) => `
+        <div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px">
+          <span style="color:#6366f1;font-weight:700;min-width:20px;padding-top:7px;font-size:0.85rem">${prefix}</span>
+          <textarea class="block-input" style="flex:1"
+            oninput="updateListItem(${idx},${i},this.value);autoResize(this)"
+            onkeydown="handleListKeydown(event,${idx},${i})"
+            placeholder="항목 입력...">${escHtml(item)}</textarea>
+          <button type="button" class="block-del-btn" style="padding-top:8px" onclick="removeListItem(${idx},${i})">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>`).join('')}
+      <button type="button" class="add-block-btn" style="padding:4px 0" onclick="addListItem(${idx})">
+        <i class="fas fa-plus"></i> 항목 추가
+      </button>`;
+  } else if (type === 'callout') {
+    inner = `
+      <div class="block-type-badge">콜아웃</div>
+      <div class="block-row-2">
+        <input type="text" class="block-icon-input" value="${block.icon||'💡'}"
+               oninput="updateBlockContent(${idx},'icon',this.value)" maxlength="4">
+        <textarea class="block-input callout-block"
+          oninput="updateBlockContent(${idx},'content',this.value);autoResize(this)"
+          placeholder="콜아웃 내용...">${escHtml(block.content||'')}</textarea>
+      </div>`;
+  } else if (type === 'image') {
+    inner = `
+      <div class="block-type-badge">이미지</div>
+      <input type="text" class="block-input" style="margin-bottom:6px"
+             value="${escHtml(block.url||'')}" placeholder="이미지 URL (https://...)"
+             oninput="updateBlockContent(${idx},'url',this.value)">
+      <input type="text" class="block-input" style="font-size:0.8rem"
+             value="${escHtml(block.caption||'')}" placeholder="캡션 (선택)"
+             oninput="updateBlockContent(${idx},'caption',this.value)">
+      ${block.url ? `<img src="${escHtml(block.url)}" style="max-width:100%;max-height:160px;object-fit:contain;border-radius:6px;margin-top:8px" onerror="this.style.display='none'">` : ''}`;
+  } else if (type === 'toggle') {
+    inner = `
+      <div class="block-type-badge">토글</div>
+      <input type="text" class="block-input heading3" placeholder="토글 제목..."
+             value="${escHtml(block.title||'')}"
+             oninput="updateBlockContent(${idx},'title',this.value)">
+      <textarea class="block-input" style="margin-top:6px;padding-left:20px;border-left:2px solid #475569"
+        oninput="updateBlockContent(${idx},'content',this.value);autoResize(this)"
+        placeholder="토글 내용...">${escHtml(block.content||'')}</textarea>`;
+  } else if (type === 'code') {
+    inner = `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span class="block-type-badge">코드</span>
+        <select class="form-select" style="padding:3px 8px;font-size:0.75rem;width:auto"
+                onchange="updateBlockContent(${idx},'language',this.value)">
+          ${['python','javascript','sql','bash','json','html','css','java','cpp'].map(l =>
+            `<option ${block.language===l?'selected':''} value="${l}">${l}</option>`).join('')}
+        </select>
+      </div>
+      <textarea class="block-input code-block"
+        oninput="updateBlockContent(${idx},'content',this.value);autoResize(this)"
+        placeholder="코드 입력...">${escHtml(block.content||'')}</textarea>`;
+  } else {
+    // paragraph, heading1, heading2, heading3, quote
+    const clsMap = { heading1:'heading1', heading2:'heading2', heading3:'heading3', quote:'quote-block', paragraph:'' };
+    const typeLabel = { heading1:'제목 1', heading2:'제목 2', heading3:'제목 3', quote:'인용구', paragraph:'텍스트' };
+    inner = `
+      <div class="block-type-badge">${typeLabel[type]||type}</div>
+      <textarea class="block-input ${clsMap[type]||''}"
+        oninput="updateBlockContent(${idx},'content',this.value);autoResize(this)"
+        placeholder="${type === 'quote' ? '인용구 입력...' : type.startsWith('heading') ? '제목 입력...' : '텍스트 입력...'}"
+        >${escHtml(block.content||'')}</textarea>`;
+  }
+
+  return `
+    <div class="block-item" data-block-idx="${idx}"
+         draggable="true" ondragstart="dragStart(event,${idx})" ondragover="dragOver(event,${idx})"
+         ondrop="dragDrop(event,${idx})" ondragleave="dragLeave(event)">
+      <div class="block-controls">
+        <span class="block-drag-handle" title="드래그하여 순서 변경">⠿</span>
+        <button type="button" class="block-del-btn" onclick="removeBlock(${idx})" title="블록 삭제">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+      <div class="block-content">${inner}</div>
+    </div>`;
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = (el.scrollHeight) + 'px';
+}
+
+// Apply autoResize to all textareas after render
+function applyAutoResize() {
+  document.querySelectorAll('.block-input').forEach(el => {
+    if (el.tagName === 'TEXTAREA') autoResize(el);
+  });
+}
+
+// List helpers
+function addListItem(blockIdx) {
+  if (!blocks[blockIdx].items) blocks[blockIdx].items = [];
+  blocks[blockIdx].items.push('');
+  renderBlocks();
+  setTimeout(() => {
+    const inputs = document.querySelectorAll(`[data-block-idx="${blockIdx}"] textarea`);
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  }, 50);
+}
+
+function removeListItem(blockIdx, itemIdx) {
+  if (blocks[blockIdx].items.length <= 1) return;
+  blocks[blockIdx].items.splice(itemIdx, 1);
+  renderBlocks();
+}
+
+function updateListItem(blockIdx, itemIdx, value) {
+  blocks[blockIdx].items[itemIdx] = value;
+  updatePreviewDebounced();
+}
+
+function handleListKeydown(e, blockIdx, itemIdx) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    blocks[blockIdx].items.splice(itemIdx + 1, 0, '');
+    renderBlocks();
+    setTimeout(() => {
+      const inputs = document.querySelectorAll(`[data-block-idx="${blockIdx}"] textarea`);
+      if (inputs[itemIdx + 1]) inputs[itemIdx + 1].focus();
+    }, 50);
+  }
+}
+
+// Drag & Drop
+function dragStart(e, idx) { dragSrcIdx = idx; e.dataTransfer.effectAllowed = 'move'; }
+function dragOver(e, idx) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.block-item').forEach(el => el.classList.remove('drag-over'));
+  const el = document.querySelector(`[data-block-idx="${idx}"]`);
+  if (el && idx !== dragSrcIdx) el.classList.add('drag-over');
+}
+function dragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function dragDrop(e, idx) {
+  e.preventDefault();
+  document.querySelectorAll('.block-item').forEach(el => el.classList.remove('drag-over'));
+  if (dragSrcIdx === null || dragSrcIdx === idx) return;
+  const moved = blocks.splice(dragSrcIdx, 1)[0];
+  blocks.splice(idx, 0, moved);
+  dragSrcIdx = null;
+  renderBlocks();
+}
+function attachDragEvents() { applyAutoResize(); }
+
+// Block picker
+function showBlockPicker(e) {
+  e.stopPropagation();
+  const picker = document.getElementById('blockPicker');
+  picker.classList.toggle('show');
+}
+function hideBlockPicker() {
+  document.getElementById('blockPicker').classList.remove('show');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#blockPicker') && !e.target.closest('#addBlockBtn')) hideBlockPicker();
+});
+
+// ── Preview ─────────────────────────────────────────────────────────────────
+let previewVisible = false;
+let previewTimer = null;
+
+function togglePreview() {
+  previewVisible = !previewVisible;
+  const panel = document.getElementById('previewPanel');
+  const layout = document.getElementById('editorLayout');
+  const txt = document.getElementById('previewToggleText');
+  if (previewVisible) {
+    panel.classList.remove('preview-hidden');
+    layout.classList.add('split');
+    txt.textContent = '에디터만';
+    refreshPreview();
+  } else {
+    panel.classList.add('preview-hidden');
+    layout.classList.remove('split');
+    txt.textContent = '미리보기';
+  }
+}
+
+function updatePreviewDebounced() {
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(() => { if (previewVisible) refreshPreview(); }, 400);
+}
+
+function refreshPreview() {
+  const title = document.getElementById('logTitle').value;
+  const icon = document.getElementById('metaIcon').value;
+  const date = document.getElementById('metaDate').value;
+  const tagsVal = document.getElementById('metaTags').value;
+  const tags = tagsVal.split(',').map(t=>t.trim()).filter(Boolean);
+
+  let html = `<!DOCTYPE html><html><head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/notion.css">
+    </head><body><article class="notion-page"><header>
+    <div class="page-icon">${icon||'📄'}</div>
+    <h1 class="page-title">${escHtml(title||'제목 없음')}</h1>
+    <table class="properties"><tbody>
+    ${date ? `<tr class="property-row"><th><i class="far fa-clock"></i> 날짜</th><td>${escHtml(date)}</td></tr>` : ''}
+    ${tags.length ? `<tr class="property-row"><th><i class="fas fa-tag"></i> 태그</th><td>${tags.map(t=>`<span class="tag tag-blue">${escHtml(t)}</span>`).join('')}</td></tr>` : ''}
+    </tbody></table></header><div class="page-body">`;
+
+  blocks.forEach(block => { html += renderBlockPreview(block); });
+
+  html += `</div></article></body></html>`;
+
+  const container = document.getElementById('previewContent');
+  // Use iframe for proper CSS isolation
+  let iframe = container.querySelector('iframe');
+  if (!iframe) {
+    iframe = document.createElement('iframe');
+    iframe.style.cssText = 'width:100%;border:none;background:#191919;min-height:500px;';
+    container.appendChild(iframe);
+  }
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
+  doc.open(); doc.write(html); doc.close();
+  // Resize iframe
+  setTimeout(() => {
+    try { iframe.style.height = doc.body.scrollHeight + 'px'; } catch(e){}
+  }, 200);
+}
+
+function renderBlockPreview(block) {
+  const type = block.type;
+  switch(type) {
+    case 'paragraph':
+      return `<p>${mdToHtml(block.content||'')}</p>`;
+    case 'heading1':
+      return `<h1>${escHtml(block.content||'')}</h1>`;
+    case 'heading2':
+      return `<h2>${escHtml(block.content||'')}</h2>`;
+    case 'heading3':
+      return `<h3>${escHtml(block.content||'')}</h3>`;
+    case 'bulleted_list':
+      return `<ul>${(block.items||[]).map(i=>`<li>${mdToHtml(i)}</li>`).join('')}</ul>`;
+    case 'numbered_list':
+      return `<ol>${(block.items||[]).map(i=>`<li>${mdToHtml(i)}</li>`).join('')}</ol>`;
+    case 'callout':
+      return `<div class="callout"><div class="icon">${block.icon||'💡'}</div><div class="callout-content"><p>${mdToHtml(block.content||'')}</p></div></div>`;
+    case 'quote':
+      return `<blockquote style="border-left:3px solid #6366f1;padding-left:16px;margin:16px 0;color:rgba(255,255,255,0.7)"><p>${mdToHtml(block.content||'')}</p></blockquote>`;
+    case 'code':
+      return `<pre style="background:rgba(0,0,0,0.3);border-radius:8px;padding:16px;overflow-x:auto;margin:16px 0"><code style="font-family:Menlo,Monaco,monospace;font-size:0.85rem;color:#e2e8f0;background:none;padding:0">${escHtml(block.content||'')}</code></pre>`;
+    case 'image':
+      return block.url ? `<figure><img src="${escHtml(block.url)}" alt="${escHtml(block.caption||'')}"><figcaption>${escHtml(block.caption||'')}</figcaption></figure>` : '';
+    case 'divider':
+      return `<hr>`;
+    case 'toggle':
+      return `<details style="margin:10px 0;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:10px 14px"><summary style="cursor:pointer;font-weight:600;color:#e2e8f0">${escHtml(block.title||'토글')}</summary><div style="margin-top:8px;padding-left:8px">${mdToHtml(block.content||'')}</div></details>`;
+    default:
+      return '';
+  }
+}
+
+// Simple markdown to HTML (bold, italic, code, links)
+function mdToHtml(text) {
+  return escHtml(text)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+    .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2">$1</a>')
+    .replace(/\n/g, '<br>');
+}
+
+// ── Save ─────────────────────────────────────────────────────────────────────
+function saveLog() {
+  // Collect latest values from DOM inputs
+  document.querySelectorAll('.block-item').forEach((el, idx) => {
+    const blockIdx = parseInt(el.dataset.blockIdx);
+    const block = blocks[blockIdx];
+    if (!block) return;
+    const inputs = el.querySelectorAll('.block-input');
+    if (block.type === 'bulleted_list' || block.type === 'numbered_list') {
+      block.items = Array.from(inputs).map(i => i.value);
+    } else if (block.type === 'callout') {
+      const iconInput = el.querySelector('.block-icon-input');
+      if (iconInput) block.icon = iconInput.value;
+      if (inputs[0]) block.content = inputs[0].value;
+    } else if (block.type === 'toggle') {
+      if (inputs[0]) block.title = inputs[0].value;
+      if (inputs[1]) block.content = inputs[1].value;
+    } else if (block.type === 'image') {
+      if (inputs[0]) block.url = inputs[0].value;
+      if (inputs[1]) block.caption = inputs[1].value;
+    } else if (block.type !== 'divider') {
+      if (inputs[0]) block.content = inputs[0].value;
+    }
+  });
+  document.getElementById('blocksJson').value = JSON.stringify(blocks);
+  document.getElementById('logForm').submit();
+}
+
+// Init
+window.addEventListener('DOMContentLoaded', () => {
+  init();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ log.title }} | Activity Log</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/notion.css') }}">
+</head>
+<body>
+<article class="notion-page">
+  <header>
+    <div class="page-icon">{{ log.icon or '📄' }}</div>
+    <h1 class="page-title">{{ log.title }}</h1>
+    <table class="properties">
+      <tbody>
+        {% if log.date_text %}
+        <tr class="property-row">
+          <th><i class="far fa-clock"></i> 날짜</th>
+          <td>{{ log.date_text }}</td>
+        </tr>
+        {% endif %}
+        <tr class="property-row">
+          <th><i class="fas fa-tag"></i> 카테고리</th>
+          <td><span class="tag tag-gray">{{ log.category }}</span></td>
+        </tr>
+        {% if log.tags %}
+        <tr class="property-row">
+          <th><i class="fas fa-hashtag"></i> 태그</th>
+          <td>
+            {% for tag in log.tags %}
+            <span class="tag tag-blue">{{ tag }}</span>
+            {% endfor %}
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </header>
+
+  <div class="page-body">
+    {% for block in blocks %}
+      {% set type = block.type %}
+      {% if type == 'paragraph' %}
+        <p>{{ block.content or '' }}</p>
+      {% elif type == 'heading1' %}
+        <h1>{{ block.content or '' }}</h1>
+      {% elif type == 'heading2' %}
+        <h2>{{ block.content or '' }}</h2>
+      {% elif type == 'heading3' %}
+        <h3>{{ block.content or '' }}</h3>
+      {% elif type == 'bulleted_list' %}
+        <ul>{% for item in (block.items or []) %}<li>{{ item }}</li>{% endfor %}</ul>
+      {% elif type == 'numbered_list' %}
+        <ol>{% for item in (block.items or []) %}<li>{{ item }}</li>{% endfor %}</ol>
+      {% elif type == 'callout' %}
+        <div class="callout">
+          <div class="icon">{{ block.icon or '💡' }}</div>
+          <div class="callout-content"><p>{{ block.content or '' }}</p></div>
+        </div>
+      {% elif type == 'quote' %}
+        <blockquote style="border-left:3px solid #6366f1;padding-left:16px;margin:16px 0;color:rgba(255,255,255,0.7)">
+          <p>{{ block.content or '' }}</p>
+        </blockquote>
+      {% elif type == 'code' %}
+        <pre style="background:rgba(0,0,0,0.3);border-radius:8px;padding:16px;overflow-x:auto;margin:16px 0"><code style="font-family:Menlo,Monaco,monospace;font-size:0.85rem;color:#e2e8f0;background:none;padding:0">{{ block.content or '' }}</code></pre>
+      {% elif type == 'image' and block.url %}
+        <figure>
+          <img src="{{ block.url }}" alt="{{ block.caption or '' }}">
+          {% if block.caption %}<figcaption>{{ block.caption }}</figcaption>{% endif %}
+        </figure>
+      {% elif type == 'divider' %}
+        <hr>
+      {% elif type == 'toggle' %}
+        <details style="margin:10px 0;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:10px 14px">
+          <summary style="cursor:pointer;font-weight:600;color:#e2e8f0">{{ block.title or '토글' }}</summary>
+          <div style="margin-top:8px;padding-left:8px">{{ block.content or '' }}</div>
+        </details>
+      {% endif %}
+    {% endfor %}
+  </div>
+</article>
+</body>
+</html>

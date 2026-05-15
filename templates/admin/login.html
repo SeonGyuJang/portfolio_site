@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login | SeonGyu Jang</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body class="admin-body">
+<div class="admin-login-wrap">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon">⚡</div>
+      <h1>Admin Panel</h1>
+      <p>SeonGyu Jang Portfolio</p>
+    </div>
+    {% if error %}
+    <div class="login-error">
+      <i class="fas fa-exclamation-circle"></i> {{ error }}
+    </div>
+    {% endif %}
+    <form method="POST" class="login-form">
+      <div class="form-group">
+        <label class="form-label">관리자 비밀번호</label>
+        <input type="password" name="password" class="form-input"
+               placeholder="비밀번호 입력" autocomplete="current-password" autofocus>
+      </div>
+      <button type="submit" class="login-submit">
+        <i class="fas fa-sign-in-alt"></i> 로그인
+      </button>
+    </form>
+    <div style="text-align:center;margin-top:20px;">
+      <a href="/" style="color:#64748b;font-size:0.8rem;text-decoration:none;">
+        <i class="fas fa-arrow-left"></i> 포트폴리오로 돌아가기
+      </a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}관리자{% endblock %} | Admin Panel</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="admin-body">
+
+<!-- Sidebar -->
+<aside class="admin-sidebar" id="adminSidebar">
+  <div class="sidebar-logo">
+    <div class="logo-text">⚡ Admin Panel</div>
+    <div class="logo-sub">SeonGyu Jang Portfolio</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">General</div>
+    <a href="{{ url_for('admin_dashboard') }}" class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+      <i class="fas fa-th-large"></i> Dashboard
+    </a>
+    <a href="/" target="_blank" class="nav-link">
+      <i class="fas fa-external-link-alt"></i> 사이트 보기
+    </a>
+
+    <div class="nav-section" style="margin-top:12px">Contents</div>
+    <a href="{{ url_for('admin_current_activities') }}" class="nav-link {% if request.endpoint == 'admin_current_activities' %}active{% endif %}">
+      <i class="fas fa-rocket"></i> Current Activities
+    </a>
+    <a href="{{ url_for('admin_past_activities') }}" class="nav-link {% if request.endpoint == 'admin_past_activities' %}active{% endif %}">
+      <i class="fas fa-flag-checkered"></i> Past Activities
+    </a>
+    <a href="{{ url_for('admin_tech_stacks') }}" class="nav-link {% if request.endpoint == 'admin_tech_stacks' %}active{% endif %}">
+      <i class="fas fa-code"></i> Tech Stacks
+    </a>
+    <a href="{{ url_for('admin_projects') }}" class="nav-link {% if request.endpoint == 'admin_projects' %}active{% endif %}">
+      <i class="fas fa-folder-open"></i> Projects
+    </a>
+    <a href="{{ url_for('admin_awards') }}" class="nav-link {% if request.endpoint == 'admin_awards' %}active{% endif %}">
+      <i class="fas fa-trophy"></i> Awards
+    </a>
+    <a href="{{ url_for('admin_academic') }}" class="nav-link {% if request.endpoint == 'admin_academic' %}active{% endif %}">
+      <i class="fas fa-graduation-cap"></i> Academic & Papers
+    </a>
+    <a href="{{ url_for('admin_certificates') }}" class="nav-link {% if request.endpoint == 'admin_certificates' %}active{% endif %}">
+      <i class="fas fa-certificate"></i> Certificates
+    </a>
+    <a href="{{ url_for('admin_activity_logs') }}" class="nav-link {% if 'activity_log' in request.endpoint %}active{% endif %}">
+      <i class="fas fa-book-open"></i> Activity Log
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <a href="{{ url_for('admin_logout') }}">
+      <i class="fas fa-sign-out-alt"></i> 로그아웃
+    </a>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="admin-main">
+  <div class="admin-topbar">
+    <div class="topbar-title">
+      <button class="hamburger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <i class="{% block topbar_icon %}fas fa-th-large{% endblock %}"></i>
+      {% block topbar_title %}Dashboard{% endblock %}
+    </div>
+    <div class="topbar-actions">
+      {% block topbar_actions %}{% endblock %}
+    </div>
+  </div>
+
+  <div class="admin-content">
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+<script>
+function toggleSidebar() {
+  document.getElementById('adminSidebar').classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  const sidebar = document.getElementById('adminSidebar');
+  if (window.innerWidth <= 768 && sidebar.classList.contains('open')) {
+    if (!sidebar.contains(e.target) && !e.target.closest('.hamburger')) {
+      sidebar.classList.remove('open');
+    }
+  }
+});
+</script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

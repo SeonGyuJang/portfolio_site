@@ -1,71 +1,519 @@
-from flask import Flask, render_template, abort
+from flask import Flask, render_template, abort, request, redirect, url_for, session, jsonify
 import os
+import json
+from functools import wraps
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-please-change')
 
-# 템플릿 폴더 내의 파일들을 스캔하여 활동 목록을 반환하는 함수
-def get_activities():
+SUPABASE_URL = os.environ.get('SUPABASE_URL', '')
+SUPABASE_KEY = os.environ.get('SUPABASE_KEY', '')
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin1234')
+
+supabase = None
+if SUPABASE_URL and SUPABASE_KEY:
+    try:
+        from supabase import create_client
+        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+    except Exception as e:
+        print(f"Supabase connection error: {e}")
+
+
+# ── helpers ────────────────────────────────────────────────────────────────
+
+def db_fetch(table, order_col='sort_order', ascending=True):
+    if not supabase:
+        return []
+    try:
+        res = supabase.table(table).select('*').order(order_col, desc=not ascending).execute()
+        return res.data or []
+    except Exception as e:
+        print(f"DB fetch error ({table}): {e}")
+        return []
+
+def db_insert(table, data):
+    if not supabase:
+        return None, "Supabase not configured"
+    try:
+        res = supabase.table(table).insert(data).execute()
+        return res.data, None
+    except Exception as e:
+        return None, str(e)
+
+def db_update(table, row_id, data):
+    if not supabase:
+        return None, "Supabase not configured"
+    try:
+        res = supabase.table(table).update(data).eq('id', row_id).execute()
+        return res.data, None
+    except Exception as e:
+        return None, str(e)
+
+def db_delete(table, row_id):
+    if not supabase:
+        return False, "Supabase not configured"
+    try:
+        supabase.table(table).delete().eq('id', row_id).execute()
+        return True, None
+    except Exception as e:
+        return False, str(e)
+
+
+def require_admin(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('admin_logged_in'):
+            return redirect(url_for('admin_login'))
+        return f(*args, **kwargs)
+    return decorated
+
+
+def get_static_activities():
+    """Scan template folders for static HTML activity files (legacy)."""
     activities = []
-    # 실제 폴더 이름 (대소문자 주의)
     categories = ['Paper', 'Book', 'School', 'Study', 'reading']
+    icon_map = {
+        'paper': 'fas fa-file-alt', 'book': 'fas fa-book',
+        'school': 'fas fa-university', 'study': 'fas fa-code',
+        'reading': 'fas fa-book-open'
+    }
     base_dir = os.path.join(app.root_path, 'templates')
-    
-    for category in categories:
-        category_dir = os.path.join(base_dir, category)
-        if os.path.exists(category_dir):
-            for filename in os.listdir(category_dir):
-                if filename.endswith('.html'):
-                    # 파일명에서 확장자 제거 및 언더바를 공백으로 변경하여 제목으로 사용
-                    title = filename.replace('.html', '').replace('_', ' ')
+    for cat in categories:
+        cat_dir = os.path.join(base_dir, cat)
+        if os.path.exists(cat_dir):
+            for fname in os.listdir(cat_dir):
+                if fname.endswith('.html'):
                     activities.append({
-                        # URL에는 소문자로 내보냄 (예: Paper -> paper)
-                        'category': category.lower(),
-                        'filename': filename,
-                        'title': title,
-                        'icon': get_icon_for_category(category.lower()),
-                        'date': '2025.11' # 임시 날짜
+                        'id': None,
+                        'source': 'static',
+                        'category': cat.lower(),
+                        'filename': fname,
+                        'title': fname.replace('.html', '').replace('_', ' '),
+                        'icon': icon_map.get(cat.lower(), 'fas fa-star'),
+                        'date_text': '',
+                        'tags': [],
                     })
     return activities
 
-def get_icon_for_category(category):
-    icons = {
-        'paper': 'fas fa-file-alt',
-        'book': 'fas fa-book',
-        'school': 'fas fa-university',
-        'study': 'fas fa-code',
-        'reading': 'fas fa-book-open'
-    }
-    return icons.get(category, 'fas fa-star')
+
+# ── public routes ──────────────────────────────────────────────────────────
 
 @app.route('/')
 def index():
-    activities = get_activities()
-    return render_template('index.html', activities=activities)
+    db_logs = db_fetch('activity_logs', order_col='created_at', ascending=False)
+    static_acts = get_static_activities()
+    data = {
+        'current_activities': db_fetch('current_activities'),
+        'past_activities': db_fetch('past_activities'),
+        'tech_stacks': db_fetch('tech_stacks'),
+        'projects': db_fetch('projects'),
+        'awards': db_fetch('awards'),
+        'academic_items': db_fetch('academic_items'),
+        'certificates': db_fetch('certificates'),
+        'activity_logs': db_logs,
+        'static_activities': static_acts,
+        'supabase_ready': supabase is not None,
+    }
+    return render_template('index.html', **data)
 
-# Activity 상세 페이지 라우트
+
+@app.route('/activity/log/<log_id>')
+def activity_log_view(log_id):
+    if not supabase:
+        abort(404)
+    try:
+        res = supabase.table('activity_logs').select('*').eq('id', log_id).execute()
+        if not res.data:
+            abort(404)
+        log = res.data[0]
+        blocks = log.get('blocks', [])
+        if isinstance(blocks, str):
+            blocks = json.loads(blocks)
+        return render_template('activity_log_view.html', log=log, blocks=blocks)
+    except Exception:
+        abort(404)
+
+
 @app.route('/activity/<category>/<filename>')
 def activity_detail(category, filename):
-    # 경로 조작 방지를 위한 간단한 검증
     if category not in ['paper', 'book', 'school', 'study', 'reading']:
         abort(404)
-    
-    # [중요 수정] URL의 소문자 카테고리를 실제 폴더명(대소문자 포함)으로 매핑
-    # 리눅스(Heroku)는 대소문자를 구분하므로 이 과정이 필수입니다.
     folder_mapping = {
-        'paper': 'Paper',
-        'book': 'Book',
-        'school': 'School',
-        'study': 'Study',
-        'reading': 'reading'
+        'paper': 'Paper', 'book': 'Book', 'school': 'School',
+        'study': 'Study', 'reading': 'reading'
     }
-    
-    real_folder_name = folder_mapping.get(category, category)
-    
+    real_folder = folder_mapping.get(category, category)
     try:
-        # 실제 폴더명을 사용하여 템플릿 렌더링
-        return render_template(f'{real_folder_name}/{filename}')
-    except:
+        return render_template(f'{real_folder}/{filename}')
+    except Exception:
         abort(404)
 
+
+# ── admin auth ──────────────────────────────────────────────────────────────
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    error = None
+    if request.method == 'POST':
+        if request.form.get('password') == ADMIN_PASSWORD:
+            session['admin_logged_in'] = True
+            return redirect(url_for('admin_dashboard'))
+        error = '비밀번호가 올바르지 않습니다.'
+    return render_template('admin/login.html', error=error)
+
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('admin_logged_in', None)
+    return redirect(url_for('admin_login'))
+
+
+# ── admin dashboard ─────────────────────────────────────────────────────────
+
+@app.route('/admin')
+@require_admin
+def admin_dashboard():
+    stats = {}
+    for t in ['current_activities','past_activities','tech_stacks','projects',
+              'awards','academic_items','certificates','activity_logs']:
+        rows = db_fetch(t)
+        stats[t] = len(rows)
+    return render_template('admin/dashboard.html', stats=stats, supabase_ready=supabase is not None)
+
+
+# ── current activities ───────────────────────────────────────────────────────
+
+@app.route('/admin/current-activities')
+@require_admin
+def admin_current_activities():
+    items = db_fetch('current_activities')
+    return render_template('admin/current_activities.html', items=items)
+
+@app.route('/admin/current-activities/save', methods=['POST'])
+@require_admin
+def admin_current_activities_save():
+    row_id = request.form.get('id', '').strip()
+    data = {
+        'title': request.form.get('title', '').strip(),
+        'description': request.form.get('description', '').strip(),
+        'date_start': request.form.get('date_start', '').strip(),
+        'date_end': request.form.get('date_end', '').strip(),
+        'is_ongoing': request.form.get('is_ongoing') == 'on',
+        'sort_order': int(request.form.get('sort_order', 0) or 0),
+    }
+    if row_id:
+        db_update('current_activities', row_id, data)
+    else:
+        db_insert('current_activities', data)
+    return redirect(url_for('admin_current_activities'))
+
+@app.route('/admin/current-activities/delete/<row_id>', methods=['POST'])
+@require_admin
+def admin_current_activities_delete(row_id):
+    db_delete('current_activities', row_id)
+    return redirect(url_for('admin_current_activities'))
+
+
+# ── past activities ──────────────────────────────────────────────────────────
+
+@app.route('/admin/past-activities')
+@require_admin
+def admin_past_activities():
+    items = db_fetch('past_activities')
+    return render_template('admin/past_activities.html', items=items)
+
+@app.route('/admin/past-activities/save', methods=['POST'])
+@require_admin
+def admin_past_activities_save():
+    row_id = request.form.get('id', '').strip()
+    data = {
+        'title': request.form.get('title', '').strip(),
+        'description': request.form.get('description', '').strip(),
+        'date_start': request.form.get('date_start', '').strip(),
+        'date_end': request.form.get('date_end', '').strip(),
+        'sort_order': int(request.form.get('sort_order', 0) or 0),
+    }
+    if row_id:
+        db_update('past_activities', row_id, data)
+    else:
+        db_insert('past_activities', data)
+    return redirect(url_for('admin_past_activities'))
+
+@app.route('/admin/past-activities/delete/<row_id>', methods=['POST'])
+@require_admin
+def admin_past_activities_delete(row_id):
+    db_delete('past_activities', row_id)
+    return redirect(url_for('admin_past_activities'))
+
+
+# ── tech stacks ──────────────────────────────────────────────────────────────
+
+@app.route('/admin/tech-stacks')
+@require_admin
+def admin_tech_stacks():
+    items = db_fetch('tech_stacks')
+    return render_template('admin/tech_stacks.html', items=items)
+
+@app.route('/admin/tech-stacks/save', methods=['POST'])
+@require_admin
+def admin_tech_stacks_save():
+    row_id = request.form.get('id', '').strip()
+    data = {
+        'category': request.form.get('category', '').strip(),
+        'category_icon': request.form.get('category_icon', '').strip(),
+        'name': request.form.get('name', '').strip(),
+        'icon_class': request.form.get('icon_class', '').strip(),
+        'level': int(request.form.get('level', 50) or 50),
+        'sort_order': int(request.form.get('sort_order', 0) or 0),
+    }
+    if row_id:
+        db_update('tech_stacks', row_id, data)
+    else:
+        db_insert('tech_stacks', data)
+    return redirect(url_for('admin_tech_stacks'))
+
+@app.route('/admin/tech-stacks/delete/<row_id>', methods=['POST'])
+@require_admin
+def admin_tech_stacks_delete(row_id):
+    db_delete('tech_stacks', row_id)
+    return redirect(url_for('admin_tech_stacks'))
+
+
+# ── projects ──────────────────────────────────────────────────────────────────
+
+@app.route('/admin/projects')
+@require_admin
+def admin_projects():
+    items = db_fetch('projects')
+    return render_template('admin/projects.html', items=items)
+
+@app.route('/admin/projects/save', methods=['POST'])
+@require_admin
+def admin_projects_save():
+    row_id = request.form.get('id', '').strip()
+    data = {
+        'title': request.form.get('title', '').strip(),
+        'description': request.form.get('description', '').strip(),
+        'icon_class': request.form.get('icon_class', 'fas fa-code').strip(),
+        'date_start': request.form.get('date_start', '').strip(),
+        'date_end': request.form.get('date_end', '').strip(),
+        'is_ongoing': request.form.get('is_ongoing') == 'on',
+        'link': request.form.get('link', '').strip(),
+        'sort_order': int(request.form.get('sort_order', 0) or 0),
+    }
+    if row_id:
+        db_update('projects', row_id, data)
+    else:
+        db_insert('projects', data)
+    return redirect(url_for('admin_projects'))
+
+@app.route('/admin/projects/delete/<row_id>', methods=['POST'])
+@require_admin
+def admin_projects_delete(row_id):
+    db_delete('projects', row_id)
+    return redirect(url_for('admin_projects'))
+
+
+# ── awards ────────────────────────────────────────────────────────────────────
+
+@app.route('/admin/awards')
+@require_admin
+def admin_awards():
+    items = db_fetch('awards')
+    return render_template('admin/awards.html', items=items)
+
+@app.route('/admin/awards/save', methods=['POST'])
+@require_admin
+def admin_awards_save():
+    row_id = request.form.get('id', '').strip()
+    images_raw = request.form.get('images', '[]').strip()
+    try:
+        images = json.loads(images_raw) if images_raw else []
+    except Exception:
+        images = [u.strip() for u in images_raw.split('\n') if u.strip()]
+    data = {
+        'name': request.form.get('name', '').strip(),
+        'subject': request.form.get('subject', '').strip(),
+        'award_result': request.form.get('award_result', '').strip(),
+        'date_text': request.form.get('date_text', '').strip(),
+        'organization': request.form.get('organization', '').strip(),
+        'description': request.form.get('description', '').strip(),
+        'images': images,
+        'icon_class': request.form.get('icon_class', 'fas fa-trophy').strip(),
+        'sort_order': int(request.form.get('sort_order', 0) or 0),
+    }
+    if row_id:
+        db_update('awards', row_id, data)
+    else:
+        db_insert('awards', data)
+    return redirect(url_for('admin_awards'))
+
+@app.route('/admin/awards/delete/<row_id>', methods=['POST'])
+@require_admin
+def admin_awards_delete(row_id):
+    db_delete('awards', row_id)
+    return redirect(url_for('admin_awards'))
+
+
+# ── academic items ────────────────────────────────────────────────────────────
+
+@app.route('/admin/academic')
+@require_admin
+def admin_academic():
+    items = db_fetch('academic_items')
+    return render_template('admin/academic.html', items=items)
+
+@app.route('/admin/academic/save', methods=['POST'])
+@require_admin
+def admin_academic_save():
+    row_id = request.form.get('id', '').strip()
+    images_raw = request.form.get('images', '[]').strip()
+    try:
+        images = json.loads(images_raw) if images_raw else []
+    except Exception:
+        images = [u.strip() for u in images_raw.split('\n') if u.strip()]
+    data = {
+        'name': request.form.get('name', '').strip(),
+        'description': request.form.get('description', '').strip(),
+        'date_text': request.form.get('date_text', '').strip(),
+        'paper_link': request.form.get('paper_link', '').strip(),
+        'images': images,
+        'sort_order': int(request.form.get('sort_order', 0) or 0),
+    }
+    if row_id:
+        db_update('academic_items', row_id, data)
+    else:
+        db_insert('academic_items', data)
+    return redirect(url_for('admin_academic'))
+
+@app.route('/admin/academic/delete/<row_id>', methods=['POST'])
+@require_admin
+def admin_academic_delete(row_id):
+    db_delete('academic_items', row_id)
+    return redirect(url_for('admin_academic'))
+
+
+# ── certificates ──────────────────────────────────────────────────────────────
+
+@app.route('/admin/certificates')
+@require_admin
+def admin_certificates():
+    items = db_fetch('certificates')
+    return render_template('admin/certificates.html', items=items)
+
+@app.route('/admin/certificates/save', methods=['POST'])
+@require_admin
+def admin_certificates_save():
+    row_id = request.form.get('id', '').strip()
+    data = {
+        'name': request.form.get('name', '').strip(),
+        'issuer': request.form.get('issuer', '').strip(),
+        'date_text': request.form.get('date_text', '').strip(),
+        'image': request.form.get('image', '').strip(),
+        'sort_order': int(request.form.get('sort_order', 0) or 0),
+    }
+    if row_id:
+        db_update('certificates', row_id, data)
+    else:
+        db_insert('certificates', data)
+    return redirect(url_for('admin_certificates'))
+
+@app.route('/admin/certificates/delete/<row_id>', methods=['POST'])
+@require_admin
+def admin_certificates_delete(row_id):
+    db_delete('certificates', row_id)
+    return redirect(url_for('admin_certificates'))
+
+
+# ── activity logs ─────────────────────────────────────────────────────────────
+
+@app.route('/admin/activity-logs')
+@require_admin
+def admin_activity_logs():
+    items = db_fetch('activity_logs', order_col='created_at', ascending=False)
+    return render_template('admin/activity_logs.html', items=items)
+
+@app.route('/admin/activity-logs/new')
+@require_admin
+def admin_activity_log_new():
+    return render_template('admin/activity_log_editor.html', log=None)
+
+@app.route('/admin/activity-logs/edit/<log_id>')
+@require_admin
+def admin_activity_log_edit(log_id):
+    if not supabase:
+        return redirect(url_for('admin_activity_logs'))
+    try:
+        res = supabase.table('activity_logs').select('*').eq('id', log_id).execute()
+        log = res.data[0] if res.data else None
+    except Exception:
+        log = None
+    if not log:
+        return redirect(url_for('admin_activity_logs'))
+    return render_template('admin/activity_log_editor.html', log=log)
+
+@app.route('/admin/activity-logs/save', methods=['POST'])
+@require_admin
+def admin_activity_log_save():
+    row_id = request.form.get('id', '').strip()
+    blocks_raw = request.form.get('blocks', '[]')
+    try:
+        blocks = json.loads(blocks_raw)
+    except Exception:
+        blocks = []
+    tags_raw = request.form.get('tags', '')
+    tags = [t.strip() for t in tags_raw.split(',') if t.strip()]
+    data = {
+        'title': request.form.get('title', '').strip(),
+        'category': request.form.get('category', 'study').strip(),
+        'date_text': request.form.get('date_text', '').strip(),
+        'icon': request.form.get('icon', '📄').strip(),
+        'cover_image': request.form.get('cover_image', '').strip(),
+        'tags': tags,
+        'blocks': blocks,
+        'sort_order': int(request.form.get('sort_order', 0) or 0),
+    }
+    if row_id:
+        db_update('activity_logs', row_id, data)
+        return redirect(url_for('admin_activity_logs'))
+    else:
+        result, err = db_insert('activity_logs', data)
+        return redirect(url_for('admin_activity_logs'))
+
+@app.route('/admin/activity-logs/delete/<log_id>', methods=['POST'])
+@require_admin
+def admin_activity_log_delete(log_id):
+    db_delete('activity_logs', log_id)
+    return redirect(url_for('admin_activity_logs'))
+
+
+# ── API for admin (JSON) ──────────────────────────────────────────────────────
+
+@app.route('/admin/api/upload-image', methods=['POST'])
+@require_admin
+def admin_upload_image():
+    """Upload image to Supabase Storage and return public URL."""
+    if not supabase:
+        return jsonify({'error': 'Supabase not configured'}), 400
+    file = request.files.get('file')
+    if not file:
+        return jsonify({'error': 'No file provided'}), 400
+    bucket = 'portfolio-images'
+    filename = file.filename
+    try:
+        content = file.read()
+        res = supabase.storage.from_(bucket).upload(
+            filename, content,
+            file_options={'content-type': file.content_type, 'upsert': 'true'}
+        )
+        url = supabase.storage.from_(bucket).get_public_url(filename)
+        return jsonify({'url': url})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 if __name__ == '__main__':
-    app.run(debug=True, port='4444')
+    app.run(debug=True, port=4444)

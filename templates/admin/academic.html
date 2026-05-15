@@ -1,0 +1,162 @@
+{% extends "admin/base.html" %}
+{% block title %}Academic & Papers{% endblock %}
+{% block topbar_icon %}fas fa-graduation-cap{% endblock %}
+{% block topbar_title %}Academic & Papers{% endblock %}
+{% block topbar_actions %}
+<button class="btn-admin btn-primary btn-sm" onclick="openModal()">
+  <i class="fas fa-plus"></i> 학회/논문 추가
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-graduation-cap"></i> 학회 활동 / 논문 ({{ items|length }}개)</div>
+  </div>
+  {% if items %}
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>제목</th>
+        <th>설명</th>
+        <th>날짜</th>
+        <th>논문 링크</th>
+        <th>이미지</th>
+        <th style="width:100px">관리</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          <strong>{{ item.name }}</strong>
+        </td>
+        <td style="color:#94a3b8;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ item.description or '-' }}</td>
+        <td style="font-size:0.8rem;color:#94a3b8;white-space:nowrap">{{ item.date_text or '-' }}</td>
+        <td>
+          {% if item.paper_link %}
+          <a href="{{ item.paper_link }}" target="_blank" class="btn-admin btn-ghost btn-sm">
+            <i class="fas fa-external-link-alt"></i>
+          </a>
+          {% else %}<span style="color:#64748b">-</span>{% endif %}
+        </td>
+        <td style="font-size:0.8rem;color:#94a3b8">
+          {{ item.images|length if item.images else 0 }}개
+        </td>
+        <td>
+          <div style="display:flex;gap:6px">
+            <button class="btn-admin btn-ghost btn-icon btn-sm" onclick="editItem({{ item | tojson }})">
+              <i class="fas fa-edit"></i>
+            </button>
+            <form method="POST" action="{{ url_for('admin_academic_delete', row_id=item.id) }}"
+                  onsubmit="return confirm('삭제하시겠습니까?')">
+              <button type="submit" class="btn-admin btn-danger btn-icon btn-sm"><i class="fas fa-trash"></i></button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="card-body" style="text-align:center;padding:40px;color:#64748b">
+    <i class="fas fa-graduation-cap" style="font-size:2rem;margin-bottom:12px;display:block"></i>
+    등록된 항목이 없습니다.
+  </div>
+  {% endif %}
+</div>
+
+<div class="admin-modal" id="editModal">
+  <div class="admin-modal-box" style="max-width:680px">
+    <div class="modal-header">
+      <div class="modal-title-text" id="modalTitleText">학회/논문 추가</div>
+      <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <form method="POST" action="{{ url_for('admin_academic_save') }}" id="academicForm">
+      <div class="modal-body">
+        <input type="hidden" name="id" id="itemId">
+        <input type="hidden" name="images" id="imagesJson">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">제목 *</label>
+            <input type="text" name="name" id="itemName" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">설명</label>
+            <textarea name="description" id="itemDesc" class="form-textarea" rows="2"></textarea>
+          </div>
+          <div class="form-grid form-grid-2">
+            <div class="form-group">
+              <label class="form-label">날짜</label>
+              <input type="text" name="date_text" id="itemDate" class="form-input" placeholder="예: 2024.05.30">
+            </div>
+            <div class="form-group">
+              <label class="form-label">논문 링크</label>
+              <input type="url" name="paper_link" id="itemLink" class="form-input" placeholder="https://...">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">이미지 URL 목록</label>
+            <div id="imgUrlList" class="img-url-list"></div>
+            <button type="button" class="btn-admin btn-ghost btn-sm" style="margin-top:8px" onclick="addImgUrl()">
+              <i class="fas fa-plus"></i> URL 추가
+            </button>
+          </div>
+          <div class="form-group">
+            <label class="form-label">정렬 순서</label>
+            <input type="number" name="sort_order" id="itemOrder" class="form-input" value="0">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-admin btn-ghost" onclick="closeModal()">취소</button>
+        <button type="button" class="btn-admin btn-primary" onclick="saveForm()"><i class="fas fa-save"></i> 저장</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let imgUrls = [];
+function addImgUrl(url='') { imgUrls.push(url); renderImgList(); }
+function removeImgUrl(i) { imgUrls.splice(i,1); renderImgList(); }
+function renderImgList() {
+  document.getElementById('imgUrlList').innerHTML = imgUrls.map((url,i) => `
+    <div class="img-url-item">
+      <input type="text" class="form-input" value="${url}"
+             oninput="imgUrls[${i}]=this.value" placeholder="https://...">
+      ${url ? `<img src="${url}" class="img-url-preview" onerror="this.style.display='none'">` : ''}
+      <button type="button" class="btn-admin btn-danger btn-icon btn-sm" onclick="removeImgUrl(${i})">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>`).join('');
+}
+function saveForm() {
+  document.getElementById('imagesJson').value = JSON.stringify(imgUrls.filter(u=>u.trim()));
+  document.getElementById('academicForm').submit();
+}
+function openModal() {
+  ['itemId','itemName','itemDesc','itemDate','itemLink'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('itemOrder').value = 0;
+  imgUrls = []; renderImgList();
+  document.getElementById('modalTitleText').textContent = '학회/논문 추가';
+  document.getElementById('editModal').classList.add('show');
+}
+function editItem(item) {
+  document.getElementById('itemId').value = item.id||'';
+  document.getElementById('itemName').value = item.name||'';
+  document.getElementById('itemDesc').value = item.description||'';
+  document.getElementById('itemDate').value = item.date_text||'';
+  document.getElementById('itemLink').value = item.paper_link||'';
+  document.getElementById('itemOrder').value = item.sort_order||0;
+  imgUrls = Array.isArray(item.images) ? [...item.images] : [];
+  renderImgList();
+  document.getElementById('modalTitleText').textContent = '학회/논문 수정';
+  document.getElementById('editModal').classList.add('show');
+}
+function closeModal() { document.getElementById('editModal').classList.remove('show'); }
+document.getElementById('editModal').addEventListener('click', e => { if(e.target===document.getElementById('editModal')) closeModal(); });
+</script>
+{% endblock %}
