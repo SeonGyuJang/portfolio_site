@@ -1,25 +1,39 @@
 from flask import Flask, render_template, abort, request, redirect, url_for, session, jsonify
 import os
 import json
+import logging
 from functools import wraps
 from dotenv import load_dotenv
 
 load_dotenv()
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-please-change')
 
-SUPABASE_URL = os.environ.get('SUPABASE_URL', '')
-SUPABASE_KEY = os.environ.get('SUPABASE_KEY', '')
+SUPABASE_URL = os.environ.get('SUPABASE_URL', '').strip()
+SUPABASE_KEY = os.environ.get('SUPABASE_KEY', '').strip()
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin1234')
 
 supabase = None
-if SUPABASE_URL and SUPABASE_KEY:
+_supabase_error = None
+
+if not SUPABASE_URL:
+    logger.error("SUPABASE_URL environment variable is not set or empty")
+elif not SUPABASE_KEY:
+    logger.error("SUPABASE_KEY environment variable is not set or empty")
+else:
     try:
         from supabase import create_client
         supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+        # Verify connection with a lightweight query
+        supabase.table('current_activities').select('id').limit(1).execute()
+        logger.info("Supabase connection established successfully")
     except Exception as e:
-        print(f"Supabase connection error: {e}")
+        _supabase_error = str(e)
+        logger.error(f"Supabase connection error: {e}")
 
 
 # ── helpers ────────────────────────────────────────────────────────────────
@@ -513,6 +527,23 @@ def admin_upload_image():
         return jsonify({'url': url})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/health')
+def health():
+    url_set = bool(SUPABASE_URL)
+    key_set = bool(SUPABASE_KEY)
+    connected = supabase is not None
+
+    status = {
+        'supabase_url_set': url_set,
+        'supabase_key_set': key_set,
+        'supabase_url_prefix': SUPABASE_URL[:30] + '...' if url_set else None,
+        'supabase_connected': connected,
+        'supabase_error': _supabase_error,
+    }
+    http_status = 200 if connected else 503
+    return jsonify(status), http_status
 
 
 if __name__ == '__main__':
