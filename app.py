@@ -556,52 +556,82 @@ def admin_activity_log_delete(log_id):
 @app.route('/admin/api/upload-image', methods=['POST'])
 @require_admin
 def admin_upload_image():
-    """Upload image to Supabase Storage and return public URL."""
+    """Upload image to database and return public URL."""
     if not supabase:
         return jsonify({'error': 'Supabase not configured'}), 400
     file = request.files.get('file')
     if not file:
         return jsonify({'error': 'No file provided'}), 400
-    bucket = 'portfolio-images'
-    _, ext = os.path.splitext(file.filename or 'image.jpg')
-    if not ext:
-        ext = '.jpg'
-    filename = f"activity-logs/{uuid.uuid4().hex}{ext.lower()}"
+    
     try:
+        import base64
         content = file.read()
-        supabase.storage.from_(bucket).upload(
-            filename, content,
-            file_options={'content-type': file.content_type or 'image/jpeg', 'upsert': 'true'}
-        )
-        url = supabase.storage.from_(bucket).get_public_url(filename)
-        return jsonify({'url': url, 'path': filename})
+        filename = file.filename or 'image.jpg'
+        
+        # MIME 타입 결정
+        mime_type = file.content_type or 'image/jpeg'
+        
+        # Base64 인코딩
+        image_data_b64 = base64.b64encode(content).decode('utf-8')
+        
+        # 데이터베이스에 저장
+        result = supabase.table('portfolio_images').insert({
+            'filename': filename,
+            'mime_type': mime_type,
+            'image_data': image_data_b64,
+            'item_type': 'activity_logs'
+        }).execute()
+        
+        if result.data and len(result.data) > 0:
+            image_id = result.data[0]['id']
+            # 이미지를 제공할 URL 생성
+            url = f"/api/images/{image_id}"
+            return jsonify({'url': url, 'image_id': image_id})
+        else:
+            return jsonify({'error': 'Failed to save image'}), 500
     except Exception as e:
+        logger.error(f"Image upload error: {e}")
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/images/<image_id>')
+def get_image(image_id):
+    """Get image by ID from database."""
+    if not supabase:
+        return "Image not available", 404
+    try:
+        import base64
+        result = supabase.table('portfolio_images').select('*').eq('id', image_id).execute()
+        if result.data and len(result.data) > 0:
+            img = result.data[0]
+            # Base64 디코딩
+            image_data = base64.b64decode(img['image_data'])
+            return image_data, 200, {
+                'Content-Type': img.get('mime_type', 'image/jpeg'),
+                'Cache-Control': 'public, max-age=86400'
+            }
+        return "Image not found", 404
+    except Exception as e:
+        logger.error(f"Get image error: {e}")
+        return "Error loading image", 500
 
 
 @app.route('/admin/api/images')
 @require_admin
 def admin_list_images():
-    """List images from Supabase Storage activity-logs folder."""
+    """List images from database activity_logs folder."""
     if not supabase:
         return jsonify({'images': []})
     try:
-        files = supabase.storage.from_('portfolio-images').list(
-            'activity-logs',
-            {'sortBy': {'column': 'created_at', 'order': 'desc'}}
-        )
+        result = supabase.table('portfolio_images').select('*').eq('item_type', 'activity_logs').order('created_at', desc=True).execute()
         images = []
-        for f in (files or []):
-            name = f.get('name', '')
-            if name and not name.startswith('.'):
-                path = f"activity-logs/{name}"
-                url = supabase.storage.from_('portfolio-images').get_public_url(path)
-                images.append({
-                    'path': path,
-                    'url': url,
-                    'name': name,
-                    'size': f.get('metadata', {}).get('size', 0) if f.get('metadata') else 0,
-                })
+        for img in (result.data or []):
+            images.append({
+                'id': img['id'],
+                'url': f"/api/images/{img['id']}",
+                'name': img.get('filename', 'image'),
+                'size': len(img.get('image_data', b'')),
+            })
         return jsonify({'images': images})
     except Exception as e:
         logger.error(f"admin_list_images error: {e}")
@@ -611,15 +641,15 @@ def admin_list_images():
 @app.route('/admin/api/images/delete', methods=['POST'])
 @require_admin
 def admin_delete_image():
-    """Delete an image from Supabase Storage."""
+    """Delete an image from database."""
     if not supabase:
         return jsonify({'error': 'Supabase not configured'}), 400
     data = request.get_json(silent=True) or {}
-    path = data.get('path', '')
-    if not path or not path.startswith('activity-logs/'):
-        return jsonify({'error': 'Invalid path'}), 400
+    image_id = data.get('image_id', '')
+    if not image_id:
+        return jsonify({'error': 'Invalid image_id'}), 400
     try:
-        supabase.storage.from_('portfolio-images').remove([path])
+        supabase.table('portfolio_images').delete().eq('id', image_id).execute()
         return jsonify({'ok': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500

@@ -9,6 +9,8 @@
 import sys
 import os
 from dotenv import load_dotenv
+import base64
+import json
 
 load_dotenv()
 
@@ -399,10 +401,115 @@ def main():
     for table_name, rows in tables_to_run.items():
         migrate_table(table_name, rows)
 
+    # 이미지 마이그레이션
+    if TARGET_TABLE is None or TARGET_TABLE in ['awards', 'academic_items']:
+        migrate_images()
+
     print(f"\n{'='*50}")
     print("  마이그레이션 완료!")
     print("  이제 포트폴리오 사이트에서 데이터를 확인하세요.")
     print("=" * 50)
+
+
+def migrate_images():
+    """Migrate images from static/images to database."""
+    print(f"\n{'─'*50}")
+    print(f"🖼  이미지 마이그레이션")
+    
+    if DRY_RUN:
+        print("  → DRY RUN: 실제 저장 안 함")
+        return
+    
+    base_dir = os.path.join(os.path.dirname(__file__), 'static', 'images')
+    if not os.path.exists(base_dir):
+        print(f"  ⚠️  이미지 폴더 없음: {base_dir}")
+        return
+    
+    # 수집할 이미지들
+    image_map = {}  # {file_path: image_id}
+    image_count = 0
+    
+    # AWARDS에서 이미지 수집
+    for award in AWARDS:
+        if isinstance(award.get('images'), list):
+            image_ids = []
+            for img_path in award['images']:
+                # 경로 정규화
+                img_path = img_path.lstrip('/')
+                if img_path.startswith('static/images/'):
+                    img_path = img_path[len('static/images/'):]
+                
+                full_path = os.path.join(base_dir, img_path)
+                
+                if os.path.exists(full_path):
+                    img_id = upload_image_to_db(full_path, 'awards', img_path)
+                    if img_id:
+                        image_ids.append(img_id)
+                        image_count += 1
+                        print(f"  ✓ {img_path}")
+                else:
+                    print(f"  ✗ 파일 없음: {img_path}")
+            
+            award['images'] = image_ids
+    
+    # ACADEMIC_ITEMS에서 이미지 수집
+    for item in ACADEMIC_ITEMS:
+        if isinstance(item.get('images'), list):
+            image_ids = []
+            for img_path in item['images']:
+                # 경로 정규화
+                img_path = img_path.lstrip('/')
+                if img_path.startswith('static/images/'):
+                    img_path = img_path[len('static/images/'):]
+                
+                full_path = os.path.join(base_dir, img_path)
+                
+                if os.path.exists(full_path):
+                    img_id = upload_image_to_db(full_path, 'academic_items', img_path)
+                    if img_id:
+                        image_ids.append(img_id)
+                        image_count += 1
+                        print(f"  ✓ {img_path}")
+                else:
+                    print(f"  ✗ 파일 없음: {img_path}")
+            
+            item['images'] = image_ids
+    
+    print(f"  완료: {image_count}개 이미지 업로드")
+
+
+def upload_image_to_db(file_path, item_type, relative_path):
+    """Upload image to database and return image ID."""
+    try:
+        with open(file_path, 'rb') as f:
+            image_data = f.read()
+        
+        # MIME 타입 결정
+        ext = os.path.splitext(file_path)[1].lower()
+        mime_map = {
+            '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+            '.png': 'image/png', '.gif': 'image/gif',
+            '.webp': 'image/webp', '.svg': 'image/svg+xml'
+        }
+        mime_type = mime_map.get(ext, 'image/jpeg')
+        
+        # Base64 인코딩 (JSON 직렬화 가능)
+        image_data_b64 = base64.b64encode(image_data).decode('utf-8')
+        
+        # 데이터베이스에 저장
+        result = supabase.table('portfolio_images').insert({
+            'filename': relative_path,
+            'mime_type': mime_type,
+            'image_data': image_data_b64,
+            'item_type': item_type
+        }).execute()
+        
+        if result.data and len(result.data) > 0:
+            return result.data[0]['id']
+        return None
+    except Exception as e:
+        print(f"    오류: {e}")
+        return None
 
 
 if __name__ == "__main__":
