@@ -539,6 +539,8 @@ def health():
         'supabase_url_set': url_set,
         'supabase_key_set': key_set,
         'supabase_url_prefix': SUPABASE_URL[:30] + '...' if url_set else None,
+        'supabase_key_prefix': SUPABASE_KEY[:20] + '...' if key_set else None,
+        'supabase_key_length': len(SUPABASE_KEY) if key_set else 0,
         'supabase_connected': connected,
         'supabase_error': _supabase_error,
     }
