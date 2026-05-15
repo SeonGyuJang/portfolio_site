@@ -1,0 +1,1517 @@
+{% extends "admin/base.html" %}
+{% block title %}Activity Log 에디터{% endblock %}
+{% block topbar_icon %}fas fa-pen-nib{% endblock %}
+{% block topbar_title %}Activity Log 에디터{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn-admin btn-ghost btn-sm" id="previewToggleBtn" onclick="NE.togglePreview()">
+  <i class="fas fa-columns"></i> 미리보기
+</button>
+<button class="btn-admin btn-success btn-sm" onclick="NE.save()">
+  <i class="fas fa-save"></i> 저장
+</button>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+/* ════════════════════════════════════════════════
+   Notion Editor — Full styles
+════════════════════════════════════════════════ */
+:root {
+  --ne-bg: #191919;
+  --ne-surface: #1f1f1f;
+  --ne-border: rgba(255,255,255,0.07);
+  --ne-text: rgba(255,255,255,0.87);
+  --ne-dim: rgba(255,255,255,0.45);
+  --ne-placeholder: rgba(255,255,255,0.2);
+  --ne-hover: rgba(255,255,255,0.055);
+  --ne-accent: #6366f1;
+  --ne-handle: rgba(255,255,255,0.2);
+
+  /* Notion text colors */
+  --nc-gray:   #9B9A97; --nc-brown: #A07862;
+  --nc-orange: #D9730D; --nc-yellow:#CB912F;
+  --nc-green:  #448361; --nc-blue:  #337EA9;
+  --nc-purple: #9065B0; --nc-pink:  #C14C8A;
+  --nc-red:    #D44C47;
+
+  /* Notion bg colors */
+  --nb-gray:   rgba(155,154,151,.18); --nb-brown: rgba(160,120,98,.18);
+  --nb-orange: rgba(217,115,13,.18);  --nb-yellow:rgba(203,145,47,.18);
+  --nb-green:  rgba(68,131,97,.18);   --nb-blue:  rgba(51,126,169,.18);
+  --nb-purple: rgba(144,101,176,.18); --nb-pink:  rgba(193,76,138,.18);
+  --nb-red:    rgba(212,76,71,.18);
+}
+
+/* ── Layout ── */
+.ne-layout {
+  display: flex;
+  gap: 0;
+  height: calc(100vh - 100px);
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid var(--ne-border);
+  background: var(--ne-bg);
+}
+
+.ne-editor-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.ne-preview-wrap {
+  width: 46%;
+  border-left: 1px solid var(--ne-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.ne-preview-wrap.hidden { display: none; }
+
+.ne-panel-header {
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--ne-border);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ne-dim);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.02);
+  flex-shrink: 0;
+}
+
+/* ── Meta bar ── */
+.ne-meta {
+  display: flex;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--ne-border);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.015);
+}
+.ne-meta-field { display: flex; flex-direction: column; gap: 3px; min-width: 100px; }
+.ne-meta-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: .05em; color: var(--ne-dim); }
+.ne-meta-input {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--ne-border);
+  border-radius: 5px;
+  padding: 5px 8px;
+  color: var(--ne-text);
+  font-size: 0.8rem;
+  font-family: inherit;
+  outline: none;
+  color-scheme: dark;
+}
+.ne-meta-input:focus { border-color: var(--ne-accent); }
+select.ne-meta-input { background: #1e2535; cursor: pointer; }
+select.ne-meta-input option { background: #1e2535; color: #e2e8f0; }
+.ne-meta-icon { width: 50px; text-align: center; font-size: 1.2rem; }
+
+/* ── Page header (icon + title) ── */
+.ne-page-header {
+  padding: 28px 52px 8px;
+  flex-shrink: 0;
+}
+.ne-page-icon-btn {
+  font-size: 3.2rem;
+  cursor: pointer;
+  background: none;
+  border: none;
+  line-height: 1;
+  padding: 4px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  display: block;
+  transition: background .15s;
+}
+.ne-page-icon-btn:hover { background: var(--ne-hover); }
+
+.ne-title {
+  width: 100%;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+  padding: 0;
+  font-family: inherit;
+  resize: none;
+  overflow: hidden;
+}
+.ne-title::placeholder { color: var(--ne-placeholder); }
+
+/* ── Blocks area ── */
+.ne-blocks-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 52px 80px;
+}
+
+/* ── Block wrapper ── */
+.ne-block {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  margin: 1px 0;
+  padding-left: 0;
+  border-radius: 4px;
+  transition: background .1s;
+}
+.ne-block:hover { background: var(--ne-hover); }
+.ne-block.drag-over-top { border-top: 2px solid var(--ne-accent); }
+.ne-block.drag-over-bottom { border-bottom: 2px solid var(--ne-accent); }
+
+/* ── Block controls (left side, show on hover) ── */
+.ne-block-left {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity .15s;
+  flex-shrink: 0;
+  padding: 6px 2px;
+  position: absolute;
+  left: -48px;
+  top: 0;
+}
+.ne-block:hover .ne-block-left { opacity: 1; }
+
+.ne-handle, .ne-plus {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: none;
+  background: none;
+  color: var(--ne-handle);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background .1s, color .1s;
+}
+.ne-handle:hover, .ne-plus:hover {
+  background: rgba(255,255,255,0.08);
+  color: var(--ne-text);
+}
+.ne-handle { cursor: grab; }
+.ne-handle:active { cursor: grabbing; }
+
+/* ── Block content ── */
+.ne-block-content { flex: 1; min-width: 0; padding: 2px 32px 2px 0; }
+
+/* ── Delete btn (right, hover) ── */
+.ne-del-btn {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  background: none;
+  border: none;
+  color: #475569;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  transition: opacity .15s, color .1s;
+}
+.ne-block:hover .ne-del-btn { opacity: 1; }
+.ne-del-btn:hover { color: #ef4444; }
+
+/* ── Contenteditable base ── */
+[contenteditable] {
+  outline: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+  caret-color: var(--ne-accent);
+  min-height: 1.5em;
+}
+[contenteditable]:empty::before {
+  content: attr(data-placeholder);
+  color: var(--ne-placeholder);
+  pointer-events: none;
+}
+
+/* ── Block types ── */
+.ne-p  { font-size: 1rem; line-height: 1.65; color: var(--ne-text); }
+.ne-h1 { font-size: 1.875rem; font-weight: 700; line-height: 1.3; color: #fff; margin: .6em 0 .15em; }
+.ne-h2 { font-size: 1.5rem;   font-weight: 600; line-height: 1.35; color: #fff; margin: .5em 0 .1em; }
+.ne-h3 { font-size: 1.25rem;  font-weight: 600; line-height: 1.4;  color: #fff; margin: .4em 0 .1em; }
+
+.ne-bullet-wrap, .ne-numbered-wrap {
+  display: flex; align-items: flex-start; gap: 6px; width: 100%;
+}
+.ne-list-marker {
+  color: var(--ne-dim);
+  font-weight: 600;
+  min-width: 20px;
+  padding-top: 2px;
+  font-size: .9rem;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.ne-quote-wrap {
+  border-left: 3px solid rgba(255,255,255,0.3);
+  padding-left: 12px;
+  margin: 4px 0;
+}
+
+.ne-callout-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(255,255,255,0.055);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin: 4px 0;
+}
+.ne-callout-icon {
+  font-size: 1.3rem;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+  padding: 0 2px;
+  border-radius: 3px;
+}
+.ne-callout-icon:hover { background: rgba(255,255,255,.1); }
+
+.ne-code-wrap {
+  background: rgba(0,0,0,.35);
+  border-radius: 8px;
+  margin: 6px 0;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.06);
+}
+.ne-code-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 12px;
+  background: rgba(255,255,255,.03);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.ne-code-lang {
+  background: none; border: none; color: var(--ne-dim);
+  font-size: .75rem; font-family: inherit; cursor: pointer; outline: none;
+  padding: 2px 4px; border-radius: 3px;
+}
+.ne-code-lang:hover { background: rgba(255,255,255,.07); }
+.ne-code-edit {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 12px 14px;
+  color: #e2e8f0;
+  font-family: 'Menlo','Monaco','Courier New',monospace;
+  font-size: .83rem;
+  line-height: 1.6;
+  outline: none;
+  resize: vertical;
+  min-height: 60px;
+  tab-size: 2;
+}
+
+.ne-image-wrap { margin: 6px 0; }
+.ne-image-url-input {
+  width: 100%; background: rgba(255,255,255,.04);
+  border: 1px dashed rgba(255,255,255,.15); border-radius: 6px;
+  padding: 10px 14px; color: var(--ne-dim); font-family: inherit;
+  font-size: .85rem; outline: none; transition: border .15s;
+}
+.ne-image-url-input:focus { border-color: var(--ne-accent); color: var(--ne-text); }
+.ne-image-preview { max-width: 100%; max-height: 300px; object-fit: contain; border-radius: 6px; margin-top: 8px; display: block; }
+.ne-image-caption {
+  width: 100%; background: none; border: none; border-top: 1px solid var(--ne-border);
+  padding: 6px 0 2px; color: var(--ne-dim); font-family: inherit; font-size: .8rem;
+  outline: none; text-align: center; margin-top: 6px;
+}
+.ne-image-caption::placeholder { color: rgba(255,255,255,.15); }
+
+.ne-divider { border: none; border-top: 1px solid rgba(255,255,255,.12); margin: 10px 0; }
+
+.ne-toggle-wrap {}
+.ne-toggle-summary {
+  display: flex; align-items: center; gap: 6px; cursor: pointer;
+  list-style: none; padding: 2px 0;
+}
+.ne-toggle-summary::marker { display: none; }
+.ne-toggle-arrow {
+  color: var(--ne-dim); font-size: .7rem;
+  transition: transform .15s; flex-shrink: 0;
+  user-select: none;
+}
+details[open] .ne-toggle-arrow { transform: rotate(90deg); }
+.ne-toggle-children {
+  padding-left: 22px; margin-top: 2px;
+}
+
+/* ── Color classes ── */
+.nc-gray{color:var(--nc-gray)} .nc-brown{color:var(--nc-brown)} .nc-orange{color:var(--nc-orange)}
+.nc-yellow{color:var(--nc-yellow)} .nc-green{color:var(--nc-green)} .nc-blue{color:var(--nc-blue)}
+.nc-purple{color:var(--nc-purple)} .nc-pink{color:var(--nc-pink)} .nc-red{color:var(--nc-red)}
+.nb-gray{background:var(--nb-gray);border-radius:2px;padding:1px 3px}
+.nb-brown{background:var(--nb-brown);border-radius:2px;padding:1px 3px}
+.nb-orange{background:var(--nb-orange);border-radius:2px;padding:1px 3px}
+.nb-yellow{background:var(--nb-yellow);border-radius:2px;padding:1px 3px}
+.nb-green{background:var(--nb-green);border-radius:2px;padding:1px 3px}
+.nb-blue{background:var(--nb-blue);border-radius:2px;padding:1px 3px}
+.nb-purple{background:var(--nb-purple);border-radius:2px;padding:1px 3px}
+.nb-pink{background:var(--nb-pink);border-radius:2px;padding:1px 3px}
+.nb-red{background:var(--nb-red);border-radius:2px;padding:1px 3px}
+
+/* ── Slash menu ── */
+#neSlashMenu {
+  position: fixed;
+  z-index: 9999;
+  background: #252d3d;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  padding: 6px;
+  width: 280px;
+  max-height: 380px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 40px rgba(0,0,0,.6);
+  display: none;
+}
+#neSlashMenu.open { display: flex; }
+#slashList {
+  overflow-y: auto;
+  flex: 1;
+}
+#slashList::-webkit-scrollbar { width: 4px; }
+#slashList::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
+.slash-search {
+  width: 100%;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--ne-text);
+  font-size: .82rem;
+  font-family: inherit;
+  outline: none;
+  margin-bottom: 6px;
+}
+.slash-section {
+  font-size: .62rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: #475569;
+  padding: 6px 8px 3px;
+}
+.slash-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: .82rem;
+  transition: all .1s;
+}
+.slash-item:hover, .slash-item.active {
+  background: rgba(99,102,241,.18);
+  color: #e2e8f0;
+}
+.slash-item-icon {
+  width: 26px; height: 26px;
+  background: rgba(255,255,255,.07);
+  border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .85rem; flex-shrink: 0;
+  font-weight: 700;
+}
+.slash-item-label { font-weight: 500; }
+.slash-item-desc { font-size: .72rem; color: #475569; }
+
+/* ── Format toolbar ── */
+#neFormatBar {
+  position: fixed;
+  z-index: 9998;
+  background: #1a2035;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 8px;
+  padding: 4px 6px;
+  display: none;
+  align-items: center;
+  gap: 2px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.4);
+}
+#neFormatBar.visible { display: flex; }
+.fmt-btn {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border: none; background: none;
+  color: #94a3b8; border-radius: 5px;
+  font-size: .82rem; cursor: pointer;
+  font-family: inherit; font-weight: 700;
+  transition: background .1s, color .1s;
+}
+.fmt-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
+.fmt-btn.active { background: rgba(99,102,241,.25); color: #818cf8; }
+.fmt-sep { width: 1px; height: 20px; background: rgba(255,255,255,.1); margin: 0 2px; }
+
+/* ── Color picker ── */
+#neColorPicker {
+  position: fixed;
+  z-index: 10000;
+  background: #252d3d;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  padding: 10px;
+  width: 220px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.5);
+  display: none;
+}
+#neColorPicker.open { display: block; }
+.cp-section { font-size: .65rem; text-transform: uppercase; color: #475569; margin-bottom: 5px; letter-spacing: .05em; }
+.cp-colors { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+.cp-btn {
+  width: 22px; height: 22px; border-radius: 4px; border: 2px solid transparent;
+  cursor: pointer; transition: border-color .1s, transform .1s;
+}
+.cp-btn:hover { border-color: rgba(255,255,255,.4); transform: scale(1.1); }
+.cp-btn.default { background: var(--ne-text); }
+.cp-btn.gray   { background: var(--nc-gray); }
+.cp-btn.brown  { background: var(--nc-brown); }
+.cp-btn.orange { background: var(--nc-orange); }
+.cp-btn.yellow { background: var(--nc-yellow); }
+.cp-btn.green  { background: var(--nc-green); }
+.cp-btn.blue   { background: var(--nc-blue); }
+.cp-btn.purple { background: var(--nc-purple); }
+.cp-btn.pink   { background: var(--nc-pink); }
+.cp-btn.red    { background: var(--nc-red); }
+.cp-btn-bg { border: 2px solid rgba(255,255,255,.15); }
+
+/* ── Emoji picker ── */
+#neEmojiPicker {
+  position: fixed; z-index: 10000;
+  background: #252d3d; border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px; padding: 10px; width: 240px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.5); display: none;
+}
+#neEmojiPicker.open { display: block; }
+.emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; }
+.emoji-btn {
+  font-size: 1.2rem; border: none; background: none; cursor: pointer;
+  border-radius: 4px; padding: 3px; transition: background .1s;
+}
+.emoji-btn:hover { background: rgba(255,255,255,.1); }
+
+/* ── Preview frame ── */
+.ne-preview-frame {
+  flex: 1; border: none; background: #191919;
+  width: 100%; min-height: 0;
+}
+
+/* ── Scrollbar ── */
+.ne-blocks-area::-webkit-scrollbar { width: 5px; }
+.ne-blocks-area::-webkit-scrollbar-track { background: transparent; }
+.ne-blocks-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<form id="logForm" method="POST" action="{{ url_for('admin_activity_log_save') }}">
+  <input type="hidden" name="id" value="{{ log.id if log else '' }}">
+  <input type="hidden" name="blocks" id="blocksJson">
+  <input type="hidden" name="title" id="formTitle">
+  <input type="hidden" name="icon"  id="formIcon">
+  <input type="hidden" name="category" id="formCategory">
+  <input type="hidden" name="date_text" id="formDate">
+  <input type="hidden" name="tags"  id="formTags">
+  <input type="hidden" name="sort_order" value="{{ log.sort_order if log else 0 }}">
+
+  <div class="ne-layout" id="neLayout">
+
+    <!-- ── EDITOR ── -->
+    <div class="ne-editor-wrap">
+
+      <!-- Meta bar -->
+      <div class="ne-meta">
+        <div class="ne-meta-field" style="flex:1;min-width:130px">
+          <div class="ne-meta-label">카테고리</div>
+          <select class="ne-meta-input" id="metaCategory">
+            {% for cat in [('paper','논문'),('study','개인공부'),('school','학교생활'),('book','독서')] %}
+            <option value="{{ cat[0] }}" {% if log and log.category==cat[0] %}selected{% endif %}>{{ cat[1] }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="ne-meta-field" style="flex:1;min-width:120px">
+          <div class="ne-meta-label">날짜</div>
+          <input class="ne-meta-input" id="metaDate"
+                 value="{{ log.date_text if log else '' }}" placeholder="예: 2025.01">
+        </div>
+        <div class="ne-meta-field" style="flex:2;min-width:160px">
+          <div class="ne-meta-label">태그 (쉼표 구분)</div>
+          <input class="ne-meta-input" id="metaTags"
+                 value="{{ (log.tags|join(', ')) if log and log.tags else '' }}"
+                 placeholder="LLM, Python, ...">
+        </div>
+      </div>
+
+      <!-- Panel header -->
+      <div class="ne-panel-header">
+        <i class="fas fa-pen-nib"></i> 에디터
+        <span style="margin-left:auto;color:#334155;font-size:.7rem">
+          <kbd style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px">/</kbd> 블록 추가 &nbsp;
+          <kbd style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px">Ctrl+B</kbd> 굵게
+        </span>
+      </div>
+
+      <!-- Page header -->
+      <div class="ne-page-header">
+        <button type="button" class="ne-page-icon-btn" id="pageIconBtn"
+                onclick="NE.showEmojiPicker(this)" title="아이콘 변경">
+          {{ log.icon if log else '📄' }}
+        </button>
+        <textarea class="ne-title" id="pageTitle" rows="1"
+                  placeholder="제목 없음"
+                  oninput="NE.onTitleInput(this)">{{ log.title if log else '' }}</textarea>
+      </div>
+
+      <!-- Blocks -->
+      <div class="ne-blocks-area" id="neBlocksArea" onclick="NE.onAreaClick(event)"></div>
+    </div>
+
+    <!-- ── PREVIEW ── -->
+    <div class="ne-preview-wrap hidden" id="nePreviewWrap">
+      <div class="ne-panel-header">
+        <i class="fas fa-eye"></i> 미리보기
+        <button type="button" style="margin-left:auto;background:none;border:none;color:#475569;cursor:pointer;font-size:.8rem"
+                onclick="NE.refreshPreview()">
+          <i class="fas fa-sync-alt"></i>
+        </button>
+      </div>
+      <iframe id="nePreviewFrame" class="ne-preview-frame"></iframe>
+    </div>
+  </div>
+</form>
+
+<!-- Slash command menu -->
+<div id="neSlashMenu">
+  <input id="slashSearch" class="slash-search" placeholder="블록 검색..." oninput="NE.filterSlash(this.value)" onkeydown="NE.slashKeydown(event)">
+  <div id="slashList"></div>
+</div>
+
+<!-- Format toolbar -->
+<div id="neFormatBar">
+  <button class="fmt-btn" title="굵게 (Ctrl+B)" onmousedown="NE.fmt('bold',event)"><b>B</b></button>
+  <button class="fmt-btn" title="기울임 (Ctrl+I)" onmousedown="NE.fmt('italic',event)"><i>I</i></button>
+  <button class="fmt-btn" title="취소선" onmousedown="NE.fmt('strike',event)"><s>S</s></button>
+  <button class="fmt-btn" title="밑줄 (Ctrl+U)" onmousedown="NE.fmt('underline',event)"><u>U</u></button>
+  <button class="fmt-btn" title="인라인 코드" onmousedown="NE.fmt('code',event)" style="font-family:monospace">&lt;/&gt;</button>
+  <div class="fmt-sep"></div>
+  <button class="fmt-btn" title="링크" onmousedown="NE.fmt('link',event)"><i class="fas fa-link" style="font-size:.7rem"></i></button>
+  <div class="fmt-sep"></div>
+  <button class="fmt-btn" title="글자색" onmousedown="NE.openColorPicker('text',event)" style="color:#f59e0b">A</button>
+  <button class="fmt-btn" title="배경색" onmousedown="NE.openColorPicker('bg',event)">
+    <span style="font-size:.6rem;line-height:1;font-weight:700">A<span style="display:block;height:3px;background:#6366f1;border-radius:1px;margin-top:1px"></span></span>
+  </button>
+</div>
+
+<!-- Color picker -->
+<div id="neColorPicker">
+  <div class="cp-section">글자색</div>
+  <div class="cp-colors" id="cpTextColors"></div>
+  <div class="cp-section">배경색</div>
+  <div class="cp-colors" id="cpBgColors"></div>
+</div>
+
+<!-- Emoji picker -->
+<div id="neEmojiPicker">
+  <div style="font-size:.7rem;color:#475569;margin-bottom:6px">페이지 아이콘 선택</div>
+  <div class="emoji-grid" id="emojiGrid"></div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// ════════════════════════════════════════════════════════════
+// NE — Notion Editor
+// ════════════════════════════════════════════════════════════
+const NE = (() => {
+  // ── State ──
+  let blocks = [];
+  let slashState = null;  // {blockId, query}
+  let slashActive = -1;   // active index in filtered slash list
+  let slashFiltered = [];
+  let dragSrcId = null;
+  let savedRange = null;
+  let colorMode = 'text';  // 'text' | 'bg'
+  let previewOpen = false;
+  let previewTimer = null;
+
+  // ── Block definitions for slash menu ──
+  const BLOCK_DEFS = [
+    { type:'paragraph',  label:'텍스트',      desc:'일반 텍스트', icon:'¶',    section:'기본 블록' },
+    { type:'heading1',   label:'제목 1',       desc:'큰 제목',     icon:'H1',   section:'기본 블록' },
+    { type:'heading2',   label:'제목 2',       desc:'중간 제목',   icon:'H2',   section:'기본 블록' },
+    { type:'heading3',   label:'제목 3',       desc:'작은 제목',   icon:'H3',   section:'기본 블록' },
+    { type:'bullet',     label:'불릿 목록',    desc:'•  항목',     icon:'•',    section:'목록' },
+    { type:'numbered',   label:'번호 목록',    desc:'1. 항목',     icon:'1.',   section:'목록' },
+    { type:'toggle',     label:'토글',         desc:'접기/펼치기', icon:'▶',    section:'목록' },
+    { type:'quote',      label:'인용구',       desc:'강조 인용',   icon:'"',    section:'미디어' },
+    { type:'callout',    label:'콜아웃',       desc:'아이콘 강조', icon:'💡',   section:'미디어' },
+    { type:'code',       label:'코드',         desc:'코드 블록',   icon:'</>',  section:'미디어' },
+    { type:'image',      label:'이미지',       desc:'URL 삽입',    icon:'🖼',   section:'미디어' },
+    { type:'divider',    label:'구분선',       desc:'─ 水平線',    icon:'─',    section:'미디어' },
+  ];
+
+  const COLORS = ['default','gray','brown','orange','yellow','green','blue','purple','pink','red'];
+
+  // ── Init ──
+  function init() {
+    const raw = {{ (log.blocks | tojson) if log and log.blocks else '[]' }};
+    blocks = Array.isArray(raw) ? raw.map(b => ({ ...b, id: b.id || genId() })) : [];
+    if (!blocks.length) blocks = [newBlock('paragraph')];
+
+    renderAll();
+    buildColorPicker();
+    buildEmojiPicker();
+    autoResizeTitle();
+
+    document.addEventListener('selectionchange', onSelectionChange);
+    document.addEventListener('mousedown', onDocMousedown);
+    document.addEventListener('keydown', onDocKeydown);
+    // Only close on scroll outside the overlay panels
+    document.addEventListener('scroll', e => {
+      const inOverlay = e.target && e.target.closest &&
+        (e.target.closest('#neSlashMenu') ||
+         e.target.closest('#neColorPicker') ||
+         e.target.closest('#neEmojiPicker'));
+      if (!inOverlay) hideAll();
+    }, true);
+  }
+
+  // ── Utilities ──
+  function genId() { return Math.random().toString(36).substr(2, 9); }
+
+  function newBlock(type, html = '') {
+    const b = { id: genId(), type, html };
+    if (type === 'callout') b.icon = '💡';
+    if (type === 'code') b.language = 'python';
+    if (type === 'image') { b.url = ''; b.caption = ''; }
+    return b;
+  }
+
+  function blockIdx(id) { return blocks.findIndex(b => b.id === id); }
+
+  function getBlockEl(id) { return document.querySelector(`.ne-block[data-id="${id}"]`); }
+
+  function getEditEl(id) {
+    const el = getBlockEl(id);
+    return el ? el.querySelector('[data-edit]') : null;
+  }
+
+  // ── Render ──
+  function renderAll() {
+    const area = document.getElementById('neBlocksArea');
+    area.innerHTML = '';
+    let numIdx = 0;
+    blocks.forEach((b, i) => {
+      if (b.type === 'numbered') { numIdx++; }
+      else { numIdx = 0; }
+      area.appendChild(makeBlockEl(b, numIdx));
+    });
+    recalcNumbers();
+    schedulePreview();
+  }
+
+  function recalcNumbers() {
+    let n = 0;
+    blocks.forEach(b => {
+      if (b.type === 'numbered') {
+        n++;
+        const el = getBlockEl(b.id);
+        const marker = el && el.querySelector('.ne-list-marker');
+        if (marker) marker.textContent = n + '.';
+      } else { n = 0; }
+    });
+  }
+
+  function makeBlockEl(b, numIdx) {
+    const wrap = document.createElement('div');
+    wrap.className = 'ne-block';
+    wrap.dataset.id = b.id;
+    wrap.dataset.type = b.type;
+    wrap.draggable = true;
+
+    // Left controls
+    const left = document.createElement('div');
+    left.className = 'ne-block-left';
+    left.innerHTML = `
+      <button type="button" class="ne-plus" title="블록 추가" onclick="NE.addBlockAfter('${b.id}')">+</button>
+      <span class="ne-handle" title="드래그" draggable="false">⠿</span>`;
+
+    // Delete btn
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'ne-del-btn';
+    delBtn.title = '블록 삭제';
+    delBtn.innerHTML = '<i class="fas fa-times"></i>';
+    delBtn.onclick = () => deleteBlock(b.id);
+
+    // Content
+    const content = document.createElement('div');
+    content.className = 'ne-block-content';
+    content.appendChild(makeContent(b));
+
+    wrap.appendChild(left);
+    wrap.appendChild(content);
+    wrap.appendChild(delBtn);
+
+    // Drag events
+    wrap.addEventListener('dragstart', e => { dragSrcId = b.id; e.dataTransfer.effectAllowed = 'move'; });
+    wrap.addEventListener('dragover', e => {
+      e.preventDefault();
+      document.querySelectorAll('.ne-block').forEach(el => el.classList.remove('drag-over-top','drag-over-bottom'));
+      const rect = wrap.getBoundingClientRect();
+      if (e.clientY < rect.top + rect.height / 2) wrap.classList.add('drag-over-top');
+      else wrap.classList.add('drag-over-bottom');
+    });
+    wrap.addEventListener('dragleave', () => wrap.classList.remove('drag-over-top','drag-over-bottom'));
+    wrap.addEventListener('drop', e => {
+      e.preventDefault();
+      wrap.classList.remove('drag-over-top','drag-over-bottom');
+      if (!dragSrcId || dragSrcId === b.id) return;
+      const rect = wrap.getBoundingClientRect();
+      const before = e.clientY < rect.top + rect.height / 2;
+      const srcIdx = blockIdx(dragSrcId);
+      const dstIdx = blockIdx(b.id);
+      const [moved] = blocks.splice(srcIdx, 1);
+      const newDst = blockIdx(b.id);
+      blocks.splice(before ? newDst : newDst + 1, 0, moved);
+      dragSrcId = null;
+      renderAll();
+    });
+
+    return wrap;
+  }
+
+  function makeContent(b) {
+    const div = document.createElement('div');
+
+    if (b.type === 'divider') {
+      div.innerHTML = '<hr class="ne-divider">';
+      return div;
+    }
+
+    if (b.type === 'image') {
+      div.className = 'ne-image-wrap';
+      div.innerHTML = `
+        <input class="ne-image-url-input" type="text" placeholder="🖼  이미지 URL을 붙여넣으세요..."
+               value="${esc(b.url || '')}" data-edit data-field="url"
+               oninput="NE.updateField('${b.id}','url',this.value);NE.updateImgPreview('${b.id}',this.value)">
+        ${b.url ? `<img src="${esc(b.url)}" class="ne-image-preview" id="imgprev_${b.id}" onerror="this.style.display='none'">` : `<img class="ne-image-preview" id="imgprev_${b.id}" style="display:none">`}
+        <input class="ne-image-caption" type="text" placeholder="캡션 추가..."
+               value="${esc(b.caption || '')}" data-field="caption"
+               oninput="NE.updateField('${b.id}','caption',this.value)">`;
+      return div;
+    }
+
+    if (b.type === 'code') {
+      div.className = 'ne-code-wrap';
+      const langs = ['python','javascript','typescript','sql','bash','json','html','css','java','cpp','rust','go','kotlin','swift'];
+      div.innerHTML = `
+        <div class="ne-code-header">
+          <select class="ne-code-lang" onchange="NE.updateField('${b.id}','language',this.value)">
+            ${langs.map(l => `<option ${b.language===l?'selected':''} value="${l}">${l}</option>`).join('')}
+          </select>
+          <button type="button" style="background:none;border:none;color:#475569;cursor:pointer;font-size:.72rem"
+                  onclick="navigator.clipboard.writeText(this.closest('.ne-code-wrap').querySelector('textarea').value)">
+            <i class="fas fa-copy"></i> 복사
+          </button>
+        </div>
+        <textarea class="ne-code-edit" data-edit spellcheck="false"
+                  placeholder="코드를 입력하세요..."
+                  oninput="NE.updateField('${b.id}','html',this.value);NE.autoResizeTA(this)"
+                  onkeydown="NE.codeKeydown(event,'${b.id}')"
+                  >${esc(b.html || b.content || '')}</textarea>`;
+      requestAnimationFrame(() => {
+        const ta = div.querySelector('textarea');
+        if (ta) NE.autoResizeTA(ta);
+      });
+      return div;
+    }
+
+    if (b.type === 'callout') {
+      div.className = 'ne-callout-wrap';
+      div.innerHTML = `
+        <span class="ne-callout-icon" contenteditable="true" data-edit data-field="icon"
+              oninput="NE.updateField('${b.id}','icon',this.textContent)"
+              title="아이콘 클릭으로 변경">${b.icon || '💡'}</span>
+        <div class="ne-p" contenteditable="true" data-edit data-block-id="${b.id}"
+             data-placeholder="콜아웃 내용..."
+             oninput="NE.onEdit(event,'${b.id}')"
+             onkeydown="NE.onKeydown(event,'${b.id}')">${b.html || ''}</div>`;
+      return div;
+    }
+
+    if (b.type === 'toggle') {
+      div.className = 'ne-toggle-wrap';
+      div.innerHTML = `
+        <details ${b.open ? 'open' : ''} onToggle="NE.updateField('${b.id}','open',this.open)">
+          <summary class="ne-toggle-summary">
+            <span class="ne-toggle-arrow">▶</span>
+            <div class="ne-h3" contenteditable="true" data-edit data-block-id="${b.id}"
+                 data-placeholder="토글 제목..."
+                 oninput="NE.onEdit(event,'${b.id}')"
+                 onkeydown="NE.onKeydown(event,'${b.id}')">${b.html || ''}</div>
+          </summary>
+          <div class="ne-toggle-children">
+            <div class="ne-p" style="color:var(--ne-dim);font-size:.85rem;padding:4px 0">
+              토글 내용은 아래 별도 블록으로 추가하세요
+            </div>
+          </div>
+        </details>`;
+      return div;
+    }
+
+    if (b.type === 'quote') {
+      div.innerHTML = `<div class="ne-quote-wrap">
+        <div class="ne-p" contenteditable="true" data-edit data-block-id="${b.id}"
+             data-placeholder="인용구를 입력하세요..."
+             oninput="NE.onEdit(event,'${b.id}')"
+             onkeydown="NE.onKeydown(event,'${b.id}')">${b.html || ''}</div></div>`;
+      return div;
+    }
+
+    if (b.type === 'bullet') {
+      div.innerHTML = `<div class="ne-bullet-wrap">
+        <span class="ne-list-marker">•</span>
+        <div class="ne-p" contenteditable="true" data-edit data-block-id="${b.id}"
+             data-placeholder="항목..."
+             oninput="NE.onEdit(event,'${b.id}')"
+             onkeydown="NE.onKeydown(event,'${b.id}')">${b.html || ''}</div></div>`;
+      return div;
+    }
+
+    if (b.type === 'numbered') {
+      div.innerHTML = `<div class="ne-numbered-wrap">
+        <span class="ne-list-marker">1.</span>
+        <div class="ne-p" contenteditable="true" data-edit data-block-id="${b.id}"
+             data-placeholder="항목..."
+             oninput="NE.onEdit(event,'${b.id}')"
+             onkeydown="NE.onKeydown(event,'${b.id}')">${b.html || ''}</div></div>`;
+      return div;
+    }
+
+    // paragraph, heading1/2/3
+    const cls = { paragraph:'ne-p', heading1:'ne-h1', heading2:'ne-h2', heading3:'ne-h3' };
+    const ph  = { paragraph:'내용을 입력하거나 \'/\'를 눌러 블록을 추가하세요', heading1:'제목 1', heading2:'제목 2', heading3:'제목 3' };
+    div.innerHTML = `<div class="${cls[b.type]||'ne-p'}" contenteditable="true"
+         data-edit data-block-id="${b.id}"
+         data-placeholder="${ph[b.type]||''}"
+         oninput="NE.onEdit(event,'${b.id}')"
+         onkeydown="NE.onKeydown(event,'${b.id}')">${b.html || ''}</div>`;
+    return div;
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Block operations ──
+  function addBlockAfter(afterId, type = 'paragraph') {
+    const idx = blockIdx(afterId);
+    const b = newBlock(type);
+    blocks.splice(idx + 1, 0, b);
+    renderAll();
+    setTimeout(() => focusBlock(b.id), 30);
+    return b.id;
+  }
+
+  function deleteBlock(id) {
+    const idx = blockIdx(id);
+    if (blocks.length === 1) {
+      blocks[0] = newBlock('paragraph');
+      renderAll();
+      focusBlock(blocks[0].id);
+      return;
+    }
+    blocks.splice(idx, 1);
+    renderAll();
+    const focusIdx = Math.min(idx, blocks.length - 1);
+    focusBlock(blocks[focusIdx].id, true);
+  }
+
+  function convertBlock(id, type) {
+    const b = blocks[blockIdx(id)];
+    if (!b) return;
+    const prevHtml = b.html;
+    Object.keys(b).forEach(k => { if (!['id','html'].includes(k)) delete b[k]; });
+    b.type = type;
+    if (type === 'callout') b.icon = '💡';
+    if (type === 'code')    b.language = 'python';
+    if (type === 'image')   { b.url = ''; b.caption = ''; }
+    if (type !== 'image' && type !== 'divider') b.html = prevHtml || '';
+    renderAll();
+    setTimeout(() => focusBlock(id), 30);
+  }
+
+  function focusBlock(id, atEnd = false) {
+    const el = getEditEl(id);
+    if (!el) return;
+    el.focus();
+    if (atEnd) {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  }
+
+  function updateField(id, field, val) {
+    const b = blocks[blockIdx(id)];
+    if (b) b[field] = val;
+    schedulePreview();
+  }
+
+  // ── Keyboard handling ──
+  function onEdit(e, id) {
+    const b = blocks[blockIdx(id)];
+    if (!b) return;
+    const el = e.target;
+
+    // Sync HTML
+    b.html = el.innerHTML;
+
+    // Slash detection — only open if menu isn't already open
+    const text = el.textContent;
+    if (text.endsWith('/') && !slashState) {
+      openSlashMenu(id, el);
+    }
+
+    schedulePreview();
+  }
+
+  function onKeydown(e, id) {
+    const b = blocks[blockIdx(id)];
+    const el = e.target;
+
+    // Slash menu navigation
+    if (slashState) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); slashNav(1); return; }
+      if (e.key === 'ArrowUp')   { e.preventDefault(); slashNav(-1); return; }
+      if (e.key === 'Enter')     {
+        e.preventDefault();
+        applySlash();
+        return;
+      }
+      if (e.key === 'Escape')    { closeSlashMenu(); return; }
+    }
+
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      // For list items, continue the list
+      const nextType = (b.type === 'bullet' || b.type === 'numbered') ? b.type : 'paragraph';
+      const newId = addBlockAfter(id, nextType);
+      return;
+    }
+
+    if (e.key === 'Backspace') {
+      const isEmpty = el.textContent.trim() === '' && el.innerHTML.replace(/<br>/gi,'') === '';
+      if (isEmpty) {
+        e.preventDefault();
+        deleteBlock(id);
+        return;
+      }
+    }
+
+    // Bold / Italic / Underline shortcuts
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key === 'b') { e.preventDefault(); document.execCommand('bold'); }
+      if (e.key === 'i') { e.preventDefault(); document.execCommand('italic'); }
+      if (e.key === 'u') { e.preventDefault(); document.execCommand('underline'); }
+    }
+  }
+
+  function codeKeydown(e, id) {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const sel = e.target.selectionStart;
+      const val = e.target.value;
+      e.target.value = val.substring(0, sel) + '  ' + val.substring(sel);
+      e.target.selectionStart = e.target.selectionEnd = sel + 2;
+    }
+    if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
+      // Allow normal newline inside code
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      // Ctrl+Enter = add block after
+      e.preventDefault();
+      addBlockAfter(id, 'paragraph');
+    }
+    updateField(id, 'html', e.target.value);
+  }
+
+  // ── Slash menu ──
+  function openSlashMenu(blockId, el) {
+    slashState = { blockId, query: '' };
+    slashActive = 0;
+    filterSlash('');
+    positionSlashMenu(el);
+    const menu = document.getElementById('neSlashMenu');
+    menu.classList.add('open');
+    const search = document.getElementById('slashSearch');
+    search.value = '';
+    // Focus the search without stealing caret from the block visually
+    requestAnimationFrame(() => search.focus());
+  }
+
+  function closeSlashMenu() {
+    slashState = null;
+    slashActive = -1;
+    document.getElementById('neSlashMenu').classList.remove('open');
+  }
+
+  function positionSlashMenu(el) {
+    const rect = el.getBoundingClientRect();
+    const menu = document.getElementById('neSlashMenu');
+    let top = rect.bottom + 4;
+    let left = rect.left;
+    const vpH = window.innerHeight;
+    const vpW = window.innerWidth;
+    if (top + 340 > vpH) top = rect.top - 340;
+    if (left + 260 > vpW) left = vpW - 270;
+    menu.style.top  = top  + 'px';
+    menu.style.left = left + 'px';
+  }
+
+  function filterSlash(q) {
+    if (slashState) slashState.query = q;
+    const query = q.toLowerCase();
+    slashFiltered = BLOCK_DEFS.filter(d =>
+      d.label.toLowerCase().includes(query) ||
+      d.section.toLowerCase().includes(query) ||
+      d.type.includes(query)
+    );
+    slashActive = slashFiltered.length ? 0 : -1;
+    renderSlashList();
+  }
+
+  function renderSlashList() {
+    const list = document.getElementById('slashList');
+    let html = '';
+    let lastSection = '';
+    slashFiltered.forEach((d, i) => {
+      if (d.section !== lastSection) {
+        html += `<div class="slash-section">${d.section}</div>`;
+        lastSection = d.section;
+      }
+      html += `<div class="slash-item ${i === slashActive ? 'active' : ''}" onclick="NE.applySlashType('${d.type}')">
+        <div class="slash-item-icon">${d.icon}</div>
+        <div>
+          <div class="slash-item-label">${d.label}</div>
+          <div class="slash-item-desc">${d.desc}</div>
+        </div>
+      </div>`;
+    });
+    if (!slashFiltered.length) html = '<div style="padding:12px;color:#475569;font-size:.82rem;text-align:center">일치하는 블록 없음</div>';
+    list.innerHTML = html;
+  }
+
+  function slashNav(dir) {
+    if (!slashFiltered.length) return;
+    slashActive = (slashActive + dir + slashFiltered.length) % slashFiltered.length;
+    renderSlashList();
+    requestAnimationFrame(() => {
+      const active = document.querySelector('#slashList .slash-item.active');
+      if (active) active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
+  }
+
+  function applySlash() {
+    if (slashActive >= 0 && slashFiltered[slashActive]) {
+      applySlashType(slashFiltered[slashActive].type);
+    }
+  }
+
+  function applySlashType(type) {
+    if (!slashState) return;
+    const { blockId, query } = slashState;
+    const b = blocks[blockIdx(blockId)];
+    const el = getEditEl(blockId);
+
+    // Remove the trailing slash from the block (query was typed in the search box, not the block)
+    if (el) {
+      const text = el.textContent;
+      const slashPos = text.lastIndexOf('/');
+      if (slashPos >= 0) {
+        removeTrailingTextFrom(el, text.length - slashPos);
+        if (b) b.html = el.innerHTML;
+      }
+    }
+    closeSlashMenu();
+    convertBlock(blockId, type);
+  }
+
+  // Remove `charCount` chars from the end of a contenteditable element's text
+  function removeTrailingTextFrom(el, charCount) {
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    let node;
+    while ((node = walker.nextNode())) nodes.push(node);
+    let toRemove = charCount;
+    for (let i = nodes.length - 1; i >= 0 && toRemove > 0; i--) {
+      const n = nodes[i];
+      if (n.nodeValue.length <= toRemove) {
+        toRemove -= n.nodeValue.length;
+        n.parentNode.removeChild(n);
+      } else {
+        n.nodeValue = n.nodeValue.slice(0, n.nodeValue.length - toRemove);
+        toRemove = 0;
+      }
+    }
+  }
+
+  // Expose for inline HTML
+  function slashKeydown(e) {
+    if (e.key === 'ArrowDown') { e.preventDefault(); slashNav(1); }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); slashNav(-1); }
+    if (e.key === 'Enter')     { e.preventDefault(); applySlash(); }
+    if (e.key === 'Escape')    closeSlashMenu();
+  }
+
+  // ── Format toolbar ──
+  function onSelectionChange() {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !sel.rangeCount) {
+      hideFormatBar();
+      return;
+    }
+    const range = sel.getRangeAt(0);
+    // Check if selection is inside editor
+    const area = document.getElementById('neBlocksArea');
+    if (!area || !area.contains(range.commonAncestorContainer)) {
+      hideFormatBar();
+      return;
+    }
+    savedRange = range.cloneRange();
+    positionFormatBar(range);
+  }
+
+  function positionFormatBar(range) {
+    const rect = range.getBoundingClientRect();
+    const bar  = document.getElementById('neFormatBar');
+    bar.classList.add('visible');
+    let top  = rect.top - 42;
+    let left = rect.left + rect.width / 2 - 110;
+    if (top < 8) top = rect.bottom + 6;
+    left = Math.max(8, Math.min(left, window.innerWidth - 240));
+    bar.style.top  = top  + 'px';
+    bar.style.left = left + 'px';
+  }
+
+  function hideFormatBar() {
+    document.getElementById('neFormatBar').classList.remove('visible');
+    document.getElementById('neColorPicker').classList.remove('open');
+  }
+
+  function restoreSelection() {
+    if (!savedRange) return;
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(savedRange);
+  }
+
+  function fmt(cmd, e) {
+    e.preventDefault();
+    restoreSelection();
+    if (cmd === 'bold')      document.execCommand('bold');
+    else if (cmd === 'italic')    document.execCommand('italic');
+    else if (cmd === 'underline') document.execCommand('underline');
+    else if (cmd === 'strike')    document.execCommand('strikeThrough');
+    else if (cmd === 'code') {
+      const sel = window.getSelection();
+      if (!sel.isCollapsed) {
+        const range = sel.getRangeAt(0);
+        const code = document.createElement('code');
+        code.style.cssText = 'background:rgba(255,255,255,.1);padding:1px 5px;border-radius:3px;font-family:monospace;font-size:.85em;color:#eb5757';
+        range.surroundContents(code);
+      }
+    } else if (cmd === 'link') {
+      const url = prompt('링크 URL을 입력하세요:', 'https://');
+      if (url) document.execCommand('createLink', false, url);
+    }
+    // Sync block html
+    syncAllBlocks();
+    schedulePreview();
+  }
+
+  function openColorPicker(mode, e) {
+    e.preventDefault();
+    colorMode = mode;
+    const cp = document.getElementById('neColorPicker');
+    // Toggle if same mode and already open
+    if (cp.classList.contains('open')) {
+      cp.classList.remove('open');
+      return;
+    }
+    cp.classList.add('open');
+    const rect = document.getElementById('neFormatBar').getBoundingClientRect();
+    let top  = rect.bottom + 6;
+    let left = rect.left;
+    const vpW = window.innerWidth;
+    const vpH = window.innerHeight;
+    if (left + 230 > vpW) left = vpW - 235;
+    if (top + 180 > vpH) top = rect.top - 185;
+    cp.style.top  = top  + 'px';
+    cp.style.left = left + 'px';
+  }
+
+  function applyColor(colorName) {
+    restoreSelection();
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !sel.rangeCount) return;
+    const range = sel.getRangeAt(0);
+    const span = document.createElement('span');
+    if (colorName === 'default') {
+      document.execCommand('removeFormat');
+    } else {
+      span.className = colorMode === 'text' ? `nc-${colorName}` : `nb-${colorName}`;
+      try { range.surroundContents(span); } catch(e) {}
+    }
+    syncAllBlocks();
+    schedulePreview();
+    document.getElementById('neColorPicker').classList.remove('open');
+  }
+
+  function buildColorPicker() {
+    const textDiv = document.getElementById('cpTextColors');
+    const bgDiv   = document.getElementById('cpBgColors');
+    COLORS.forEach(c => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `cp-btn ${c}`;
+      btn.title = c;
+      btn.onmousedown = (e) => { e.preventDefault(); applyColor(c); };
+      textDiv.appendChild(btn.cloneNode(true));
+      const bgBtn = btn.cloneNode(true);
+      bgBtn.className = `cp-btn ${c} cp-btn-bg`;
+      bgBtn.style.background = c === 'default' ? 'rgba(255,255,255,.15)' : `var(--nb-${c})`;
+      bgBtn.onmousedown = (e) => { e.preventDefault(); colorMode = 'bg'; applyColor(c); };
+      bgDiv.appendChild(bgBtn);
+    });
+  }
+
+  // ── Emoji picker ──
+  const EMOJIS = ['📄','📝','📚','📖','🎓','💡','🔥','⭐','🚀','💻','🎯','🏆','📊','🔬','🧬','📐','💼','🎨','🌟','✅','📌','🗂️','📋','🖊️','🧠','🔑','💰','📈','🎤','🎵'];
+
+  function buildEmojiPicker() {
+    const grid = document.getElementById('emojiGrid');
+    EMOJIS.forEach(em => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'emoji-btn';
+      btn.textContent = em;
+      btn.onclick = () => setIcon(em);
+      grid.appendChild(btn);
+    });
+  }
+
+  function showEmojiPicker(el) {
+    const picker = document.getElementById('neEmojiPicker');
+    const isOpen = picker.classList.contains('open');
+    // Toggle: if already open, close it
+    if (isOpen) { picker.classList.remove('open'); return; }
+    picker.classList.add('open');
+    const rect = el.getBoundingClientRect();
+    let top  = rect.bottom + 6;
+    let left = rect.left;
+    const vpW = window.innerWidth;
+    const vpH = window.innerHeight;
+    if (left + 250 > vpW) left = vpW - 260;
+    if (top + 200 > vpH) top = rect.top - 200;
+    picker.style.top  = top  + 'px';
+    picker.style.left = left + 'px';
+  }
+
+  function setIcon(em) {
+    document.getElementById('pageIconBtn').textContent = em;
+    document.getElementById('neEmojiPicker').classList.remove('open');
+    schedulePreview();
+  }
+
+  // ── Global mouse/keyboard ──
+  function onDocMousedown(e) {
+    // Overlay panels and their trigger buttons — clicks here should NOT close overlays
+    const inOverlay = e.target.closest(
+      '#neSlashMenu, #neEmojiPicker, #neColorPicker, #neFormatBar, .ne-page-icon-btn'
+    );
+    if (!inOverlay) {
+      // Close each popup independently — don't close slash menu if user is
+      // clicking inside the editor area (they might be refocusing a block)
+      const inEditor = e.target.closest('#neBlocksArea, .ne-page-header, .ne-meta');
+      if (!inEditor) closeSlashMenu();
+      document.getElementById('neColorPicker').classList.remove('open');
+      document.getElementById('neEmojiPicker').classList.remove('open');
+    }
+  }
+
+  function onDocKeydown(e) {
+    if (e.key === 'Escape') hideAll();
+  }
+
+  function hideAll() {
+    closeSlashMenu();
+    document.getElementById('neColorPicker').classList.remove('open');
+    document.getElementById('neEmojiPicker').classList.remove('open');
+  }
+
+  function onAreaClick(e) {
+    // Click on empty area below blocks → add new paragraph
+    if (e.target === e.currentTarget) {
+      if (!blocks.length) {
+        blocks.push(newBlock('paragraph'));
+        renderAll();
+      }
+      focusBlock(blocks[blocks.length - 1].id, true);
+    }
+  }
+
+  // ── Title ──
+  function onTitleInput(el) {
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+    schedulePreview();
+  }
+
+  function autoResizeTitle() {
+    const el = document.getElementById('pageTitle');
+    if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+  }
+
+  function autoResizeTA(ta) {
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
+  }
+
+  function updateImgPreview(id, url) {
+    const img = document.getElementById('imgprev_' + id);
+    if (img) { img.src = url; img.style.display = url ? 'block' : 'none'; }
+    schedulePreview();
+  }
+
+  // ── Sync block HTML from DOM ──
+  function syncAllBlocks() {
+    blocks.forEach(b => {
+      const el = getEditEl(b.id);
+      if (el && el.contentEditable === 'true') b.html = el.innerHTML;
+    });
+  }
+
+  // ── Preview ──
+  function togglePreview() {
+    previewOpen = !previewOpen;
+    document.getElementById('nePreviewWrap').classList.toggle('hidden', !previewOpen);
+    document.getElementById('previewToggleBtn').innerHTML = previewOpen
+      ? '<i class="fas fa-edit"></i> 에디터만'
+      : '<i class="fas fa-columns"></i> 미리보기';
+    if (previewOpen) refreshPreview();
+  }
+
+  function schedulePreview() {
+    if (!previewOpen) return;
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(refreshPreview, 500);
+  }
+
+  function refreshPreview() {
+    if (!previewOpen) return;
+    const title   = document.getElementById('pageTitle').value;
+    const icon    = document.getElementById('pageIconBtn').textContent;
+    const date    = document.getElementById('metaDate').value;
+    const tagsRaw = document.getElementById('metaTags').value;
+    const tags    = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+
+    syncAllBlocks();
+
+    let html = `<!DOCTYPE html><html><head>
+      <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+      <link rel="stylesheet" href="/static/css/notion.css">
+      </head><body><article class="notion-page"><header>
+      <div class="page-icon">${icon}</div>
+      <h1 class="page-title">${e(title||'제목 없음')}</h1>
+      <table class="properties"><tbody>
+      ${date ? `<tr class="property-row"><th><i class="far fa-clock"></i> 날짜</th><td>${e(date)}</td></tr>` : ''}
+      ${tags.length ? `<tr class="property-row"><th><i class="fas fa-tag"></i> 태그</th><td>${tags.map(t=>`<span class="tag tag-blue">${e(t)}</span>`).join('')}</td></tr>` : ''}
+      </tbody></table></header><div class="page-body">`;
+
+    blocks.forEach(b => { html += renderBlockPreview(b); });
+    html += `</div></article></body></html>`;
+
+    const frame = document.getElementById('nePreviewFrame');
+    const doc = frame.contentDocument || frame.contentWindow.document;
+    doc.open(); doc.write(html); doc.close();
+    setTimeout(() => {
+      try { frame.style.height = '0'; frame.style.height = doc.body.scrollHeight + 40 + 'px'; } catch(_) {}
+    }, 200);
+  }
+
+  function e(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function renderBlockPreview(b) {
+    const content = b.html || b.content || '';
+    switch (b.type) {
+      case 'paragraph':  return `<p>${content}</p>`;
+      case 'heading1':   return `<h1>${content}</h1>`;
+      case 'heading2':   return `<h2>${content}</h2>`;
+      case 'heading3':   return `<h3>${content}</h3>`;
+      case 'bullet':     return `<ul class="bulleted-list"><li>${content}</li></ul>`;
+      case 'numbered':   return `<ol class="numbered-list"><li>${content}</li></ol>`;
+      case 'quote':      return `<blockquote style="border-left:3px solid rgba(255,255,255,.3);padding-left:14px;margin:10px 0;color:rgba(255,255,255,.7)"><p>${content}</p></blockquote>`;
+      case 'callout':    return `<div class="callout"><div class="icon">${b.icon||'💡'}</div><div class="callout-content"><p>${content}</p></div></div>`;
+      case 'code':       return `<pre style="background:rgba(0,0,0,.35);border-radius:8px;padding:14px;overflow-x:auto;margin:10px 0"><code style="font-family:Menlo,Monaco,monospace;font-size:.83rem;color:#e2e8f0;background:none;padding:0">${e(content)}</code></pre>`;
+      case 'image':      return b.url ? `<figure><img src="${e(b.url)}" alt="${e(b.caption||'')}"><figcaption>${e(b.caption||'')}</figcaption></figure>` : '';
+      case 'divider':    return `<hr>`;
+      case 'toggle':     return `<details style="margin:6px 0;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:5px;padding:8px 12px"><summary style="cursor:pointer;font-weight:600">${content||'토글'}</summary></details>`;
+      default:           return '';
+    }
+  }
+
+  // ── Save ──
+  function save() {
+    syncAllBlocks();
+    document.getElementById('blocksJson').value  = JSON.stringify(blocks);
+    document.getElementById('formTitle').value    = document.getElementById('pageTitle').value;
+    document.getElementById('formIcon').value     = document.getElementById('pageIconBtn').textContent.trim();
+    document.getElementById('formCategory').value = document.getElementById('metaCategory').value;
+    document.getElementById('formDate').value     = document.getElementById('metaDate').value;
+    document.getElementById('formTags').value     = document.getElementById('metaTags').value;
+    document.getElementById('logForm').submit();
+  }
+
+  // ── Public API ──
+  return {
+    init, addBlockAfter, deleteBlock, convertBlock,
+    onEdit, onKeydown, codeKeydown,
+    updateField, updateImgPreview, autoResizeTA,
+    onTitleInput, onAreaClick,
+    filterSlash, slashKeydown, applySlashType, slashNav,
+    fmt, openColorPicker, applyColor,
+    showEmojiPicker, setIcon,
+    togglePreview, refreshPreview, schedulePreview,
+    save,
+  };
+})();
+
+document.addEventListener('DOMContentLoaded', () => NE.init());
+</script>
+{% endblock %}

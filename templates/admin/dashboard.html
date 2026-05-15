@@ -1,0 +1,77 @@
+{% extends "admin/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block topbar_title %}Dashboard{% endblock %}
+
+{% block content %}
+{% if not supabase_ready %}
+<div class="admin-alert alert-warning">
+  <i class="fas fa-exclamation-triangle"></i>
+  <div>
+    <strong>Supabase가 연결되지 않았습니다.</strong>
+    환경변수 <code>SUPABASE_URL</code>과 <code>SUPABASE_KEY</code>를 설정하세요.
+    설정 전까지 데이터 관리 기능을 사용할 수 없습니다.
+  </div>
+</div>
+{% endif %}
+
+<div class="stats-grid">
+  <a href="{{ url_for('admin_current_activities') }}" class="stat-card">
+    <div class="stat-icon">🚀</div>
+    <div class="stat-value">{{ stats.current_activities }}</div>
+    <div class="stat-label">Current Activities</div>
+  </a>
+  <a href="{{ url_for('admin_past_activities') }}" class="stat-card">
+    <div class="stat-icon">🏁</div>
+    <div class="stat-value">{{ stats.past_activities }}</div>
+    <div class="stat-label">Past Activities</div>
+  </a>
+  <a href="{{ url_for('admin_tech_stacks') }}" class="stat-card">
+    <div class="stat-icon">💻</div>
+    <div class="stat-value">{{ stats.tech_stacks }}</div>
+    <div class="stat-label">Tech Stacks</div>
+  </a>
+  <a href="{{ url_for('admin_projects') }}" class="stat-card">
+    <div class="stat-icon">📁</div>
+    <div class="stat-value">{{ stats.projects }}</div>
+    <div class="stat-label">Projects</div>
+  </a>
+  <a href="{{ url_for('admin_awards') }}" class="stat-card">
+    <div class="stat-icon">🏆</div>
+    <div class="stat-value">{{ stats.awards }}</div>
+    <div class="stat-label">Awards</div>
+  </a>
+  <a href="{{ url_for('admin_academic') }}" class="stat-card">
+    <div class="stat-icon">🎓</div>
+    <div class="stat-value">{{ stats.academic_items }}</div>
+    <div class="stat-label">Academic Items</div>
+  </a>
+  <a href="{{ url_for('admin_certificates') }}" class="stat-card">
+    <div class="stat-icon">📜</div>
+    <div class="stat-value">{{ stats.certificates }}</div>
+    <div class="stat-label">Certificates</div>
+  </a>
+  <a href="{{ url_for('admin_activity_logs') }}" class="stat-card">
+    <div class="stat-icon">📝</div>
+    <div class="stat-value">{{ stats.activity_logs }}</div>
+    <div class="stat-label">Activity Logs</div>
+  </a>
+</div>
+
+<div class="admin-card">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-info-circle"></i> Supabase 설정 가이드</div>
+  </div>
+  <div class="card-body">
+    <p style="color:#94a3b8;font-size:0.875rem;line-height:1.8;">
+      아래 SQL을 Supabase SQL Editor에서 실행하여 테이블을 생성하세요.<br>
+      그 후 환경변수 <code style="color:#818cf8">SUPABASE_URL</code>, <code style="color:#818cf8">SUPABASE_KEY</code>,
+      <code style="color:#818cf8">ADMIN_PASSWORD</code>를 설정하면 모든 기능을 사용할 수 있습니다.
+    </p>
+    <div style="margin-top:14px;">
+      <a href="/admin/schema.sql" class="btn-admin btn-ghost btn-sm" download>
+        <i class="fas fa-download"></i> 스키마 SQL 다운로드
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

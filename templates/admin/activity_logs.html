@@ -1,0 +1,63 @@
+{% extends "admin/base.html" %}
+{% block title %}Activity Logs{% endblock %}
+{% block topbar_icon %}fas fa-book-open{% endblock %}
+{% block topbar_title %}Activity Log{% endblock %}
+{% block topbar_actions %}
+<a href="{{ url_for('admin_activity_log_new') }}" class="btn-admin btn-primary btn-sm">
+  <i class="fas fa-plus"></i> 새 로그 작성
+</a>
+{% endblock %}
+
+{% block content %}
+{% if not items %}
+<div style="text-align:center;padding:80px 20px;color:#64748b">
+  <i class="fas fa-book-open" style="font-size:3rem;margin-bottom:16px;display:block;color:#334155"></i>
+  <h3 style="font-size:1.1rem;color:#475569;margin-bottom:8px">작성된 Activity Log가 없습니다</h3>
+  <p style="font-size:0.875rem;margin-bottom:20px">노션 스타일로 새 로그를 작성해보세요.</p>
+  <a href="{{ url_for('admin_activity_log_new') }}" class="btn-admin btn-primary">
+    <i class="fas fa-plus"></i> 첫 번째 로그 작성
+  </a>
+</div>
+{% else %}
+<div class="log-card-grid">
+  {% for log in items %}
+  <div class="log-card">
+    <div class="log-card-header">
+      <div>
+        <div style="font-size:2rem;margin-bottom:6px">{{ log.icon or '📄' }}</div>
+        <div class="log-card-title">{{ log.title }}</div>
+        <div class="log-card-meta">
+          <span><i class="fas fa-tag"></i> {{ log.category }}</span>
+          {% if log.date_text %}<span><i class="fas fa-calendar"></i> {{ log.date_text }}</span>{% endif %}
+          <span><i class="fas fa-cubes"></i> {{ log.blocks|length if log.blocks else 0 }} 블록</span>
+        </div>
+        {% if log.tags %}
+        <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px">
+          {% for tag in log.tags %}
+          <span class="badge badge-blue">{{ tag }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      <div class="log-card-actions">
+        <a href="{{ url_for('admin_activity_log_edit', log_id=log.id) }}"
+           class="btn-admin btn-ghost btn-icon btn-sm" title="수정">
+          <i class="fas fa-edit"></i>
+        </a>
+        <a href="{{ url_for('activity_log_view', log_id=log.id) }}" target="_blank"
+           class="btn-admin btn-ghost btn-icon btn-sm" title="미리보기">
+          <i class="fas fa-eye"></i>
+        </a>
+        <form method="POST" action="{{ url_for('admin_activity_log_delete', log_id=log.id) }}"
+              onsubmit="return confirm('삭제하시겠습니까?')" style="display:inline">
+          <button type="submit" class="btn-admin btn-danger btn-icon btn-sm" title="삭제">
+            <i class="fas fa-trash"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
