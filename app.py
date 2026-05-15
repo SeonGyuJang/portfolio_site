@@ -2,6 +2,8 @@ from flask import Flask, render_template, abort, request, redirect, url_for, ses
 import os
 import json
 import logging
+import uuid
+from datetime import datetime
 from functools import wraps
 from dotenv import load_dotenv
 
@@ -76,6 +78,32 @@ def db_delete(table, row_id):
         return False, str(e)
 
 
+def get_last_updated():
+    """Return the stored last-updated date string (YYYY.MM.DD)."""
+    if not supabase:
+        return '2025.12.21'
+    try:
+        res = supabase.table('site_settings').select('value').eq('key', 'last_updated').execute()
+        if res.data:
+            return res.data[0]['value']
+    except Exception:
+        pass
+    return '2025.12.21'
+
+
+def update_last_updated():
+    """Upsert today's date into site_settings whenever any data changes."""
+    if not supabase:
+        return
+    today = datetime.now().strftime('%Y.%m.%d')
+    try:
+        supabase.table('site_settings').upsert(
+            {'key': 'last_updated', 'value': today, 'updated_at': 'now()'}
+        ).execute()
+    except Exception as e:
+        logger.warning(f"update_last_updated failed: {e}")
+
+
 def require_admin(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -130,6 +158,7 @@ def index():
         'activity_logs': db_logs,
         'static_activities': static_acts,
         'supabase_ready': supabase is not None,
+        'last_updated': get_last_updated(),
     }
     return render_template('index.html', **data)
 
@@ -222,12 +251,14 @@ def admin_current_activities_save():
         db_update('current_activities', row_id, data)
     else:
         db_insert('current_activities', data)
+    update_last_updated()
     return redirect(url_for('admin_current_activities'))
 
 @app.route('/admin/current-activities/delete/<row_id>', methods=['POST'])
 @require_admin
 def admin_current_activities_delete(row_id):
     db_delete('current_activities', row_id)
+    update_last_updated()
     return redirect(url_for('admin_current_activities'))
 
 
@@ -254,12 +285,14 @@ def admin_past_activities_save():
         db_update('past_activities', row_id, data)
     else:
         db_insert('past_activities', data)
+    update_last_updated()
     return redirect(url_for('admin_past_activities'))
 
 @app.route('/admin/past-activities/delete/<row_id>', methods=['POST'])
 @require_admin
 def admin_past_activities_delete(row_id):
     db_delete('past_activities', row_id)
+    update_last_updated()
     return redirect(url_for('admin_past_activities'))
 
 
@@ -287,12 +320,14 @@ def admin_tech_stacks_save():
         db_update('tech_stacks', row_id, data)
     else:
         db_insert('tech_stacks', data)
+    update_last_updated()
     return redirect(url_for('admin_tech_stacks'))
 
 @app.route('/admin/tech-stacks/delete/<row_id>', methods=['POST'])
 @require_admin
 def admin_tech_stacks_delete(row_id):
     db_delete('tech_stacks', row_id)
+    update_last_updated()
     return redirect(url_for('admin_tech_stacks'))
 
 
@@ -322,12 +357,14 @@ def admin_projects_save():
         db_update('projects', row_id, data)
     else:
         db_insert('projects', data)
+    update_last_updated()
     return redirect(url_for('admin_projects'))
 
 @app.route('/admin/projects/delete/<row_id>', methods=['POST'])
 @require_admin
 def admin_projects_delete(row_id):
     db_delete('projects', row_id)
+    update_last_updated()
     return redirect(url_for('admin_projects'))
 
 
@@ -363,12 +400,14 @@ def admin_awards_save():
         db_update('awards', row_id, data)
     else:
         db_insert('awards', data)
+    update_last_updated()
     return redirect(url_for('admin_awards'))
 
 @app.route('/admin/awards/delete/<row_id>', methods=['POST'])
 @require_admin
 def admin_awards_delete(row_id):
     db_delete('awards', row_id)
+    update_last_updated()
     return redirect(url_for('admin_awards'))
 
 
@@ -401,12 +440,14 @@ def admin_academic_save():
         db_update('academic_items', row_id, data)
     else:
         db_insert('academic_items', data)
+    update_last_updated()
     return redirect(url_for('admin_academic'))
 
 @app.route('/admin/academic/delete/<row_id>', methods=['POST'])
 @require_admin
 def admin_academic_delete(row_id):
     db_delete('academic_items', row_id)
+    update_last_updated()
     return redirect(url_for('admin_academic'))
 
 
@@ -433,12 +474,14 @@ def admin_certificates_save():
         db_update('certificates', row_id, data)
     else:
         db_insert('certificates', data)
+    update_last_updated()
     return redirect(url_for('admin_certificates'))
 
 @app.route('/admin/certificates/delete/<row_id>', methods=['POST'])
 @require_admin
 def admin_certificates_delete(row_id):
     db_delete('certificates', row_id)
+    update_last_updated()
     return redirect(url_for('admin_certificates'))
 
 
@@ -491,16 +534,18 @@ def admin_activity_log_save():
         'sort_order': int(request.form.get('sort_order', 0) or 0),
     }
     if row_id:
+        data['updated_at'] = datetime.utcnow().isoformat()
         db_update('activity_logs', row_id, data)
-        return redirect(url_for('admin_activity_logs'))
     else:
-        result, err = db_insert('activity_logs', data)
-        return redirect(url_for('admin_activity_logs'))
+        db_insert('activity_logs', data)
+    update_last_updated()
+    return redirect(url_for('admin_activity_logs'))
 
 @app.route('/admin/activity-logs/delete/<log_id>', methods=['POST'])
 @require_admin
 def admin_activity_log_delete(log_id):
     db_delete('activity_logs', log_id)
+    update_last_updated()
     return redirect(url_for('admin_activity_logs'))
 
 
@@ -516,15 +561,64 @@ def admin_upload_image():
     if not file:
         return jsonify({'error': 'No file provided'}), 400
     bucket = 'portfolio-images'
-    filename = file.filename
+    _, ext = os.path.splitext(file.filename or 'image.jpg')
+    if not ext:
+        ext = '.jpg'
+    filename = f"activity-logs/{uuid.uuid4().hex}{ext.lower()}"
     try:
         content = file.read()
-        res = supabase.storage.from_(bucket).upload(
+        supabase.storage.from_(bucket).upload(
             filename, content,
-            file_options={'content-type': file.content_type, 'upsert': 'true'}
+            file_options={'content-type': file.content_type or 'image/jpeg', 'upsert': 'true'}
         )
         url = supabase.storage.from_(bucket).get_public_url(filename)
-        return jsonify({'url': url})
+        return jsonify({'url': url, 'path': filename})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/admin/api/images')
+@require_admin
+def admin_list_images():
+    """List images from Supabase Storage activity-logs folder."""
+    if not supabase:
+        return jsonify({'images': []})
+    try:
+        files = supabase.storage.from_('portfolio-images').list(
+            'activity-logs',
+            {'sortBy': {'column': 'created_at', 'order': 'desc'}}
+        )
+        images = []
+        for f in (files or []):
+            name = f.get('name', '')
+            if name and not name.startswith('.'):
+                path = f"activity-logs/{name}"
+                url = supabase.storage.from_('portfolio-images').get_public_url(path)
+                images.append({
+                    'path': path,
+                    'url': url,
+                    'name': name,
+                    'size': f.get('metadata', {}).get('size', 0) if f.get('metadata') else 0,
+                })
+        return jsonify({'images': images})
+    except Exception as e:
+        logger.error(f"admin_list_images error: {e}")
+        return jsonify({'images': [], 'error': str(e)})
+
+
+@app.route('/admin/api/images/delete', methods=['POST'])
+@require_admin
+def admin_delete_image():
+    """Delete an image from Supabase Storage."""
+    if not supabase:
+        return jsonify({'error': 'Supabase not configured'}), 400
+    data = request.get_json(silent=True) or {}
+    path = data.get('path', '')
+    if not path or not path.startswith('activity-logs/'):
+        return jsonify({'error': 'Invalid path'}), 400
+    try:
+        supabase.storage.from_('portfolio-images').remove([path])
+        return jsonify({'ok': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

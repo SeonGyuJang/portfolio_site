@@ -147,11 +147,15 @@ select.ne-meta-input option { background: #1e2535; color: #e2e8f0; }
 }
 .ne-title::placeholder { color: var(--ne-placeholder); }
 
-/* ── Blocks area ── */
-.ne-blocks-area {
+/* ── Blocks area — scroll wrapper trick to allow left-overflow of controls ── */
+.ne-blocks-scroll {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 52px 80px;
+  overflow-x: hidden;
+}
+.ne-blocks-area {
+  padding: 4px 52px 80px 64px; /* extra left padding for block controls */
+  min-height: 100%;
 }
 
 /* ── Block wrapper ── */
@@ -172,15 +176,16 @@ select.ne-meta-input option { background: #1e2535; color: #e2e8f0; }
 /* ── Block controls (left side, show on hover) ── */
 .ne-block-left {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 2px;
   opacity: 0;
   transition: opacity .15s;
   flex-shrink: 0;
-  padding: 6px 2px;
+  padding-top: 5px;
   position: absolute;
-  left: -48px;
+  left: -56px;
   top: 0;
+  z-index: 10;
 }
 .ne-block:hover .ne-block-left { opacity: 1; }
 
@@ -206,7 +211,7 @@ select.ne-meta-input option { background: #1e2535; color: #e2e8f0; }
 .ne-handle:active { cursor: grabbing; }
 
 /* ── Block content ── */
-.ne-block-content { flex: 1; min-width: 0; padding: 2px 32px 2px 0; }
+.ne-block-content { flex: 1; min-width: 0; padding: 2px 36px 2px 0; }
 
 /* ── Delete btn (right, hover) ── */
 .ne-del-btn {
@@ -223,6 +228,7 @@ select.ne-meta-input option { background: #1e2535; color: #e2e8f0; }
   border-radius: 4px;
   font-size: 0.75rem;
   transition: opacity .15s, color .1s;
+  z-index: 5;
 }
 .ne-block:hover .ne-del-btn { opacity: 1; }
 .ne-del-btn:hover { color: #ef4444; }
@@ -319,23 +325,142 @@ select.ne-meta-input option { background: #1e2535; color: #e2e8f0; }
   resize: vertical;
   min-height: 60px;
   tab-size: 2;
+  box-sizing: border-box;
 }
 
+/* ── Image block ── */
 .ne-image-wrap { margin: 6px 0; }
+
+.ne-image-dropzone {
+  border: 2px dashed rgba(255,255,255,.15);
+  border-radius: 8px;
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  background: rgba(255,255,255,.02);
+}
+.ne-image-dropzone:hover,
+.ne-image-dropzone.drag-active {
+  border-color: var(--ne-accent);
+  background: rgba(99,102,241,.06);
+}
+.ne-image-dropzone-text {
+  color: var(--ne-dim);
+  font-size: .85rem;
+  margin-bottom: 12px;
+}
+.ne-image-dropzone-hint {
+  font-size: .75rem;
+  color: rgba(255,255,255,.2);
+  margin-top: 6px;
+}
+.ne-image-option-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.ne-image-opt-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 6px;
+  color: #94a3b8;
+  font-size: .78rem;
+  cursor: pointer;
+  transition: all .15s;
+  font-family: inherit;
+}
+.ne-image-opt-btn:hover {
+  background: rgba(99,102,241,.2);
+  border-color: var(--ne-accent);
+  color: #e2e8f0;
+}
+
+.ne-image-url-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  align-items: center;
+}
 .ne-image-url-input {
-  width: 100%; background: rgba(255,255,255,.04);
-  border: 1px dashed rgba(255,255,255,.15); border-radius: 6px;
-  padding: 10px 14px; color: var(--ne-dim); font-family: inherit;
-  font-size: .85rem; outline: none; transition: border .15s;
+  flex: 1;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 6px;
+  padding: 7px 12px;
+  color: var(--ne-dim);
+  font-family: inherit;
+  font-size: .83rem;
+  outline: none;
+  transition: border .15s;
 }
 .ne-image-url-input:focus { border-color: var(--ne-accent); color: var(--ne-text); }
-.ne-image-preview { max-width: 100%; max-height: 300px; object-fit: contain; border-radius: 6px; margin-top: 8px; display: block; }
+.ne-image-url-confirm {
+  padding: 7px 14px;
+  background: var(--ne-accent);
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-size: .82rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity .15s;
+  white-space: nowrap;
+}
+.ne-image-url-confirm:hover { opacity: .85; }
+
+.ne-image-preview-wrap { margin-top: 8px; position: relative; }
+.ne-image-preview {
+  max-width: 100%; max-height: 400px; object-fit: contain;
+  border-radius: 6px; display: block;
+}
+.ne-image-change-btn {
+  position: absolute;
+  top: 6px; right: 6px;
+  background: rgba(0,0,0,.6);
+  border: none;
+  border-radius: 4px;
+  color: #94a3b8;
+  font-size: .72rem;
+  padding: 4px 8px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .15s;
+  font-family: inherit;
+}
+.ne-image-preview-wrap:hover .ne-image-change-btn { opacity: 1; }
+.ne-image-change-btn:hover { color: #fff; }
+
 .ne-image-caption {
-  width: 100%; background: none; border: none; border-top: 1px solid var(--ne-border);
+  width: 100%; background: none; border: none;
+  border-top: 1px solid var(--ne-border);
   padding: 6px 0 2px; color: var(--ne-dim); font-family: inherit; font-size: .8rem;
-  outline: none; text-align: center; margin-top: 6px;
+  outline: none; text-align: center; margin-top: 6px; box-sizing: border-box;
 }
 .ne-image-caption::placeholder { color: rgba(255,255,255,.15); }
+
+.ne-upload-progress {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  color: var(--ne-dim);
+  font-size: .82rem;
+}
+.ne-upload-progress.active { display: flex; }
+.ne-upload-spinner {
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,.1);
+  border-top-color: var(--ne-accent);
+  border-radius: 50%;
+  animation: ne-spin .7s linear infinite;
+}
+@keyframes ne-spin { to { transform: rotate(360deg); } }
 
 .ne-divider { border: none; border-top: 1px solid rgba(255,255,255,.12); margin: 10px 0; }
 
@@ -379,10 +504,9 @@ details[open] .ne-toggle-arrow { transform: rotate(90deg); }
   padding: 6px;
   width: 280px;
   max-height: 380px;
-  display: flex;
+  display: none;
   flex-direction: column;
   box-shadow: 0 12px 40px rgba(0,0,0,.6);
-  display: none;
 }
 #neSlashMenu.open { display: flex; }
 #slashList {
@@ -402,6 +526,7 @@ details[open] .ne-toggle-arrow { transform: rotate(90deg); }
   font-family: inherit;
   outline: none;
   margin-bottom: 6px;
+  box-sizing: border-box;
 }
 .slash-section {
   font-size: .62rem;
@@ -510,6 +635,94 @@ details[open] .ne-toggle-arrow { transform: rotate(90deg); }
 }
 .emoji-btn:hover { background: rgba(255,255,255,.1); }
 
+/* ── Image Library Modal ── */
+#neImageLibrary {
+  position: fixed; z-index: 10001;
+  inset: 0;
+  background: rgba(0,0,0,.75);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+#neImageLibrary.open { display: flex; }
+.img-lib-panel {
+  background: #1e2535;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 14px;
+  width: min(780px, 92vw);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.img-lib-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  font-size: .9rem; font-weight: 600; color: #e2e8f0;
+  flex-shrink: 0;
+}
+.img-lib-header-actions { display: flex; gap: 8px; align-items: center; }
+.img-lib-upload-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px;
+  background: var(--ne-accent);
+  border: none; border-radius: 6px;
+  color: #fff; font-size: .8rem; cursor: pointer;
+  font-family: inherit; transition: opacity .15s;
+}
+.img-lib-upload-btn:hover { opacity: .85; }
+.img-lib-close {
+  background: none; border: none; color: #475569;
+  font-size: 1.2rem; cursor: pointer; padding: 2px 6px;
+  border-radius: 4px; transition: color .1s;
+}
+.img-lib-close:hover { color: #e2e8f0; }
+.img-lib-grid {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  align-content: start;
+}
+.img-lib-grid::-webkit-scrollbar { width: 5px; }
+.img-lib-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
+.img-lib-item {
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(255,255,255,.03);
+  cursor: pointer;
+  transition: border-color .15s, transform .1s;
+}
+.img-lib-item:hover { border-color: var(--ne-accent); transform: scale(1.02); }
+.img-lib-item img {
+  width: 100%; height: 120px; object-fit: cover; display: block;
+}
+.img-lib-item-footer {
+  padding: 6px 8px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 4px;
+}
+.img-lib-item-name {
+  font-size: .68rem; color: #64748b;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;
+}
+.img-lib-item-del {
+  background: none; border: none; color: #475569;
+  cursor: pointer; font-size: .72rem; padding: 2px 4px;
+  border-radius: 3px; flex-shrink: 0;
+  transition: color .1s, background .1s;
+}
+.img-lib-item-del:hover { color: #ef4444; background: rgba(239,68,68,.1); }
+.img-lib-empty {
+  grid-column: 1/-1;
+  text-align: center; padding: 40px 20px;
+  color: #475569; font-size: .85rem;
+}
+
 /* ── Preview frame ── */
 .ne-preview-frame {
   flex: 1; border: none; background: #191919;
@@ -517,9 +730,9 @@ details[open] .ne-toggle-arrow { transform: rotate(90deg); }
 }
 
 /* ── Scrollbar ── */
-.ne-blocks-area::-webkit-scrollbar { width: 5px; }
-.ne-blocks-area::-webkit-scrollbar-track { background: transparent; }
-.ne-blocks-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
+.ne-blocks-scroll::-webkit-scrollbar { width: 5px; }
+.ne-blocks-scroll::-webkit-scrollbar-track { background: transparent; }
+.ne-blocks-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
 </style>
 {% endblock %}
 
@@ -567,7 +780,8 @@ details[open] .ne-toggle-arrow { transform: rotate(90deg); }
         <i class="fas fa-pen-nib"></i> 에디터
         <span style="margin-left:auto;color:#334155;font-size:.7rem">
           <kbd style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px">/</kbd> 블록 추가 &nbsp;
-          <kbd style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px">Ctrl+B</kbd> 굵게
+          <kbd style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px">Ctrl+B</kbd> 굵게 &nbsp;
+          <kbd style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px">Ctrl+V</kbd> 이미지 붙여넣기
         </span>
       </div>
 
@@ -582,8 +796,10 @@ details[open] .ne-toggle-arrow { transform: rotate(90deg); }
                   oninput="NE.onTitleInput(this)">{{ log.title if log else '' }}</textarea>
       </div>
 
-      <!-- Blocks -->
-      <div class="ne-blocks-area" id="neBlocksArea" onclick="NE.onAreaClick(event)"></div>
+      <!-- Blocks scroll wrapper -->
+      <div class="ne-blocks-scroll" id="neBlocksScroll">
+        <div class="ne-blocks-area" id="neBlocksArea" onclick="NE.onAreaClick(event)"></div>
+      </div>
     </div>
 
     <!-- ── PREVIEW ── -->
@@ -635,6 +851,27 @@ details[open] .ne-toggle-arrow { transform: rotate(90deg); }
   <div style="font-size:.7rem;color:#475569;margin-bottom:6px">페이지 아이콘 선택</div>
   <div class="emoji-grid" id="emojiGrid"></div>
 </div>
+
+<!-- Image Library Modal -->
+<div id="neImageLibrary">
+  <div class="img-lib-panel">
+    <div class="img-lib-header">
+      <span><i class="fas fa-images" style="margin-right:8px;color:var(--ne-accent)"></i>이미지 라이브러리</span>
+      <div class="img-lib-header-actions">
+        <button type="button" class="img-lib-upload-btn" onclick="document.getElementById('libFileInput').click()">
+          <i class="fas fa-upload"></i> 업로드
+        </button>
+        <input type="file" id="libFileInput" accept="image/*" style="display:none" onchange="NE.libUploadFile(event)">
+        <button type="button" class="img-lib-close" onclick="NE.closeImageLibrary()" title="닫기">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+    <div class="img-lib-grid" id="imgLibGrid">
+      <div class="img-lib-empty">로딩 중...</div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -646,13 +883,14 @@ const NE = (() => {
   // ── State ──
   let blocks = [];
   let slashState = null;  // {blockId, query}
-  let slashActive = -1;   // active index in filtered slash list
+  let slashActive = -1;
   let slashFiltered = [];
   let dragSrcId = null;
   let savedRange = null;
-  let colorMode = 'text';  // 'text' | 'bg'
+  let colorMode = 'text';
   let previewOpen = false;
   let previewTimer = null;
+  let imageLibTarget = null;  // blockId waiting for image selection
 
   // ── Block definitions for slash menu ──
   const BLOCK_DEFS = [
@@ -666,7 +904,7 @@ const NE = (() => {
     { type:'quote',      label:'인용구',       desc:'강조 인용',   icon:'"',    section:'미디어' },
     { type:'callout',    label:'콜아웃',       desc:'아이콘 강조', icon:'💡',   section:'미디어' },
     { type:'code',       label:'코드',         desc:'코드 블록',   icon:'</>',  section:'미디어' },
-    { type:'image',      label:'이미지',       desc:'URL 삽입',    icon:'🖼',   section:'미디어' },
+    { type:'image',      label:'이미지',       desc:'업로드/URL',  icon:'🖼',   section:'미디어' },
     { type:'divider',    label:'구분선',       desc:'─ 水平線',    icon:'─',    section:'미디어' },
   ];
 
@@ -686,7 +924,6 @@ const NE = (() => {
     document.addEventListener('selectionchange', onSelectionChange);
     document.addEventListener('mousedown', onDocMousedown);
     document.addEventListener('keydown', onDocKeydown);
-    // Only close on scroll outside the overlay panels
     document.addEventListener('scroll', e => {
       const inOverlay = e.target && e.target.closest &&
         (e.target.closest('#neSlashMenu') ||
@@ -694,6 +931,9 @@ const NE = (() => {
          e.target.closest('#neEmojiPicker'));
       if (!inOverlay) hideAll();
     }, true);
+
+    // Global paste: handle image paste anywhere in editor
+    document.addEventListener('paste', onGlobalPaste);
   }
 
   // ── Utilities ──
@@ -708,9 +948,7 @@ const NE = (() => {
   }
 
   function blockIdx(id) { return blocks.findIndex(b => b.id === id); }
-
   function getBlockEl(id) { return document.querySelector(`.ne-block[data-id="${id}"]`); }
-
   function getEditEl(id) {
     const el = getBlockEl(id);
     return el ? el.querySelector('[data-edit]') : null;
@@ -720,12 +958,7 @@ const NE = (() => {
   function renderAll() {
     const area = document.getElementById('neBlocksArea');
     area.innerHTML = '';
-    let numIdx = 0;
-    blocks.forEach((b, i) => {
-      if (b.type === 'numbered') { numIdx++; }
-      else { numIdx = 0; }
-      area.appendChild(makeBlockEl(b, numIdx));
-    });
+    blocks.forEach((b, i) => area.appendChild(makeBlockEl(b)));
     recalcNumbers();
     schedulePreview();
   }
@@ -742,7 +975,7 @@ const NE = (() => {
     });
   }
 
-  function makeBlockEl(b, numIdx) {
+  function makeBlockEl(b) {
     const wrap = document.createElement('div');
     wrap.className = 'ne-block';
     wrap.dataset.id = b.id;
@@ -790,7 +1023,6 @@ const NE = (() => {
       const rect = wrap.getBoundingClientRect();
       const before = e.clientY < rect.top + rect.height / 2;
       const srcIdx = blockIdx(dragSrcId);
-      const dstIdx = blockIdx(b.id);
       const [moved] = blocks.splice(srcIdx, 1);
       const newDst = blockIdx(b.id);
       blocks.splice(before ? newDst : newDst + 1, 0, moved);
@@ -811,14 +1043,23 @@ const NE = (() => {
 
     if (b.type === 'image') {
       div.className = 'ne-image-wrap';
-      div.innerHTML = `
-        <input class="ne-image-url-input" type="text" placeholder="🖼  이미지 URL을 붙여넣으세요..."
-               value="${esc(b.url || '')}" data-edit data-field="url"
-               oninput="NE.updateField('${b.id}','url',this.value);NE.updateImgPreview('${b.id}',this.value)">
-        ${b.url ? `<img src="${esc(b.url)}" class="ne-image-preview" id="imgprev_${b.id}" onerror="this.style.display='none'">` : `<img class="ne-image-preview" id="imgprev_${b.id}" style="display:none">`}
-        <input class="ne-image-caption" type="text" placeholder="캡션 추가..."
-               value="${esc(b.caption || '')}" data-field="caption"
-               oninput="NE.updateField('${b.id}','caption',this.value)">`;
+      div.dataset.blockId = b.id;
+      div.innerHTML = buildImageHtml(b);
+
+      // Attach drag-and-drop for file onto the dropzone
+      requestAnimationFrame(() => {
+        const dz = div.querySelector('.ne-image-dropzone');
+        if (dz) {
+          dz.addEventListener('dragover', ev => { ev.preventDefault(); dz.classList.add('drag-active'); });
+          dz.addEventListener('dragleave', () => dz.classList.remove('drag-active'));
+          dz.addEventListener('drop', ev => {
+            ev.preventDefault(); ev.stopPropagation();
+            dz.classList.remove('drag-active');
+            const file = ev.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) uploadImageFile(file, b.id);
+          });
+        }
+      });
       return div;
     }
 
@@ -920,6 +1161,71 @@ const NE = (() => {
     return div;
   }
 
+  // ── Image block HTML builder ──
+  function buildImageHtml(b) {
+    if (!b.url) {
+      return `
+        <div class="ne-image-dropzone" id="imgdz_${b.id}"
+             onclick="document.getElementById('imgfile_${b.id}').click()">
+          <div class="ne-image-dropzone-text">
+            <i class="fas fa-image" style="font-size:1.6rem;margin-bottom:8px;display:block;color:rgba(255,255,255,.3)"></i>
+            파일을 드래그하거나 클릭하여 업로드
+          </div>
+          <div class="ne-image-option-row">
+            <button type="button" class="ne-image-opt-btn"
+                    onclick="event.stopPropagation();document.getElementById('imgfile_${b.id}').click()">
+              <i class="fas fa-upload"></i> 파일 업로드
+            </button>
+            <button type="button" class="ne-image-opt-btn"
+                    onclick="event.stopPropagation();NE.showUrlInput('${b.id}')">
+              <i class="fas fa-link"></i> URL 입력
+            </button>
+            <button type="button" class="ne-image-opt-btn"
+                    onclick="event.stopPropagation();NE.openImageLibrary('${b.id}')">
+              <i class="fas fa-images"></i> 라이브러리
+            </button>
+          </div>
+          <div class="ne-image-dropzone-hint">또는 Ctrl+V 로 이미지/URL 붙여넣기</div>
+        </div>
+        <div class="ne-upload-progress" id="imgprog_${b.id}">
+          <div class="ne-upload-spinner"></div>
+          <span>업로드 중...</span>
+        </div>
+        <div id="imgurl_row_${b.id}" style="display:none">
+          <div class="ne-image-url-row">
+            <input class="ne-image-url-input" id="imgurl_${b.id}" type="text"
+                   placeholder="이미지 URL을 붙여넣으세요 (https://...)"
+                   onpaste="NE.handleUrlPaste(event,'${b.id}')"
+                   onkeydown="if(event.key==='Enter'){event.preventDefault();NE.confirmUrl('${b.id}')}">
+            <button type="button" class="ne-image-url-confirm"
+                    onclick="NE.confirmUrl('${b.id}')">확인</button>
+          </div>
+        </div>
+        <input type="file" id="imgfile_${b.id}" accept="image/*" style="display:none"
+               onchange="NE.handleImageFile(event,'${b.id}')">`;
+    }
+
+    return `
+      <div class="ne-upload-progress" id="imgprog_${b.id}">
+        <div class="ne-upload-spinner"></div>
+        <span>업로드 중...</span>
+      </div>
+      <div class="ne-image-preview-wrap">
+        <img src="${esc(b.url)}" class="ne-image-preview" id="imgprev_${b.id}"
+             onerror="this.style.opacity='.3'">
+        <button type="button" class="ne-image-change-btn"
+                onclick="NE.resetImageBlock('${b.id}')">
+          <i class="fas fa-exchange-alt"></i> 변경
+        </button>
+      </div>
+      <input type="file" id="imgfile_${b.id}" accept="image/*" style="display:none"
+             onchange="NE.handleImageFile(event,'${b.id}')">
+      <input class="ne-image-caption" id="imgcap_${b.id}" type="text"
+             placeholder="캡션 추가 (선택)"
+             value="${esc(b.caption || '')}"
+             oninput="NE.updateField('${b.id}','caption',this.value)">`;
+  }
+
   function esc(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
@@ -956,8 +1262,8 @@ const NE = (() => {
     b.type = type;
     if (type === 'callout') b.icon = '💡';
     if (type === 'code')    b.language = 'python';
-    if (type === 'image')   { b.url = ''; b.caption = ''; }
-    if (type !== 'image' && type !== 'divider') b.html = prevHtml || '';
+    if (type === 'image')   { b.url = ''; b.caption = ''; b.html = ''; }
+    else if (type !== 'divider') b.html = prevHtml || '';
     renderAll();
     setTimeout(() => focusBlock(id), 30);
   }
@@ -982,16 +1288,263 @@ const NE = (() => {
     schedulePreview();
   }
 
+  // ── Image block interactions ──
+  function showUrlInput(blockId) {
+    const row = document.getElementById(`imgurl_row_${blockId}`);
+    if (row) {
+      row.style.display = 'block';
+      const input = document.getElementById(`imgurl_${blockId}`);
+      if (input) setTimeout(() => input.focus(), 50);
+    }
+  }
+
+  function confirmUrl(blockId) {
+    const input = document.getElementById(`imgurl_${blockId}`);
+    if (!input) return;
+    const url = input.value.trim();
+    if (url) {
+      updateField(blockId, 'url', url);
+      // Re-render just this block
+      rerenderImageBlock(blockId);
+    }
+  }
+
+  function resetImageBlock(blockId) {
+    const b = blocks[blockIdx(blockId)];
+    if (!b) return;
+    b.url = '';
+    b.caption = '';
+    rerenderImageBlock(blockId);
+  }
+
+  function rerenderImageBlock(blockId) {
+    const b = blocks[blockIdx(blockId)];
+    if (!b || b.type !== 'image') return;
+    const blockEl = getBlockEl(blockId);
+    if (!blockEl) return;
+    const contentEl = blockEl.querySelector('.ne-block-content');
+    if (!contentEl) return;
+    const wrap = contentEl.querySelector('.ne-image-wrap');
+    if (!wrap) return;
+    wrap.innerHTML = buildImageHtml(b);
+    // Re-attach drag-and-drop
+    const dz = wrap.querySelector('.ne-image-dropzone');
+    if (dz) {
+      dz.addEventListener('dragover', ev => { ev.preventDefault(); dz.classList.add('drag-active'); });
+      dz.addEventListener('dragleave', () => dz.classList.remove('drag-active'));
+      dz.addEventListener('drop', ev => {
+        ev.preventDefault(); ev.stopPropagation();
+        dz.classList.remove('drag-active');
+        const file = ev.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) uploadImageFile(file, blockId);
+      });
+    }
+    schedulePreview();
+  }
+
+  function handleImageFile(event, blockId) {
+    const file = event.target.files[0];
+    if (!file) return;
+    // reset so same file can be re-selected
+    event.target.value = '';
+    uploadImageFile(file, blockId);
+  }
+
+  async function uploadImageFile(file, blockId) {
+    const prog = document.getElementById(`imgprog_${blockId}`);
+    if (prog) prog.classList.add('active');
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/admin/api/upload-image', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.url) {
+        updateField(blockId, 'url', data.url);
+        rerenderImageBlock(blockId);
+      } else {
+        alert('이미지 업로드 실패: ' + (data.error || '알 수 없는 오류'));
+      }
+    } catch (e) {
+      alert('업로드 오류: ' + e.message);
+    } finally {
+      if (prog) prog.classList.remove('active');
+    }
+  }
+
+  function handleUrlPaste(event, blockId) {
+    // Check if pasting an image file from clipboard
+    const items = event.clipboardData && event.clipboardData.items;
+    if (!items) return;
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith('image/')) {
+        event.preventDefault();
+        const file = item.getAsFile();
+        if (file) uploadImageFile(file, blockId);
+        return;
+      }
+    }
+    // Otherwise let the URL text paste through normally, then auto-confirm
+    setTimeout(() => {
+      const input = document.getElementById(`imgurl_${blockId}`);
+      if (input && input.value.trim().match(/^https?:\/\//)) {
+        confirmUrl(blockId);
+      }
+    }, 50);
+  }
+
+  // Global paste: if an image is in clipboard and focus is in editor, create/fill image block
+  async function onGlobalPaste(event) {
+    const items = event.clipboardData && event.clipboardData.items;
+    if (!items) return;
+
+    // Check if user is focused inside an image URL input (handled by handleUrlPaste)
+    if (event.target && event.target.classList && event.target.classList.contains('ne-image-url-input')) return;
+
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith('image/')) {
+        // Only intercept if focus is inside the editor
+        const area = document.getElementById('neBlocksArea');
+        const focused = document.activeElement;
+        if (!area || !area.contains(focused)) return;
+
+        event.preventDefault();
+        const file = item.getAsFile();
+        if (!file) return;
+
+        // Find the currently focused block or add image after last focused block
+        let targetId = null;
+        if (focused && focused.dataset && focused.dataset.blockId) {
+          targetId = focused.dataset.blockId;
+        }
+
+        // Convert current block to image or add new image block
+        if (targetId) {
+          const b = blocks[blockIdx(targetId)];
+          if (b && b.type !== 'image') {
+            const imgId = addBlockAfter(targetId, 'image');
+            await uploadImageFile(file, imgId);
+          } else if (b && b.type === 'image') {
+            await uploadImageFile(file, targetId);
+          }
+        } else {
+          const imgId = addBlockAfter(blocks[blocks.length-1].id, 'image');
+          await uploadImageFile(file, imgId);
+        }
+        return;
+      }
+    }
+  }
+
+  // ── Image Library ──
+  function openImageLibrary(blockId) {
+    imageLibTarget = blockId;
+    document.getElementById('neImageLibrary').classList.add('open');
+    loadImageLibrary();
+  }
+
+  function closeImageLibrary() {
+    imageLibTarget = null;
+    document.getElementById('neImageLibrary').classList.remove('open');
+  }
+
+  async function loadImageLibrary() {
+    const grid = document.getElementById('imgLibGrid');
+    grid.innerHTML = '<div class="img-lib-empty">로딩 중...</div>';
+    try {
+      const res = await fetch('/admin/api/images');
+      const data = await res.json();
+      if (data.images && data.images.length > 0) {
+        grid.innerHTML = '';
+        data.images.forEach(img => {
+          const item = document.createElement('div');
+          item.className = 'img-lib-item';
+          item.innerHTML = `
+            <img src="${esc(img.url)}" alt="${esc(img.name)}" loading="lazy"
+                 onerror="this.style.background='rgba(255,255,255,.05)'">
+            <div class="img-lib-item-footer">
+              <span class="img-lib-item-name">${esc(img.name)}</span>
+              <button type="button" class="img-lib-item-del" title="삭제"
+                      onclick="event.stopPropagation();NE.deleteLibraryImage('${esc(img.path)}',this)">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>`;
+          item.addEventListener('click', () => selectLibraryImage(img.url));
+          grid.appendChild(item);
+        });
+      } else {
+        grid.innerHTML = '<div class="img-lib-empty"><i class="fas fa-images" style="font-size:2rem;margin-bottom:10px;display:block;opacity:.3"></i>업로드된 이미지가 없습니다<br><small style="margin-top:6px;display:block">위 업로드 버튼 또는 이미지 블록에서 추가하세요</small></div>';
+      }
+    } catch (e) {
+      grid.innerHTML = `<div class="img-lib-empty" style="color:#ef4444">로드 실패: ${e.message}</div>`;
+    }
+  }
+
+  function selectLibraryImage(url) {
+    if (!imageLibTarget) return;
+    updateField(imageLibTarget, 'url', url);
+    rerenderImageBlock(imageLibTarget);
+    closeImageLibrary();
+  }
+
+  async function deleteLibraryImage(path, btn) {
+    if (!confirm('이 이미지를 삭제하시겠습니까?')) return;
+    btn.disabled = true;
+    try {
+      const res = await fetch('/admin/api/images/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        btn.closest('.img-lib-item').remove();
+        const grid = document.getElementById('imgLibGrid');
+        if (!grid.querySelector('.img-lib-item')) {
+          grid.innerHTML = '<div class="img-lib-empty">이미지가 없습니다</div>';
+        }
+      } else {
+        alert('삭제 실패: ' + (data.error || '오류'));
+        btn.disabled = false;
+      }
+    } catch (e) {
+      alert('삭제 오류: ' + e.message);
+      btn.disabled = false;
+    }
+  }
+
+  async function libUploadFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    event.target.value = '';
+    const btn = document.querySelector('.img-lib-upload-btn');
+    if (btn) btn.disabled = true;
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const res = await fetch('/admin/api/upload-image', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.url) {
+        loadImageLibrary();
+      } else {
+        alert('업로드 실패: ' + (data.error || '오류'));
+      }
+    } catch (e) {
+      alert('업로드 오류: ' + e.message);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
   // ── Keyboard handling ──
   function onEdit(e, id) {
     const b = blocks[blockIdx(id)];
     if (!b) return;
     const el = e.target;
 
-    // Sync HTML
     b.html = el.innerHTML;
 
-    // Slash detection — only open if menu isn't already open
     const text = el.textContent;
     if (text.endsWith('/') && !slashState) {
       openSlashMenu(id, el);
@@ -1004,23 +1557,17 @@ const NE = (() => {
     const b = blocks[blockIdx(id)];
     const el = e.target;
 
-    // Slash menu navigation
     if (slashState) {
       if (e.key === 'ArrowDown') { e.preventDefault(); slashNav(1); return; }
       if (e.key === 'ArrowUp')   { e.preventDefault(); slashNav(-1); return; }
-      if (e.key === 'Enter')     {
-        e.preventDefault();
-        applySlash();
-        return;
-      }
+      if (e.key === 'Enter')     { e.preventDefault(); applySlash(); return; }
       if (e.key === 'Escape')    { closeSlashMenu(); return; }
     }
 
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      // For list items, continue the list
       const nextType = (b.type === 'bullet' || b.type === 'numbered') ? b.type : 'paragraph';
-      const newId = addBlockAfter(id, nextType);
+      addBlockAfter(id, nextType);
       return;
     }
 
@@ -1033,7 +1580,6 @@ const NE = (() => {
       }
     }
 
-    // Bold / Italic / Underline shortcuts
     if (e.ctrlKey || e.metaKey) {
       if (e.key === 'b') { e.preventDefault(); document.execCommand('bold'); }
       if (e.key === 'i') { e.preventDefault(); document.execCommand('italic'); }
@@ -1049,11 +1595,7 @@ const NE = (() => {
       e.target.value = val.substring(0, sel) + '  ' + val.substring(sel);
       e.target.selectionStart = e.target.selectionEnd = sel + 2;
     }
-    if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
-      // Allow normal newline inside code
-    }
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-      // Ctrl+Enter = add block after
       e.preventDefault();
       addBlockAfter(id, 'paragraph');
     }
@@ -1070,7 +1612,6 @@ const NE = (() => {
     menu.classList.add('open');
     const search = document.getElementById('slashSearch');
     search.value = '';
-    // Focus the search without stealing caret from the block visually
     requestAnimationFrame(() => search.focus());
   }
 
@@ -1144,11 +1685,10 @@ const NE = (() => {
 
   function applySlashType(type) {
     if (!slashState) return;
-    const { blockId, query } = slashState;
+    const { blockId } = slashState;
     const b = blocks[blockIdx(blockId)];
     const el = getEditEl(blockId);
 
-    // Remove the trailing slash from the block (query was typed in the search box, not the block)
     if (el) {
       const text = el.textContent;
       const slashPos = text.lastIndexOf('/');
@@ -1161,7 +1701,6 @@ const NE = (() => {
     convertBlock(blockId, type);
   }
 
-  // Remove `charCount` chars from the end of a contenteditable element's text
   function removeTrailingTextFrom(el, charCount) {
     const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
     const nodes = [];
@@ -1180,7 +1719,6 @@ const NE = (() => {
     }
   }
 
-  // Expose for inline HTML
   function slashKeydown(e) {
     if (e.key === 'ArrowDown') { e.preventDefault(); slashNav(1); }
     if (e.key === 'ArrowUp')   { e.preventDefault(); slashNav(-1); }
@@ -1196,7 +1734,6 @@ const NE = (() => {
       return;
     }
     const range = sel.getRangeAt(0);
-    // Check if selection is inside editor
     const area = document.getElementById('neBlocksArea');
     if (!area || !area.contains(range.commonAncestorContainer)) {
       hideFormatBar();
@@ -1233,23 +1770,22 @@ const NE = (() => {
   function fmt(cmd, e) {
     e.preventDefault();
     restoreSelection();
-    if (cmd === 'bold')      document.execCommand('bold');
+    if (cmd === 'bold')           document.execCommand('bold');
     else if (cmd === 'italic')    document.execCommand('italic');
     else if (cmd === 'underline') document.execCommand('underline');
     else if (cmd === 'strike')    document.execCommand('strikeThrough');
     else if (cmd === 'code') {
       const sel = window.getSelection();
-      if (!sel.isCollapsed) {
+      if (sel && !sel.isCollapsed && sel.rangeCount) {
         const range = sel.getRangeAt(0);
         const code = document.createElement('code');
         code.style.cssText = 'background:rgba(255,255,255,.1);padding:1px 5px;border-radius:3px;font-family:monospace;font-size:.85em;color:#eb5757';
-        range.surroundContents(code);
+        try { range.surroundContents(code); } catch(_) {}
       }
     } else if (cmd === 'link') {
       const url = prompt('링크 URL을 입력하세요:', 'https://');
       if (url) document.execCommand('createLink', false, url);
     }
-    // Sync block html
     syncAllBlocks();
     schedulePreview();
   }
@@ -1258,7 +1794,6 @@ const NE = (() => {
     e.preventDefault();
     colorMode = mode;
     const cp = document.getElementById('neColorPicker');
-    // Toggle if same mode and already open
     if (cp.classList.contains('open')) {
       cp.classList.remove('open');
       return;
@@ -1280,30 +1815,37 @@ const NE = (() => {
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed || !sel.rangeCount) return;
     const range = sel.getRangeAt(0);
-    const span = document.createElement('span');
     if (colorName === 'default') {
       document.execCommand('removeFormat');
     } else {
+      const span = document.createElement('span');
       span.className = colorMode === 'text' ? `nc-${colorName}` : `nb-${colorName}`;
-      try { range.surroundContents(span); } catch(e) {}
+      try { range.surroundContents(span); } catch(_) {}
     }
     syncAllBlocks();
     schedulePreview();
     document.getElementById('neColorPicker').classList.remove('open');
   }
 
+  // ── Color picker — create each button separately (cloneNode loses event handlers) ──
   function buildColorPicker() {
     const textDiv = document.getElementById('cpTextColors');
     const bgDiv   = document.getElementById('cpBgColors');
+
     COLORS.forEach(c => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = `cp-btn ${c}`;
-      btn.title = c;
-      btn.onmousedown = (e) => { e.preventDefault(); applyColor(c); };
-      textDiv.appendChild(btn.cloneNode(true));
-      const bgBtn = btn.cloneNode(true);
+      // Text color button
+      const textBtn = document.createElement('button');
+      textBtn.type = 'button';
+      textBtn.className = `cp-btn ${c}`;
+      textBtn.title = c === 'default' ? '기본 색' : c;
+      textBtn.onmousedown = (e) => { e.preventDefault(); colorMode = 'text'; applyColor(c); };
+      textDiv.appendChild(textBtn);
+
+      // Background color button
+      const bgBtn = document.createElement('button');
+      bgBtn.type = 'button';
       bgBtn.className = `cp-btn ${c} cp-btn-bg`;
+      bgBtn.title = (c === 'default' ? '기본' : c) + ' 배경';
       bgBtn.style.background = c === 'default' ? 'rgba(255,255,255,.15)' : `var(--nb-${c})`;
       bgBtn.onmousedown = (e) => { e.preventDefault(); colorMode = 'bg'; applyColor(c); };
       bgDiv.appendChild(bgBtn);
@@ -1327,9 +1869,7 @@ const NE = (() => {
 
   function showEmojiPicker(el) {
     const picker = document.getElementById('neEmojiPicker');
-    const isOpen = picker.classList.contains('open');
-    // Toggle: if already open, close it
-    if (isOpen) { picker.classList.remove('open'); return; }
+    if (picker.classList.contains('open')) { picker.classList.remove('open'); return; }
     picker.classList.add('open');
     const rect = el.getBoundingClientRect();
     let top  = rect.bottom + 6;
@@ -1350,14 +1890,11 @@ const NE = (() => {
 
   // ── Global mouse/keyboard ──
   function onDocMousedown(e) {
-    // Overlay panels and their trigger buttons — clicks here should NOT close overlays
     const inOverlay = e.target.closest(
-      '#neSlashMenu, #neEmojiPicker, #neColorPicker, #neFormatBar, .ne-page-icon-btn'
+      '#neSlashMenu, #neEmojiPicker, #neColorPicker, #neFormatBar, .ne-page-icon-btn, #neImageLibrary'
     );
     if (!inOverlay) {
-      // Close each popup independently — don't close slash menu if user is
-      // clicking inside the editor area (they might be refocusing a block)
-      const inEditor = e.target.closest('#neBlocksArea, .ne-page-header, .ne-meta');
+      const inEditor = e.target.closest('#neBlocksArea, #neBlocksScroll, .ne-page-header, .ne-meta');
       if (!inEditor) closeSlashMenu();
       document.getElementById('neColorPicker').classList.remove('open');
       document.getElementById('neEmojiPicker').classList.remove('open');
@@ -1365,7 +1902,10 @@ const NE = (() => {
   }
 
   function onDocKeydown(e) {
-    if (e.key === 'Escape') hideAll();
+    if (e.key === 'Escape') {
+      hideAll();
+      closeImageLibrary();
+    }
   }
 
   function hideAll() {
@@ -1375,7 +1915,6 @@ const NE = (() => {
   }
 
   function onAreaClick(e) {
-    // Click on empty area below blocks → add new paragraph
     if (e.target === e.currentTarget) {
       if (!blocks.length) {
         blocks.push(newBlock('paragraph'));
@@ -1402,15 +1941,10 @@ const NE = (() => {
     ta.style.height = ta.scrollHeight + 'px';
   }
 
-  function updateImgPreview(id, url) {
-    const img = document.getElementById('imgprev_' + id);
-    if (img) { img.src = url; img.style.display = url ? 'block' : 'none'; }
-    schedulePreview();
-  }
-
   // ── Sync block HTML from DOM ──
   function syncAllBlocks() {
     blocks.forEach(b => {
+      if (b.type === 'image') return; // image state managed directly
       const el = getEditEl(b.id);
       if (el && el.contentEditable === 'true') b.html = el.innerHTML;
     });
@@ -1446,6 +1980,20 @@ const NE = (() => {
       <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
       <link rel="stylesheet" href="/static/css/notion.css">
+      <style>
+        .nc-gray{color:#9B9A97}.nc-brown{color:#A07862}.nc-orange{color:#D9730D}
+        .nc-yellow{color:#CB912F}.nc-green{color:#448361}.nc-blue{color:#337EA9}
+        .nc-purple{color:#9065B0}.nc-pink{color:#C14C8A}.nc-red{color:#D44C47}
+        .nb-gray{background:rgba(155,154,151,.18);border-radius:2px;padding:1px 3px}
+        .nb-brown{background:rgba(160,120,98,.18);border-radius:2px;padding:1px 3px}
+        .nb-orange{background:rgba(217,115,13,.18);border-radius:2px;padding:1px 3px}
+        .nb-yellow{background:rgba(203,145,47,.18);border-radius:2px;padding:1px 3px}
+        .nb-green{background:rgba(68,131,97,.18);border-radius:2px;padding:1px 3px}
+        .nb-blue{background:rgba(51,126,169,.18);border-radius:2px;padding:1px 3px}
+        .nb-purple{background:rgba(144,101,176,.18);border-radius:2px;padding:1px 3px}
+        .nb-pink{background:rgba(193,76,138,.18);border-radius:2px;padding:1px 3px}
+        .nb-red{background:rgba(212,76,71,.18);border-radius:2px;padding:1px 3px}
+      </style>
       </head><body><article class="notion-page"><header>
       <div class="page-icon">${icon}</div>
       <h1 class="page-title">${e(title||'제목 없음')}</h1>
@@ -1460,9 +2008,6 @@ const NE = (() => {
     const frame = document.getElementById('nePreviewFrame');
     const doc = frame.contentDocument || frame.contentWindow.document;
     doc.open(); doc.write(html); doc.close();
-    setTimeout(() => {
-      try { frame.style.height = '0'; frame.style.height = doc.body.scrollHeight + 40 + 'px'; } catch(_) {}
-    }, 200);
   }
 
   function e(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -1470,7 +2015,7 @@ const NE = (() => {
   function renderBlockPreview(b) {
     const content = b.html || b.content || '';
     switch (b.type) {
-      case 'paragraph':  return `<p>${content}</p>`;
+      case 'paragraph':  return `<p>${content || '&nbsp;'}</p>`;
       case 'heading1':   return `<h1>${content}</h1>`;
       case 'heading2':   return `<h2>${content}</h2>`;
       case 'heading3':   return `<h3>${content}</h3>`;
@@ -1502,13 +2047,18 @@ const NE = (() => {
   return {
     init, addBlockAfter, deleteBlock, convertBlock,
     onEdit, onKeydown, codeKeydown,
-    updateField, updateImgPreview, autoResizeTA,
+    updateField, autoResizeTA,
     onTitleInput, onAreaClick,
     filterSlash, slashKeydown, applySlashType, slashNav,
     fmt, openColorPicker, applyColor,
     showEmojiPicker, setIcon,
     togglePreview, refreshPreview, schedulePreview,
     save,
+    // Image
+    showUrlInput, confirmUrl, handleUrlPaste,
+    handleImageFile, resetImageBlock,
+    openImageLibrary, closeImageLibrary, deleteLibraryImage, libUploadFile,
+    selectLibraryImage,
   };
 })();
 

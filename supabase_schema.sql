@@ -136,5 +136,22 @@ CREATE POLICY "Anon full access" ON academic_items FOR ALL USING (true) WITH CHE
 CREATE POLICY "Anon full access" ON certificates FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Anon full access" ON activity_logs FOR ALL USING (true) WITH CHECK (true);
 
+-- Site Settings (key-value store, e.g. last_updated)
+CREATE TABLE IF NOT EXISTS site_settings (
+  key text PRIMARY KEY,
+  value text NOT NULL,
+  updated_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public read" ON site_settings FOR SELECT USING (true);
+CREATE POLICY "Anon full access" ON site_settings FOR ALL USING (true) WITH CHECK (true);
+
+-- Seed initial last_updated value
+INSERT INTO site_settings (key, value)
+VALUES ('last_updated', to_char(now() AT TIME ZONE 'Asia/Seoul', 'YYYY.MM.DD'))
+ON CONFLICT (key) DO NOTHING;
+
 -- Storage bucket for images (run in Supabase dashboard Storage section)
 -- Create a bucket named 'portfolio-images' and set it to public
+-- The app uploads activity-log images under the 'activity-logs/' path prefix
