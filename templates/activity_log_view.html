@@ -41,29 +41,30 @@
   <div class="page-body">
     {% for block in blocks %}
       {% set type = block.type %}
+      {% set content = (block.html or block.content or '') %}
       {% if type == 'paragraph' %}
-        <p>{{ block.content or '' }}</p>
+        <p>{{ content | safe }}</p>
       {% elif type == 'heading1' %}
-        <h1>{{ block.content or '' }}</h1>
+        <h1>{{ content | safe }}</h1>
       {% elif type == 'heading2' %}
-        <h2>{{ block.content or '' }}</h2>
+        <h2>{{ content | safe }}</h2>
       {% elif type == 'heading3' %}
-        <h3>{{ block.content or '' }}</h3>
-      {% elif type == 'bulleted_list' %}
-        <ul>{% for item in (block.items or []) %}<li>{{ item }}</li>{% endfor %}</ul>
-      {% elif type == 'numbered_list' %}
-        <ol>{% for item in (block.items or []) %}<li>{{ item }}</li>{% endfor %}</ol>
+        <h3>{{ content | safe }}</h3>
+      {% elif type in ('bullet', 'bulleted_list') %}
+        <ul class="bulleted-list"><li>{{ content | safe }}</li></ul>
+      {% elif type in ('numbered', 'numbered_list') %}
+        <ol class="numbered-list"><li>{{ content | safe }}</li></ol>
       {% elif type == 'callout' %}
         <div class="callout">
           <div class="icon">{{ block.icon or '💡' }}</div>
-          <div class="callout-content"><p>{{ block.content or '' }}</p></div>
+          <div class="callout-content"><p>{{ content | safe }}</p></div>
         </div>
       {% elif type == 'quote' %}
         <blockquote style="border-left:3px solid #6366f1;padding-left:16px;margin:16px 0;color:rgba(255,255,255,0.7)">
-          <p>{{ block.content or '' }}</p>
+          <p>{{ content | safe }}</p>
         </blockquote>
       {% elif type == 'code' %}
-        <pre style="background:rgba(0,0,0,0.3);border-radius:8px;padding:16px;overflow-x:auto;margin:16px 0"><code style="font-family:Menlo,Monaco,monospace;font-size:0.85rem;color:#e2e8f0;background:none;padding:0">{{ block.content or '' }}</code></pre>
+        <pre style="background:rgba(0,0,0,0.3);border-radius:8px;padding:16px;overflow-x:auto;margin:16px 0"><code style="font-family:Menlo,Monaco,monospace;font-size:0.85rem;color:#e2e8f0;background:none;padding:0">{{ content }}</code></pre>
       {% elif type == 'image' and block.url %}
         <figure>
           <img src="{{ block.url }}" alt="{{ block.caption or '' }}">
@@ -73,8 +74,7 @@
         <hr>
       {% elif type == 'toggle' %}
         <details style="margin:10px 0;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:10px 14px">
-          <summary style="cursor:pointer;font-weight:600;color:#e2e8f0">{{ block.title or '토글' }}</summary>
-          <div style="margin-top:8px;padding-left:8px">{{ block.content or '' }}</div>
+          <summary style="cursor:pointer;font-weight:600;color:#e2e8f0">{{ content | safe or '토글' }}</summary>
         </details>
       {% endif %}
     {% endfor %}

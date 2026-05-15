@@ -46,7 +46,7 @@
         <td>{{ item.sort_order }}</td>
         <td>
           <div style="display:flex;gap:6px">
-            <button class="btn-admin btn-ghost btn-icon btn-sm" onclick="editItem({{ item | tojson }})">
+            <button class="btn-admin btn-ghost btn-icon btn-sm" onclick="editItem({{ loop.index0 }})">
               <i class="fas fa-edit"></i>
             </button>
             <form method="POST" action="{{ url_for('admin_current_activities_delete', row_id=item.id) }}"
@@ -134,7 +134,7 @@ function openModal(item) {
   document.getElementById('modalTitleText').textContent = '활동 추가';
   document.getElementById('editModal').classList.add('show');
 }
-function editItem(item) {
+function editItem(idx) { const item = ITEMS[idx];
   document.getElementById('itemId').value = item.id || '';
   document.getElementById('itemTitle').value = item.title || '';
   document.getElementById('itemDesc').value = item.description || '';
@@ -152,4 +152,5 @@ document.getElementById('editModal').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
 });
 </script>
+<script>const ITEMS = {{ items | tojson }};</script>
 {% endblock %}

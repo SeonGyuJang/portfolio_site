@@ -39,7 +39,7 @@
         </td>
         <td>
           <div style="display:flex;gap:6px">
-            <button class="btn-admin btn-ghost btn-icon btn-sm" onclick="editItem({{ item | tojson }})">
+            <button class="btn-admin btn-ghost btn-icon btn-sm" onclick="editItem({{ loop.index0 }})">
               <i class="fas fa-edit"></i>
             </button>
             <form method="POST" action="{{ url_for('admin_certificates_delete', row_id=item.id) }}"
@@ -120,7 +120,7 @@ function openModal() {
   document.getElementById('modalTitleText').textContent='자격증 추가';
   document.getElementById('editModal').classList.add('show');
 }
-function editItem(item) {
+function editItem(idx) { const item = ITEMS[idx];
   document.getElementById('itemId').value=item.id||'';
   document.getElementById('itemName').value=item.name||'';
   document.getElementById('itemIssuer').value=item.issuer||'';
@@ -135,4 +135,5 @@ function editItem(item) {
 function closeModal(){document.getElementById('editModal').classList.remove('show');}
 document.getElementById('editModal').addEventListener('click',e=>{if(e.target===document.getElementById('editModal'))closeModal();});
 </script>
+<script>const ITEMS = {{ items | tojson }};</script>
 {% endblock %}
