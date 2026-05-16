@@ -75,7 +75,6 @@
     <form method="POST" action="{{ url_for('admin_academic_save') }}" id="academicForm">
       <div class="modal-body">
         <input type="hidden" name="id" id="itemId">
-        <input type="hidden" name="images" id="imagesJson">
         <div class="form-grid">
           <div class="form-group">
             <label class="form-label">제목 *</label>
@@ -96,12 +95,17 @@
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">이미지 URL 목록</label>
-            <div id="imgUrlList" class="img-url-list"></div>
-            <button type="button" class="btn-admin btn-ghost btn-sm" style="margin-top:8px" onclick="addImgUrl()">
-              <i class="fas fa-plus"></i> URL 추가
-            </button>
-          </div>
+  <label class="form-label">이미지</label>
+  <div id="imgList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px"></div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button type="button" class="btn-admin btn-ghost btn-sm" onclick="triggerUpload()" id="uploadBtn">
+      <i class="fas fa-upload"></i> 파일 업로드
+    </button>
+    <span id="uploadStatus" style="font-size:.8rem;color:#94a3b8;display:none">업로드 중...</span>
+  </div>
+  <input type="file" id="imgFileInput" accept="image/*" style="display:none" onchange="handleImgFile(event)">
+  <input type="hidden" name="images" id="imagesJson">
+</div>
           <div class="form-group">
             <label class="form-label">정렬 순서</label>
             <input type="number" name="sort_order" id="itemOrder" class="form-input" value="0">
@@ -118,25 +122,52 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<style>
+.img-thumb-wrap { position:relative; display:inline-flex; }
+.img-thumb { width:80px; height:80px; object-fit:cover; border-radius:6px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.05); }
+.img-thumb-del { position:absolute; top:-6px; right:-6px; width:18px; height:18px; border-radius:50%; background:#ef4444; border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:.65rem; }
+</style>
 <script>
 let imgUrls = [];
-function addImgUrl(url='') { imgUrls.push(url); renderImgList(); }
-function removeImgUrl(i) { imgUrls.splice(i,1); renderImgList(); }
+
+function triggerUpload() { document.getElementById('imgFileInput').click(); }
+
+async function handleImgFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = '';
+  const btn = document.getElementById('uploadBtn');
+  const status = document.getElementById('uploadStatus');
+  btn.disabled = true; status.style.display = 'inline';
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('item_type', 'academic_items');
+  try {
+    const res = await fetch('/admin/api/upload-image', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.url) { imgUrls.push(data.url); renderImgList(); }
+    else alert('업로드 실패: ' + (data.error || '오류'));
+  } catch(e) { alert('업로드 오류: ' + e.message); }
+  btn.disabled = false; status.style.display = 'none';
+}
+
+function removeImg(i) { imgUrls.splice(i, 1); renderImgList(); }
+
 function renderImgList() {
-  document.getElementById('imgUrlList').innerHTML = imgUrls.map((url,i) => `
-    <div class="img-url-item">
-      <input type="text" class="form-input" value="${url}"
-             oninput="imgUrls[${i}]=this.value" placeholder="https://...">
-      ${url ? `<img src="${url}" class="img-url-preview" onerror="this.style.display='none'">` : ''}
-      <button type="button" class="btn-admin btn-danger btn-icon btn-sm" onclick="removeImgUrl(${i})">
-        <i class="fas fa-times"></i>
-      </button>
+  document.getElementById('imagesJson').value = JSON.stringify(imgUrls);
+  const list = document.getElementById('imgList');
+  list.innerHTML = imgUrls.map((url, i) => `
+    <div class="img-thumb-wrap">
+      <img src="${url}" class="img-thumb" onerror="this.style.opacity='.3'">
+      <button type="button" class="img-thumb-del" onclick="removeImg(${i})" title="삭제">✕</button>
     </div>`).join('');
 }
+
 function saveForm() {
-  document.getElementById('imagesJson').value = JSON.stringify(imgUrls.filter(u=>u.trim()));
+  document.getElementById('imagesJson').value = JSON.stringify(imgUrls);
   document.getElementById('academicForm').submit();
 }
+
 function openModal() {
   ['itemId','itemName','itemDesc','itemDate','itemLink'].forEach(id => document.getElementById(id).value='');
   document.getElementById('itemOrder').value = 0;
@@ -144,7 +175,9 @@ function openModal() {
   document.getElementById('modalTitleText').textContent = '학회/논문 추가';
   document.getElementById('editModal').classList.add('show');
 }
-function editItem(idx) { const item = ITEMS[idx];
+
+function editItem(idx) {
+  const item = ITEMS[idx];
   document.getElementById('itemId').value = item.id||'';
   document.getElementById('itemName').value = item.name||'';
   document.getElementById('itemDesc').value = item.description||'';
@@ -156,6 +189,7 @@ function editItem(idx) { const item = ITEMS[idx];
   document.getElementById('modalTitleText').textContent = '학회/논문 수정';
   document.getElementById('editModal').classList.add('show');
 }
+
 function closeModal() { document.getElementById('editModal').classList.remove('show'); }
 document.getElementById('editModal').addEventListener('click', e => { if(e.target===document.getElementById('editModal')) closeModal(); });
 </script>

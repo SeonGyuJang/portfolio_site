@@ -85,12 +85,20 @@
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">증명서 이미지 URL</label>
-            <input type="text" name="image" id="itemImage" class="form-input" placeholder="https://...">
-            <div style="margin-top:8px">
-              <img id="imgPreview" src="" style="max-height:120px;border-radius:6px;display:none" onerror="this.style.display='none'">
-            </div>
-          </div>
+  <label class="form-label">증명서 이미지</label>
+  <input type="hidden" name="image" id="itemImage">
+  <div id="certImgPreview" style="margin-bottom:8px"></div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button type="button" class="btn-admin btn-ghost btn-sm" onclick="triggerUpload()" id="uploadBtn">
+      <i class="fas fa-upload"></i> 파일 업로드
+    </button>
+    <button type="button" class="btn-admin btn-ghost btn-sm" id="removeImgBtn" onclick="removeImg()" style="display:none">
+      <i class="fas fa-times"></i> 이미지 삭제
+    </button>
+    <span id="uploadStatus" style="font-size:.8rem;color:#94a3b8;display:none">업로드 중...</span>
+  </div>
+  <input type="file" id="imgFileInput" accept="image/*" style="display:none" onchange="handleImgFile(event)">
+</div>
           <div class="form-group">
             <label class="form-label">정렬 순서</label>
             <input type="number" name="sort_order" id="itemOrder" class="form-input" value="0">
@@ -108,30 +116,56 @@
 
 {% block extra_scripts %}
 <script>
-document.getElementById('itemImage').addEventListener('input', function() {
-  const img = document.getElementById('imgPreview');
-  img.src = this.value;
-  img.style.display = this.value ? 'block' : 'none';
-});
+function triggerUpload() { document.getElementById('imgFileInput').click(); }
+
+async function handleImgFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = '';
+  const btn = document.getElementById('uploadBtn');
+  const status = document.getElementById('uploadStatus');
+  btn.disabled = true; status.style.display = 'inline';
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('item_type', 'certificates');
+  try {
+    const res = await fetch('/admin/api/upload-image', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.url) { setImg(data.url); }
+    else alert('업로드 실패: ' + (data.error || '오류'));
+  } catch(e) { alert('업로드 오류: ' + e.message); }
+  btn.disabled = false; status.style.display = 'none';
+}
+
+function setImg(url) {
+  document.getElementById('itemImage').value = url;
+  const preview = document.getElementById('certImgPreview');
+  preview.innerHTML = url ? `<img src="${url}" style="max-height:120px;border-radius:6px;border:1px solid rgba(255,255,255,.1)" onerror="this.style.opacity='.3'">` : '';
+  document.getElementById('removeImgBtn').style.display = url ? 'inline-flex' : 'none';
+}
+
+function removeImg() { setImg(''); }
+
 function openModal() {
-  ['itemId','itemName','itemIssuer','itemDate','itemImage'].forEach(id => document.getElementById(id).value='');
+  ['itemId','itemName','itemIssuer','itemDate'].forEach(id => document.getElementById(id).value='');
   document.getElementById('itemOrder').value=0;
-  document.getElementById('imgPreview').style.display='none';
+  setImg('');
   document.getElementById('modalTitleText').textContent='자격증 추가';
   document.getElementById('editModal').classList.add('show');
 }
-function editItem(idx) { const item = ITEMS[idx];
+
+function editItem(idx) {
+  const item = ITEMS[idx];
   document.getElementById('itemId').value=item.id||'';
   document.getElementById('itemName').value=item.name||'';
   document.getElementById('itemIssuer').value=item.issuer||'';
   document.getElementById('itemDate').value=item.date_text||'';
-  document.getElementById('itemImage').value=item.image||'';
   document.getElementById('itemOrder').value=item.sort_order||0;
-  const img=document.getElementById('imgPreview');
-  if(item.image){img.src=item.image;img.style.display='block';}else{img.style.display='none';}
+  setImg(item.image||'');
   document.getElementById('modalTitleText').textContent='자격증 수정';
   document.getElementById('editModal').classList.add('show');
 }
+
 function closeModal(){document.getElementById('editModal').classList.remove('show');}
 document.getElementById('editModal').addEventListener('click',e=>{if(e.target===document.getElementById('editModal'))closeModal();});
 </script>

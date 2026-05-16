@@ -577,73 +577,79 @@ def admin_activity_log_delete(log_id):
 @app.route('/admin/api/upload-image', methods=['POST'])
 @require_admin
 def admin_upload_image():
-    """Upload image to database and return public URL."""
+    """Upload image to portfolio_images table; returns {url, image_id}."""
     if not supabase:
         return jsonify({'error': 'Supabase not configured'}), 400
     file = request.files.get('file')
     if not file:
         return jsonify({'error': 'No file provided'}), 400
+    item_type = request.form.get('item_type', 'activity_logs')
     try:
-        import base64
+        import base64 as _b64
         content = file.read()
         filename = file.filename or 'image.jpg'
         mime_type = file.content_type or 'image/jpeg'
-        image_data_b64 = base64.b64encode(content).decode('utf-8')
+        image_data_b64 = _b64.b64encode(content).decode('utf-8')
         result = supabase.table('portfolio_images').insert({
             'filename': filename,
             'mime_type': mime_type,
             'image_data': image_data_b64,
-            'item_type': 'activity_logs'
+            'item_type': item_type,
         }).execute()
-        if result.data and len(result.data) > 0:
+        if result.data:
             image_id = result.data[0]['id']
-            url = f"/api/images/{image_id}"
-            return jsonify({'url': url, 'image_id': image_id})
-        else:
-            return jsonify({'error': 'Failed to save image'}), 500
+            return jsonify({'url': f"/api/images/{image_id}", 'image_id': image_id})
+        return jsonify({'error': 'Failed to save image'}), 500
     except Exception as e:
-        logger.error(f"Image upload error: {e}")
+        logger.error(f"admin_upload_image error: {e}")
         return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/images/<image_id>')
 def get_image(image_id):
-    """Get image by ID from database."""
+    """Serve image bytes stored in portfolio_images table."""
     if not supabase:
         return "Image not available", 404
     try:
-        import base64
-        result = supabase.table('portfolio_images').select('*').eq('id', image_id).execute()
-        if result.data and len(result.data) > 0:
-            img = result.data[0]
-            # Base64 디코딩
-            image_data = base64.b64decode(img['image_data'])
-            return image_data, 200, {
-                'Content-Type': img.get('mime_type', 'image/jpeg'),
-                'Cache-Control': 'public, max-age=86400'
-            }
-        return "Image not found", 404
+        import base64 as _b64
+        result = supabase.table('portfolio_images').select('mime_type,image_data').eq('id', image_id).execute()
+        if not result.data:
+            return "Image not found", 404
+        img = result.data[0]
+        raw = img['image_data']
+        # Handle both text (base64) and bytea (\xHEX) column types
+        if isinstance(raw, str):
+            if raw.startswith('\\x'):
+                image_bytes = bytes.fromhex(raw[2:])
+            else:
+                image_bytes = _b64.b64decode(raw)
+        elif isinstance(raw, (bytes, bytearray)):
+            image_bytes = bytes(raw)
+        else:
+            return "Invalid image data", 500
+        from flask import make_response
+        resp = make_response(image_bytes)
+        resp.headers['Content-Type'] = img.get('mime_type') or 'image/jpeg'
+        resp.headers['Cache-Control'] = 'public, max-age=86400'
+        return resp
     except Exception as e:
-        logger.error(f"Get image error: {e}")
+        logger.error(f"get_image error: {e}")
         return "Error loading image", 500
 
 
 @app.route('/admin/api/images')
 @require_admin
 def admin_list_images():
-    """List images from database."""
+    """List images from portfolio_images table, filtered by item_type."""
     if not supabase:
         return jsonify({'images': []})
+    item_type = request.args.get('item_type', 'activity_logs')
     try:
-        result = supabase.table('portfolio_images').select('*').eq('item_type', 'activity_logs').order('created_at', desc=True).execute()
-        images = []
-        for img in (result.data or []):
-            images.append({
-                'id': img['id'],
-                'url': f"/api/images/{img['id']}",
-                'name': img.get('filename', 'image'),
-                'size': len(img.get('image_data', b'')),
-            })
+        result = supabase.table('portfolio_images').select('id,filename,mime_type,created_at').eq('item_type', item_type).order('created_at', desc=True).execute()
+        images = [
+            {'id': img['id'], 'url': f"/api/images/{img['id']}", 'name': img.get('filename', 'image')}
+            for img in (result.data or [])
+        ]
         return jsonify({'images': images})
     except Exception as e:
         logger.error(f"admin_list_images error: {e}")
