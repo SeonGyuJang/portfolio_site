@@ -481,16 +481,20 @@ def public_url(filename: str) -> str:
 
 
 def ensure_bucket() -> None:
-    """Create the Storage bucket (public) if it doesn't already exist."""
+    """Verify the Storage bucket exists; abort with instructions if not."""
     try:
-        supabase.storage.create_bucket(BUCKET, options={'public': True})
-        print(f"  ✓ 버킷 '{BUCKET}' 생성됨")
+        buckets = supabase.storage.list_buckets()
+        names = [b.name for b in (buckets or [])]
+        if BUCKET not in names:
+            print(f"\n✗ Storage 버킷 '{BUCKET}'이(가) 없습니다.")
+            print("  Supabase 대시보드 → Storage → New bucket 에서")
+            print(f"  이름: {BUCKET}, Public: ON 으로 생성한 뒤 다시 실행하세요.")
+            sys.exit(1)
+        print(f"  ✓ 버킷 '{BUCKET}' 확인됨")
+    except SystemExit:
+        raise
     except Exception as e:
-        msg = str(e).lower()
-        if 'already exists' in msg or 'duplicate' in msg or '409' in msg:
-            print(f"  – 버킷 '{BUCKET}' 이미 존재함")
-        else:
-            print(f"  ⚠ 버킷 생성 실패: {e}")
+        print(f"  ⚠ 버킷 확인 실패: {e}")
 
 
 def flat_name(prefix: str, original_filename: str, space_to_underscore: bool = False) -> str:

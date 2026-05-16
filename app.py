@@ -43,7 +43,6 @@ else:
 # ── helpers ────────────────────────────────────────────────────────────────
 
 STORAGE_BUCKET = 'portfolio-images'
-_bucket_ensured = False
 
 
 def storage_url(filename: str) -> str:
@@ -51,30 +50,22 @@ def storage_url(filename: str) -> str:
     return f"{base}/storage/v1/object/public/{STORAGE_BUCKET}/{filename}"
 
 
-def _ensure_bucket() -> None:
-    """Create the Storage bucket if it doesn't exist yet (idempotent)."""
-    global _bucket_ensured
-    if _bucket_ensured:
-        return
-    try:
-        supabase.storage.create_bucket(STORAGE_BUCKET, options={'public': True})
-        logger.info(f"Created Storage bucket '{STORAGE_BUCKET}'")
-    except Exception as e:
-        msg = str(e).lower()
-        if 'already exists' in msg or 'duplicate' in msg or '409' in msg:
-            pass  # bucket already exists, that's fine
-        else:
-            logger.warning(f"Could not create bucket '{STORAGE_BUCKET}': {e}")
-    _bucket_ensured = True
-
-
 def storage_upload(filename: str, content: bytes, content_type: str = 'image/jpeg') -> str:
     """Upload bytes to Supabase Storage and return the public URL."""
-    _ensure_bucket()
-    supabase.storage.from_(STORAGE_BUCKET).upload(
-        filename, content,
-        file_options={'content-type': content_type, 'upsert': 'true'}
-    )
+    try:
+        supabase.storage.from_(STORAGE_BUCKET).upload(
+            filename, content,
+            file_options={'content-type': content_type, 'upsert': 'true'}
+        )
+    except Exception as e:
+        msg = str(e)
+        if 'Bucket not found' in msg or '404' in msg:
+            raise RuntimeError(
+                f"Storage bucket '{STORAGE_BUCKET}' not found. "
+                "Go to Supabase dashboard → Storage → New bucket → "
+                f"name it '{STORAGE_BUCKET}' → enable Public → Create."
+            ) from e
+        raise
     return storage_url(filename)
 
 def db_fetch(table, order_col='sort_order', ascending=True):
