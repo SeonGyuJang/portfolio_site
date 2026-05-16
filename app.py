@@ -42,6 +42,27 @@ else:
 
 # ── helpers ────────────────────────────────────────────────────────────────
 
+STORAGE_BUCKET = 'portfolio-images'
+
+
+def storage_url(filename: str) -> str:
+    """Construct Supabase Storage public URL without relying on get_public_url().
+
+    get_public_url() has version-dependent return types in supabase-py.
+    Manual construction is stable across all versions.
+    """
+    base = SUPABASE_URL.rstrip('/')
+    return f"{base}/storage/v1/object/public/{STORAGE_BUCKET}/{filename}"
+
+
+def storage_upload(filename: str, content: bytes, content_type: str = 'image/jpeg') -> str:
+    """Upload bytes to Supabase Storage and return the public URL."""
+    supabase.storage.from_(STORAGE_BUCKET).upload(
+        filename, content,
+        file_options={'content-type': content_type, 'upsert': 'true'}
+    )
+    return storage_url(filename)
+
 def db_fetch(table, order_col='sort_order', ascending=True):
     if not supabase:
         return []
@@ -562,29 +583,20 @@ def admin_upload_image():
     file = request.files.get('file')
     if not file:
         return jsonify({'error': 'No file provided'}), 400
-    
     try:
         import base64
         content = file.read()
         filename = file.filename or 'image.jpg'
-        
-        # MIME 타입 결정
         mime_type = file.content_type or 'image/jpeg'
-        
-        # Base64 인코딩
         image_data_b64 = base64.b64encode(content).decode('utf-8')
-        
-        # 데이터베이스에 저장
         result = supabase.table('portfolio_images').insert({
             'filename': filename,
             'mime_type': mime_type,
             'image_data': image_data_b64,
             'item_type': 'activity_logs'
         }).execute()
-        
         if result.data and len(result.data) > 0:
             image_id = result.data[0]['id']
-            # 이미지를 제공할 URL 생성
             url = f"/api/images/{image_id}"
             return jsonify({'url': url, 'image_id': image_id})
         else:
@@ -619,7 +631,7 @@ def get_image(image_id):
 @app.route('/admin/api/images')
 @require_admin
 def admin_list_images():
-    """List images from database activity_logs folder."""
+    """List images from database."""
     if not supabase:
         return jsonify({'images': []})
     try:

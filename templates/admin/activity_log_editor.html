@@ -147,14 +147,14 @@ select.ne-meta-input option { background: #1e2535; color: #e2e8f0; }
 }
 .ne-title::placeholder { color: var(--ne-placeholder); }
 
-/* ── Blocks area — scroll wrapper trick to allow left-overflow of controls ── */
+/* ── Blocks area ── */
 .ne-blocks-scroll {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
 }
 .ne-blocks-area {
-  padding: 4px 52px 80px 64px; /* extra left padding for block controls */
+  padding: 4px 52px 80px 8px;
   min-height: 100%;
 }
 
@@ -165,7 +165,6 @@ select.ne-meta-input option { background: #1e2535; color: #e2e8f0; }
   align-items: flex-start;
   gap: 0;
   margin: 1px 0;
-  padding-left: 0;
   border-radius: 4px;
   transition: background .1s;
 }
@@ -173,19 +172,18 @@ select.ne-meta-input option { background: #1e2535; color: #e2e8f0; }
 .ne-block.drag-over-top { border-top: 2px solid var(--ne-accent); }
 .ne-block.drag-over-bottom { border-bottom: 2px solid var(--ne-accent); }
 
-/* ── Block controls (left side, show on hover) ── */
+/* ── Block controls (left side, show on hover, flex-based — no absolute) ── */
 .ne-block-left {
   display: flex;
   align-items: flex-start;
+  justify-content: flex-end;
   gap: 2px;
   opacity: 0;
   transition: opacity .15s;
   flex-shrink: 0;
+  width: 52px;
   padding-top: 5px;
-  position: absolute;
-  left: -56px;
-  top: 0;
-  z-index: 10;
+  padding-right: 4px;
 }
 .ne-block:hover .ne-block-left { opacity: 1; }
 
@@ -1474,7 +1472,7 @@ const NE = (() => {
             <div class="img-lib-item-footer">
               <span class="img-lib-item-name">${esc(img.name)}</span>
               <button type="button" class="img-lib-item-del" title="삭제"
-                      onclick="event.stopPropagation();NE.deleteLibraryImage('${esc(img.path)}',this)">
+                      onclick="event.stopPropagation();NE.deleteLibraryImage('${esc(img.id || img.path)}',this)">
                 <i class="fas fa-trash"></i>
               </button>
             </div>`;
@@ -1496,14 +1494,14 @@ const NE = (() => {
     closeImageLibrary();
   }
 
-  async function deleteLibraryImage(path, btn) {
+  async function deleteLibraryImage(imageId, btn) {
     if (!confirm('이 이미지를 삭제하시겠습니까?')) return;
     btn.disabled = true;
     try {
       const res = await fetch('/admin/api/images/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path })
+        body: JSON.stringify({ image_id: imageId })
       });
       const data = await res.json();
       if (data.ok) {

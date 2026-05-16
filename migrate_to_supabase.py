@@ -1,59 +1,158 @@
 #!/usr/bin/env python3
 """
-포트폴리오 데이터 Supabase 마이그레이션 스크립트
-사용법: python migrate_to_supabase.py
-       python migrate_to_supabase.py --dry-run   (실제 저장 없이 확인만)
-       python migrate_to_supabase.py --table awards  (특정 테이블만)
+Portfolio data + image migration script for Supabase.
+
+Usage:
+    python migrate_to_supabase.py              # migrate data + prompt about images
+    python migrate_to_supabase.py --dry-run    # show what would happen, no writes
+    python migrate_to_supabase.py --images     # only upload images to Supabase Storage
+    python migrate_to_supabase.py --data       # only migrate data to Supabase DB
 """
 
-import sys
+import mimetypes
 import os
+import sys
+from pathlib import Path
+
 from dotenv import load_dotenv
 import base64
 import json
 
+# ---------------------------------------------------------------------------
+# Environment & CLI flags
+# ---------------------------------------------------------------------------
+
 load_dotenv()
 
-DRY_RUN = '--dry-run' in sys.argv
-TARGET_TABLE = None
-for arg in sys.argv[1:]:
-    if not arg.startswith('--'):
-        TARGET_TABLE = arg
-
-SUPABASE_URL = os.environ.get('SUPABASE_URL', '')
-SUPABASE_KEY = os.environ.get('SUPABASE_KEY', '')
+SUPABASE_URL: str = os.environ.get("SUPABASE_URL", "")
+SUPABASE_KEY: str = os.environ.get("SUPABASE_KEY", "")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
-    print("❌ 환경변수 SUPABASE_URL, SUPABASE_KEY를 설정하세요.")
-    print("   .env 파일에 추가하거나 export로 설정하세요.")
+    print("✗ Environment variables SUPABASE_URL and SUPABASE_KEY must be set.")
+    print("  Add them to your .env file or export them in your shell.")
     sys.exit(1)
 
-from supabase import create_client
+DRY_RUN: bool = "--dry-run" in sys.argv
+MODE_IMAGES: bool = "--images" in sys.argv
+MODE_DATA: bool = "--data" in sys.argv
+
+# Default (no mode flags): run data migration then prompt about images.
+RUN_DATA: bool = MODE_DATA or (not MODE_IMAGES and not MODE_DATA)
+RUN_IMAGES: bool = MODE_IMAGES or (not MODE_IMAGES and not MODE_DATA)
+
+from supabase import create_client  # noqa: E402  (import after env-check)
+
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-print(f"{'[DRY RUN] ' if DRY_RUN else ''}Supabase 연결 완료: {SUPABASE_URL[:40]}...")
+# Base directory of this script (so it can be run from any cwd)
+BASE_DIR = Path(__file__).parent.resolve()
+BUCKET = "portfolio-images"
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 마이그레이션 데이터 정의
-# ─────────────────────────────────────────────────────────────────────────────
+print(f"{'[DRY RUN] ' if DRY_RUN else ''}Connected to Supabase: {SUPABASE_URL[:50]}...")
+
+# ---------------------------------------------------------------------------
+# Migration data
+# ---------------------------------------------------------------------------
 
 CURRENT_ACTIVITIES = [
-    {"title": "고려대학교 세종캠퍼스 재학", "description": "디지털경영전공", "date_start": "2023.03.01", "date_end": "", "is_ongoing": True, "sort_order": 1},
-    {"title": "Cactusun CTO", "description": "브랜드 창업 및 기술 총괄", "date_start": "2023.09.01", "date_end": "", "is_ongoing": True, "sort_order": 2},
-    {"title": "제38대 총학생회 '비범' 부총학생회장", "description": "고려대학교 세종캠퍼스", "date_start": "2025.12.06", "date_end": "", "is_ongoing": True, "sort_order": 3},
-    {"title": "One-Stop 서비스센터 근로장학생", "description": "고려대학교 세종캠퍼스", "date_start": "2024.03.12", "date_end": "", "is_ongoing": True, "sort_order": 4},
+    {
+        "title": "고려대학교 세종캠퍼스 재학",
+        "description": "디지털경영전공",
+        "date_start": "2023.03.01",
+        "date_end": "",
+        "is_ongoing": True,
+        "sort_order": 1,
+    },
+    {
+        "title": "Cactusun CTO",
+        "description": "브랜드 창업 및 기술 총괄",
+        "date_start": "2023.09.01",
+        "date_end": "",
+        "is_ongoing": True,
+        "sort_order": 2,
+    },
+    {
+        "title": "제38대 총학생회 '비범' 부총학생회장",
+        "description": "고려대학교 세종캠퍼스",
+        "date_start": "2025.12.06",
+        "date_end": "",
+        "is_ongoing": True,
+        "sort_order": 3,
+    },
+    {
+        "title": "One-Stop 서비스센터 근로장학생",
+        "description": "고려대학교 세종캠퍼스",
+        "date_start": "2024.03.12",
+        "date_end": "",
+        "is_ongoing": True,
+        "sort_order": 4,
+    },
 ]
 
 PAST_ACTIVITIES = [
-    {"title": "중앙동아리 AD-ZONE 2025-02 총무", "description": "", "date_start": "2025.07.01", "date_end": "2025.12.20", "sort_order": 1},
-    {"title": "제45대 총동아리연합회 '파란' 기획국 국장", "description": "", "date_start": "2025.01.01", "date_end": "2025.11.07", "sort_order": 2},
-    {"title": "중앙동아리 AD-ZONE 2025-01 부회장", "description": "", "date_start": "2025.01.01", "date_end": "2025.07.01", "sort_order": 3},
-    {"title": "(주)팜킷 AI Developer 인턴", "description": "기업부설연구소", "date_start": "2024.07.01", "date_end": "2024.12.20", "sort_order": 4},
-    {"title": "데이터분석 및 인공지능 학회 'PRISM' 1기 학회장", "description": "고려대학교 세종캠퍼스 크림슨브레인 소속", "date_start": "2024.03.27", "date_end": "2024.12.31", "sort_order": 5},
-    {"title": "중앙동아리 AD-ZONE 2024-02 기획 운영진", "description": "", "date_start": "2024.07.07", "date_end": "2024.12.31", "sort_order": 6},
-    {"title": "제44대 총동아리연합회 '동심' 홍보국 국원", "description": "", "date_start": "2024.03.22", "date_end": "2024.12.31", "sort_order": 7},
-    {"title": "서울 선사고등학교 졸업", "description": "", "date_start": "2020.03", "date_end": "2023.02", "sort_order": 8},
-    {"title": "대구 경북대학교 사범대학 부설중학교 졸업", "description": "", "date_start": "2017.03", "date_end": "2020.01", "sort_order": 9},
+    {
+        "title": "중앙동아리 AD-ZONE 2025-02 총무",
+        "description": "",
+        "date_start": "2025.07.01",
+        "date_end": "2025.12.20",
+        "sort_order": 1,
+    },
+    {
+        "title": "제45대 총동아리연합회 '파란' 기획국 국장",
+        "description": "",
+        "date_start": "2025.01.01",
+        "date_end": "2025.11.07",
+        "sort_order": 2,
+    },
+    {
+        "title": "중앙동아리 AD-ZONE 2025-01 부회장",
+        "description": "",
+        "date_start": "2025.01.01",
+        "date_end": "2025.07.01",
+        "sort_order": 3,
+    },
+    {
+        "title": "(주)팜킷 AI Developer 인턴",
+        "description": "기업부설연구소",
+        "date_start": "2024.07.01",
+        "date_end": "2024.12.20",
+        "sort_order": 4,
+    },
+    {
+        "title": "데이터분석 및 인공지능 학회 'PRISM' 1기 학회장",
+        "description": "고려대학교 세종캠퍼스 크림슨브레인 소속",
+        "date_start": "2024.03.27",
+        "date_end": "2024.12.31",
+        "sort_order": 5,
+    },
+    {
+        "title": "중앙동아리 AD-ZONE 2024-02 기획 운영진",
+        "description": "",
+        "date_start": "2024.07.07",
+        "date_end": "2024.12.31",
+        "sort_order": 6,
+    },
+    {
+        "title": "제44대 총동아리연합회 '동심' 홍보국 국원",
+        "description": "",
+        "date_start": "2024.03.22",
+        "date_end": "2024.12.31",
+        "sort_order": 7,
+    },
+    {
+        "title": "서울 선사고등학교 졸업",
+        "description": "",
+        "date_start": "2020.03",
+        "date_end": "2023.02",
+        "sort_order": 8,
+    },
+    {
+        "title": "대구 경북대학교 사범대학 부설중학교 졸업",
+        "description": "",
+        "date_start": "2017.03",
+        "date_end": "2020.01",
+        "sort_order": 9,
+    },
 ]
 
 TECH_STACKS = [
@@ -139,7 +238,12 @@ AWARDS = [
         "date_text": "2023.12.08",
         "organization": "",
         "description": "",
-        "images": ["/static/images/awards/JooInJang_2.png", "/static/images/awards/JooInJang_5.jpg", "/static/images/awards/JooInJang_6.jpg", "/static/images/awards/JooInJang_1.jpg"],
+        "images": [
+            "/static/images/awards/JooInJang_2.png",
+            "/static/images/awards/JooInJang_5.jpg",
+            "/static/images/awards/JooInJang_6.jpg",
+            "/static/images/awards/JooInJang_1.jpg",
+        ],
         "icon_class": "fas fa-trophy",
         "sort_order": 3,
     },
@@ -205,7 +309,11 @@ AWARDS = [
         "date_text": "2024.10.08",
         "organization": "세종시",
         "description": "",
-        "images": ["static/images/awards/SEJONG_C.jpeg", "static/images/awards/SEJONG_A.jpeg", "static/images/awards/SEJONG_B.png"],
+        "images": [
+            "static/images/awards/SEJONG_C.jpeg",
+            "static/images/awards/SEJONG_A.jpeg",
+            "static/images/awards/SEJONG_B.png",
+        ],
         "icon_class": "fas fa-trophy",
         "sort_order": 9,
     },
@@ -328,77 +436,166 @@ CERTIFICATES = [
     },
 ]
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 마이그레이션 실행
-# ─────────────────────────────────────────────────────────────────────────────
-
 TABLES = {
-    "current_activities":  CURRENT_ACTIVITIES,
-    "past_activities":     PAST_ACTIVITIES,
-    "tech_stacks":         TECH_STACKS,
-    "projects":            PROJECTS,
-    "awards":              AWARDS,
-    "academic_items":      ACADEMIC_ITEMS,
-    "certificates":        CERTIFICATES,
+    "current_activities": CURRENT_ACTIVITIES,
+    "past_activities": PAST_ACTIVITIES,
+    "tech_stacks": TECH_STACKS,
+    "projects": PROJECTS,
+    "awards": AWARDS,
+    "academic_items": ACADEMIC_ITEMS,
+    "certificates": CERTIFICATES,
 }
 
+# ---------------------------------------------------------------------------
+# Image upload configuration
+#
+# Each entry describes one source directory and the flat prefix to apply.
+# Certificate images live in the awards/ directory but get the ct_ prefix.
+# ---------------------------------------------------------------------------
 
-def migrate_table(table_name, rows):
-    print(f"\n{'─'*50}")
-    print(f"📦 테이블: {table_name}  ({len(rows)}개 항목)")
+# Files in awards/ that are certificates (get ct_ prefix instead of aw_)
+CERTIFICATE_FILENAMES = {"ADsP.png", "SQLD.png"}
+
+IMAGE_SOURCES = [
+    {
+        "dir": BASE_DIR / "static" / "images" / "awards",
+        "prefix": "aw_",
+        # certificate files inside this dir are handled separately
+    },
+    {
+        "dir": BASE_DIR / "static" / "images" / "academic" / "DOF",
+        "prefix": "ac_",
+    },
+    {
+        "dir": BASE_DIR / "static" / "images" / "Paper_1",
+        "prefix": "pp_",
+        "space_to_underscore": True,
+    },
+]
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def public_url(filename: str) -> str:
+    """Construct a Supabase Storage public URL for a flat-named file."""
+    base = SUPABASE_URL.rstrip("/")
+    return f"{base}/storage/v1/object/public/{BUCKET}/{filename}"
+
+
+def flat_name(prefix: str, original_filename: str, space_to_underscore: bool = False) -> str:
+    """Return the flat storage filename for an image."""
+    name = original_filename
+    if space_to_underscore:
+        name = name.replace(" ", "_")
+    return f"{prefix}{name}"
+
+
+def award_path_to_flat(path: str) -> str | None:
+    """
+    Convert a local award image path such as
+      'static/images/awards/ICT_3.jpg'  or
+      '/static/images/awards/ICT_3.jpg'
+    to its flat storage filename.  Returns None if the path is not
+    recognised as an awards image.
+    """
+    norm = path.lstrip("/")
+    prefix_dir = "static/images/awards/"
+    if not norm.startswith(prefix_dir):
+        return None
+    filename = norm[len(prefix_dir):]
+    if filename in CERTIFICATE_FILENAMES:
+        return flat_name("ct_", filename)
+    return flat_name("aw_", filename)
+
+
+def academic_path_to_flat(path: str) -> str | None:
+    """
+    Convert a local academic image path such as
+      'static/images/academic/DOF/PRISM.jpeg'
+    to its flat storage filename.  Returns None if not recognised.
+    """
+    norm = path.lstrip("/")
+    prefix_dir = "static/images/academic/DOF/"
+    if not norm.startswith(prefix_dir):
+        return None
+    filename = norm[len(prefix_dir):]
+    return flat_name("ac_", filename)
+
+
+def certificate_path_to_flat(path: str) -> str | None:
+    """
+    Convert a local certificate image path such as
+      '/static/images/awards/ADsP.png'
+    to its flat ct_ storage filename.  Returns None if not recognised.
+    """
+    norm = path.lstrip("/")
+    prefix_dir = "static/images/awards/"
+    if not norm.startswith(prefix_dir):
+        return None
+    filename = norm[len(prefix_dir):]
+    if filename not in CERTIFICATE_FILENAMES:
+        return None
+    return flat_name("ct_", filename)
+
+
+# ---------------------------------------------------------------------------
+# Data migration
+# ---------------------------------------------------------------------------
+
+
+def migrate_table(table_name: str, rows: list[dict]) -> None:
+    print(f"\n{'─' * 55}")
+    print(f"  Table: {table_name}  ({len(rows)} rows)")
 
     if DRY_RUN:
         for i, row in enumerate(rows, 1):
-            print(f"  [{i}] {row.get('title') or row.get('name') or '(no title)'}")
-        print("  → DRY RUN: 실제 저장 안 함")
+            label = row.get("title") or row.get("name") or "(no label)"
+            print(f"    [{i}] {label}")
+        print("  --> DRY RUN: no writes performed")
         return
 
-    # 기존 데이터 확인
+    # Check for existing data and prompt before overwriting.
     try:
         existing = supabase.table(table_name).select("id").execute()
         if existing.data:
-            ans = input(f"  ⚠️  테이블에 이미 {len(existing.data)}개 데이터가 있습니다. 덮어쓰시겠습니까? (기존 데이터 삭제 후 재삽입) [y/N]: ").strip().lower()
-            if ans != 'y':
-                print("  ⏭  건너뜀")
+            answer = input(
+                f"  ⚠  Table already has {len(existing.data)} row(s). "
+                "Delete all and re-insert? [y/N]: "
+            ).strip().lower()
+            if answer != "y":
+                print("  --> Skipped")
                 return
-            # 기존 데이터 삭제
-            supabase.table(table_name).delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
-            print(f"  🗑  기존 {len(existing.data)}개 삭제 완료")
-    except Exception as e:
-        print(f"  ⚠️  기존 데이터 확인 실패: {e}")
+            supabase.table(table_name).delete().neq(
+                "id", "00000000-0000-0000-0000-000000000000"
+            ).execute()
+            print(f"  Deleted {len(existing.data)} existing row(s).")
+    except Exception as exc:
+        print(f"  ⚠  Could not check existing data: {exc}")
 
-    # 삽입
-    ok = 0
-    fail = 0
+    ok = fail = 0
     for row in rows:
+        label = row.get("title") or row.get("name") or "?"
         try:
             supabase.table(table_name).insert(row).execute()
-            label = row.get('title') or row.get('name') or '?'
             print(f"  ✓ {label}")
             ok += 1
-        except Exception as e:
-            label = row.get('title') or row.get('name') or '?'
-            print(f"  ✗ {label} → {e}")
+        except Exception as exc:
+            print(f"  ✗ {label} --> {exc}")
             fail += 1
 
-    print(f"  완료: {ok}개 성공, {fail}개 실패")
+    print(f"  Done: {ok} inserted, {fail} failed.")
 
 
-def main():
-    print("=" * 50)
-    print("  포트폴리오 데이터 → Supabase 마이그레이션")
+def run_data_migration() -> None:
+    print("\n" + "=" * 55)
+    print("  Phase 1: Data migration --> Supabase DB")
     if DRY_RUN:
-        print("  모드: DRY RUN (실제 저장 없음)")
-    print("=" * 50)
+        print("  Mode: DRY RUN (no writes)")
+    print("=" * 55)
 
-    tables_to_run = {k: v for k, v in TABLES.items() if TARGET_TABLE is None or k == TARGET_TABLE}
-
-    if TARGET_TABLE and TARGET_TABLE not in TABLES:
-        print(f"❌ 알 수 없는 테이블: {TARGET_TABLE}")
-        print(f"   가능한 테이블: {', '.join(TABLES.keys())}")
-        sys.exit(1)
-
-    for table_name, rows in tables_to_run.items():
+    for table_name, rows in TABLES.items():
         migrate_table(table_name, rows)
 
     # 이미지 마이그레이션
