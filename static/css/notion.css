@@ -171,6 +171,27 @@ figcaption {
 .highlight-blue { color: var(--notion-blue); }
 .highlight-bold { font-weight: 700; color: #fff; }
 
+/* Notion editor color classes — used in saved block HTML */
+.nc-gray   { color: #9B9A97; }
+.nc-brown  { color: #A07862; }
+.nc-orange { color: #D9730D; }
+.nc-yellow { color: #CB912F; }
+.nc-green  { color: #448361; }
+.nc-blue   { color: #337EA9; }
+.nc-purple { color: #9065B0; }
+.nc-pink   { color: #C14C8A; }
+.nc-red    { color: #D44C47; }
+
+.nb-gray   { background: rgba(155,154,151,.18); border-radius: 2px; padding: 1px 3px; }
+.nb-brown  { background: rgba(160,120,98,.18);  border-radius: 2px; padding: 1px 3px; }
+.nb-orange { background: rgba(217,115,13,.18);  border-radius: 2px; padding: 1px 3px; }
+.nb-yellow { background: rgba(203,145,47,.18);  border-radius: 2px; padding: 1px 3px; }
+.nb-green  { background: rgba(68,131,97,.18);   border-radius: 2px; padding: 1px 3px; }
+.nb-blue   { background: rgba(51,126,169,.18);  border-radius: 2px; padding: 1px 3px; }
+.nb-purple { background: rgba(144,101,176,.18); border-radius: 2px; padding: 1px 3px; }
+.nb-pink   { background: rgba(193,76,138,.18);  border-radius: 2px; padding: 1px 3px; }
+.nb-red    { background: rgba(212,76,71,.18);   border-radius: 2px; padding: 1px 3px; }
+
 /* Dividers */
 hr {
     border: 0;

@@ -105,6 +105,17 @@ CREATE TABLE IF NOT EXISTS activity_logs (
   updated_at timestamptz DEFAULT now()
 );
 
+-- Portfolio Images (database-based image storage)
+CREATE TABLE IF NOT EXISTS portfolio_images (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  filename text NOT NULL,
+  mime_type text DEFAULT 'image/jpeg',
+  image_data bytea NOT NULL,
+  item_type text NOT NULL,  -- 'awards', 'academic_items', 'activity_logs', etc.
+  item_id text,  -- ID of the parent item (optional, for reference)
+  created_at timestamptz DEFAULT now()
+);
+
 -- Enable RLS (Row Level Security) - allow all for authenticated users
 ALTER TABLE current_activities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE past_activities ENABLE ROW LEVEL SECURITY;
@@ -114,6 +125,7 @@ ALTER TABLE awards ENABLE ROW LEVEL SECURITY;
 ALTER TABLE academic_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE certificates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE activity_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE portfolio_images ENABLE ROW LEVEL SECURITY;
 
 -- Public read policy (anon can read)
 CREATE POLICY "Public read" ON current_activities FOR SELECT USING (true);
@@ -135,6 +147,25 @@ CREATE POLICY "Anon full access" ON awards FOR ALL USING (true) WITH CHECK (true
 CREATE POLICY "Anon full access" ON academic_items FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Anon full access" ON certificates FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Anon full access" ON activity_logs FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public read" ON portfolio_images FOR SELECT USING (true);
+CREATE POLICY "Anon full access" ON portfolio_images FOR ALL USING (true) WITH CHECK (true);
+
+-- Site Settings (key-value store, e.g. last_updated)
+CREATE TABLE IF NOT EXISTS site_settings (
+  key text PRIMARY KEY,
+  value text NOT NULL,
+  updated_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public read" ON site_settings FOR SELECT USING (true);
+CREATE POLICY "Anon full access" ON site_settings FOR ALL USING (true) WITH CHECK (true);
+
+-- Seed initial last_updated value
+INSERT INTO site_settings (key, value)
+VALUES ('last_updated', to_char(now() AT TIME ZONE 'Asia/Seoul', 'YYYY.MM.DD'))
+ON CONFLICT (key) DO NOTHING;
 
 -- Storage bucket for images (run in Supabase dashboard Storage section)
 -- Create a bucket named 'portfolio-images' and set it to public
+-- The app uploads activity-log images under the 'activity-logs/' path prefix
