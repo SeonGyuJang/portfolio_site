@@ -577,89 +577,53 @@ def admin_activity_log_delete(log_id):
 @app.route('/admin/api/upload-image', methods=['POST'])
 @require_admin
 def admin_upload_image():
-    """Upload image to portfolio_images table; returns {url, image_id}."""
+    """Upload image to Supabase Storage; returns {url, path}."""
     if not supabase:
         return jsonify({'error': 'Supabase not configured'}), 400
     file = request.files.get('file')
     if not file:
         return jsonify({'error': 'No file provided'}), 400
     item_type = request.form.get('item_type', 'activity_logs')
+    prefix_map = {'awards': 'aw_', 'academic_items': 'ac_',
+                  'certificates': 'ct_', 'activity_logs': 'img_'}
+    prefix = prefix_map.get(item_type, 'img_')
     try:
-        import base64 as _b64
         content = file.read()
-        filename = file.filename or 'image.jpg'
-        mime_type = file.content_type or 'image/jpeg'
-        image_data_b64 = _b64.b64encode(content).decode('utf-8')
-        result = supabase.table('portfolio_images').insert({
-            'filename': filename,
-            'mime_type': mime_type,
-            'image_data': image_data_b64,
-            'item_type': item_type,
-        }).execute()
-        if result.data:
-            image_id = result.data[0]['id']
-            return jsonify({'url': f"/api/images/{image_id}", 'image_id': image_id})
-        return jsonify({'error': 'Failed to save image'}), 500
+        _, ext = os.path.splitext(file.filename or 'image.jpg')
+        ext = (ext or '.jpg').lower()
+        filename = f"{prefix}{uuid.uuid4().hex}{ext}"
+        content_type = file.content_type or 'image/jpeg'
+        url = storage_upload(filename, content, content_type)
+        return jsonify({'url': url, 'path': filename})
     except Exception as e:
         logger.error(f"admin_upload_image error: {e}")
         return jsonify({'error': str(e)}), 500
 
 
-@app.route('/api/images/<image_id>')
-def get_image(image_id):
-    """Serve image bytes stored in portfolio_images table."""
-    if not supabase:
-        return "Image not available", 404
-    try:
-        import base64 as _b64
-        result = supabase.table('portfolio_images').select('mime_type,image_data').eq('id', image_id).execute()
-        if not result.data:
-            return "Image not found", 404
-        img = result.data[0]
-        raw = img['image_data']
-
-        image_bytes = None
-        if isinstance(raw, (bytes, bytearray)):
-            # Already binary (supabase-py returned raw bytes)
-            image_bytes = bytes(raw)
-        elif isinstance(raw, str):
-            raw = raw.strip()
-            if raw.startswith('\\x') or raw.startswith('0x'):
-                # PostgreSQL bytea hex format: \xDEADBEEF
-                image_bytes = bytes.fromhex(raw.lstrip('\\').lstrip('0').lstrip('x') if raw.startswith('0x') else raw[2:])
-            else:
-                # Assume base64 — strip whitespace/newlines that break padding
-                padding = 4 - len(raw) % 4
-                if padding != 4:
-                    raw += '=' * padding
-                image_bytes = _b64.b64decode(raw)
-        else:
-            logger.error(f"get_image: unexpected data type {type(raw)} for id={image_id}")
-            return "Invalid image data", 500
-
-        from flask import make_response
-        resp = make_response(image_bytes)
-        resp.headers['Content-Type'] = img.get('mime_type') or 'image/jpeg'
-        resp.headers['Cache-Control'] = 'public, max-age=86400'
-        return resp
-    except Exception as e:
-        logger.error(f"get_image error for id={image_id}: {e}")
-        return "Error loading image", 500
-
-
 @app.route('/admin/api/images')
 @require_admin
 def admin_list_images():
-    """List images from portfolio_images table, filtered by item_type."""
+    """List images in Supabase Storage filtered by item_type prefix."""
     if not supabase:
         return jsonify({'images': []})
     item_type = request.args.get('item_type', 'activity_logs')
+    prefix_map = {'awards': 'aw_', 'academic_items': 'ac_',
+                  'certificates': 'ct_', 'activity_logs': 'img_'}
+    prefix = prefix_map.get(item_type, 'img_')
     try:
-        result = supabase.table('portfolio_images').select('id,filename,mime_type,created_at').eq('item_type', item_type).order('created_at', desc=True).execute()
-        images = [
-            {'id': img['id'], 'url': f"/api/images/{img['id']}", 'name': img.get('filename', 'image')}
-            for img in (result.data or [])
-        ]
+        files = supabase.storage.from_(STORAGE_BUCKET).list(
+            '', {'sortBy': {'column': 'created_at', 'order': 'desc'}, 'limit': 200}
+        )
+        images = []
+        for f in (files or []):
+            name = f.get('name', '')
+            if name and name.startswith(prefix) and '/' not in name:
+                images.append({
+                    'id': name,
+                    'path': name,
+                    'url': storage_url(name),
+                    'name': name,
+                })
         return jsonify({'images': images})
     except Exception as e:
         logger.error(f"admin_list_images error: {e}")
@@ -669,15 +633,17 @@ def admin_list_images():
 @app.route('/admin/api/images/delete', methods=['POST'])
 @require_admin
 def admin_delete_image():
-    """Delete an image from database."""
+    """Delete an image from Supabase Storage."""
     if not supabase:
         return jsonify({'error': 'Supabase not configured'}), 400
     data = request.get_json(silent=True) or {}
-    image_id = data.get('image_id', '')
-    if not image_id:
-        return jsonify({'error': 'Invalid image_id'}), 400
+    # Accept both 'path' and 'image_id' for backwards compatibility
+    path = data.get('path') or data.get('image_id', '')
+    KNOWN_PREFIXES = ('img_', 'aw_', 'ac_', 'ct_', 'pp_')
+    if not path or '/' in path or '..' in path or not any(path.startswith(p) for p in KNOWN_PREFIXES):
+        return jsonify({'error': 'Invalid path'}), 400
     try:
-        supabase.table('portfolio_images').delete().eq('id', image_id).execute()
+        supabase.storage.from_(STORAGE_BUCKET).remove([path])
         return jsonify({'ok': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500

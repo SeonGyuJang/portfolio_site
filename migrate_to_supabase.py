@@ -9,14 +9,11 @@ Usage:
     python migrate_to_supabase.py --data       # only migrate data to Supabase DB
 """
 
-import mimetypes
 import os
 import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
-import base64
-import json
 
 # ---------------------------------------------------------------------------
 # Environment & CLI flags
@@ -604,28 +601,92 @@ def run_data_migration() -> None:
     print("=" * 50)
 
 
-def normalize_img_path(raw_path: str) -> str:
-    """'/static/images/awards/foo.jpg' → 'awards/foo.jpg'"""
-    p = raw_path.lstrip('/')
-    if p.startswith('static/images/'):
-        p = p[len('static/images/'):]
-    return p
+MIME_MAP = {
+    '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+    '.png': 'image/png', '.gif': 'image/gif',
+    '.webp': 'image/webp', '.svg': 'image/svg+xml',
+}
+
+
+def storage_upload_file(local_path: Path, flat_filename: str) -> str | None:
+    """Upload a local file to Supabase Storage; return its public URL or None."""
+    try:
+        content = local_path.read_bytes()
+        ext = local_path.suffix.lower()
+        content_type = MIME_MAP.get(ext, 'image/jpeg')
+        supabase.storage.from_(BUCKET).upload(
+            flat_filename, content,
+            file_options={'content-type': content_type, 'upsert': 'true'},
+        )
+        return public_url(flat_filename)
+    except Exception as e:
+        print(f"    ✗ 업로드 실패 ({flat_filename}): {e}")
+        return None
+
+
+def is_already_storage_url(path: str) -> bool:
+    """Return True if the path is already a Supabase Storage public URL."""
+    return path.startswith('http') and '/storage/v1/object/public/' in path
+
+
+def resolve_award_image(raw: str, base_dir: Path) -> str:
+    """Return the storage URL for an award image path, uploading if needed."""
+    if is_already_storage_url(raw):
+        return raw
+    flat = award_path_to_flat(raw)
+    if not flat:
+        return raw
+    local = base_dir / raw.lstrip('/')
+    if not local.exists():
+        # Try without leading static/
+        local = BASE_DIR / raw.lstrip('/')
+    if not local.exists():
+        print(f"    ✗ 파일 없음: {raw}")
+        return raw
+    url = storage_upload_file(local, flat)
+    return url if url else raw
+
+
+def resolve_academic_image(raw: str, base_dir: Path) -> str:
+    """Return the storage URL for an academic image path, uploading if needed."""
+    if is_already_storage_url(raw):
+        return raw
+    flat = academic_path_to_flat(raw)
+    if not flat:
+        return raw
+    local = BASE_DIR / raw.lstrip('/')
+    if not local.exists():
+        print(f"    ✗ 파일 없음: {raw}")
+        return raw
+    url = storage_upload_file(local, flat)
+    return url if url else raw
+
+
+def resolve_certificate_image(raw: str) -> str:
+    """Return the storage URL for a certificate image path, uploading if needed."""
+    if is_already_storage_url(raw):
+        return raw
+    flat = certificate_path_to_flat(raw)
+    if not flat:
+        return raw
+    local = BASE_DIR / raw.lstrip('/')
+    if not local.exists():
+        print(f"    ✗ 파일 없음: {raw}")
+        return raw
+    url = storage_upload_file(local, flat)
+    return url if url else raw
 
 
 def migrate_images():
-    """Upload static images to portfolio_images table, then update DB records."""
+    """Upload static images to Supabase Storage, then update DB records with Storage URLs."""
     print(f"\n{'─'*50}")
-    print("🖼  이미지 마이그레이션")
+    print("🖼  이미지 마이그레이션 (→ Supabase Storage)")
 
     if DRY_RUN:
         print("  → DRY RUN: 실제 저장 안 함")
         return
 
-    base_dir = os.path.join(os.path.dirname(__file__), 'static', 'images')
-    if not os.path.exists(base_dir):
-        print(f"  ⚠️  이미지 폴더 없음: {base_dir}")
-        return
-
+    base_dir = BASE_DIR
     total = 0
 
     # ── Awards ─────────────────────────────────────────────────────
@@ -639,21 +700,15 @@ def migrate_images():
     for row in db_awards:
         old_images = row.get('images') or []
         new_urls = []
+        changed = False
         for raw in old_images:
-            rel = normalize_img_path(raw)
-            full = os.path.join(base_dir, rel)
-            if os.path.exists(full):
-                img_id = upload_image_to_db(full, 'awards', rel)
-                if img_id:
-                    new_urls.append(f"/api/images/{img_id}")
-                    total += 1
-                    print(f"    ✓ {rel}")
-                else:
-                    new_urls.append(raw)
-            else:
-                print(f"    ✗ 파일 없음: {rel}")
-                new_urls.append(raw)
-        if new_urls != old_images:
+            new = resolve_award_image(raw, base_dir)
+            new_urls.append(new)
+            if new != raw:
+                changed = True
+                total += 1
+                print(f"    ✓ {Path(raw).name} → storage")
+        if changed:
             supabase.table('awards').update({'images': new_urls}).eq('id', row['id']).execute()
 
     # ── Academic items ─────────────────────────────────────────────
@@ -667,21 +722,15 @@ def migrate_images():
     for row in db_academic:
         old_images = row.get('images') or []
         new_urls = []
+        changed = False
         for raw in old_images:
-            rel = normalize_img_path(raw)
-            full = os.path.join(base_dir, rel)
-            if os.path.exists(full):
-                img_id = upload_image_to_db(full, 'academic_items', rel)
-                if img_id:
-                    new_urls.append(f"/api/images/{img_id}")
-                    total += 1
-                    print(f"    ✓ {rel}")
-                else:
-                    new_urls.append(raw)
-            else:
-                print(f"    ✗ 파일 없음: {rel}")
-                new_urls.append(raw)
-        if new_urls != old_images:
+            new = resolve_academic_image(raw, base_dir)
+            new_urls.append(new)
+            if new != raw:
+                changed = True
+                total += 1
+                print(f"    ✓ {Path(raw).name} → storage")
+        if changed:
             supabase.table('academic_items').update({'images': new_urls}).eq('id', row['id']).execute()
 
     # ── Certificates ───────────────────────────────────────────────
@@ -696,53 +745,15 @@ def migrate_images():
         raw = row.get('image') or ''
         if not raw:
             continue
-        rel = normalize_img_path(raw)
-        full = os.path.join(base_dir, rel)
-        if os.path.exists(full):
-            img_id = upload_image_to_db(full, 'certificates', rel)
-            if img_id:
-                new_url = f"/api/images/{img_id}"
-                supabase.table('certificates').update({'image': new_url}).eq('id', row['id']).execute()
-                total += 1
-                print(f"    ✓ {rel}")
+        new = resolve_certificate_image(raw)
+        if new != raw:
+            supabase.table('certificates').update({'image': new}).eq('id', row['id']).execute()
+            total += 1
+            print(f"    ✓ {Path(raw).name} → storage")
         else:
-            print(f"    ✗ 파일 없음: {rel}")
+            print(f"    – {Path(raw).name} (변경 없음)")
 
     print(f"\n  완료: {total}개 이미지 업로드 및 DB 업데이트")
-
-
-def upload_image_to_db(file_path, item_type, relative_path):
-    """Upload image to database and return image ID."""
-    try:
-        with open(file_path, 'rb') as f:
-            image_data = f.read()
-        
-        # MIME 타입 결정
-        ext = os.path.splitext(file_path)[1].lower()
-        mime_map = {
-            '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
-            '.png': 'image/png', '.gif': 'image/gif',
-            '.webp': 'image/webp', '.svg': 'image/svg+xml'
-        }
-        mime_type = mime_map.get(ext, 'image/jpeg')
-        
-        # Base64 인코딩 (JSON 직렬화 가능)
-        image_data_b64 = base64.b64encode(image_data).decode('utf-8')
-        
-        # 데이터베이스에 저장
-        result = supabase.table('portfolio_images').insert({
-            'filename': relative_path,
-            'mime_type': mime_type,
-            'image_data': image_data_b64,
-            'item_type': item_type
-        }).execute()
-        
-        if result.data and len(result.data) > 0:
-            return result.data[0]['id']
-        return None
-    except Exception as e:
-        print(f"    오류: {e}")
-        return None
 
 
 if __name__ == "__main__":
