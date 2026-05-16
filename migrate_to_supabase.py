@@ -598,81 +598,117 @@ def run_data_migration() -> None:
     for table_name, rows in TABLES.items():
         migrate_table(table_name, rows)
 
-    # 이미지 마이그레이션
-    if TARGET_TABLE is None or TARGET_TABLE in ['awards', 'academic_items']:
-        migrate_images()
-
     print(f"\n{'='*50}")
-    print("  마이그레이션 완료!")
+    print("  데이터 마이그레이션 완료!")
     print("  이제 포트폴리오 사이트에서 데이터를 확인하세요.")
     print("=" * 50)
 
 
+def normalize_img_path(raw_path: str) -> str:
+    """'/static/images/awards/foo.jpg' → 'awards/foo.jpg'"""
+    p = raw_path.lstrip('/')
+    if p.startswith('static/images/'):
+        p = p[len('static/images/'):]
+    return p
+
+
 def migrate_images():
-    """Migrate images from static/images to database."""
+    """Upload static images to portfolio_images table, then update DB records."""
     print(f"\n{'─'*50}")
-    print(f"🖼  이미지 마이그레이션")
-    
+    print("🖼  이미지 마이그레이션")
+
     if DRY_RUN:
         print("  → DRY RUN: 실제 저장 안 함")
         return
-    
+
     base_dir = os.path.join(os.path.dirname(__file__), 'static', 'images')
     if not os.path.exists(base_dir):
         print(f"  ⚠️  이미지 폴더 없음: {base_dir}")
         return
-    
-    # 수집할 이미지들
-    image_map = {}  # {file_path: image_id}
-    image_count = 0
-    
-    # AWARDS에서 이미지 수집
-    for award in AWARDS:
-        if isinstance(award.get('images'), list):
-            image_ids = []
-            for img_path in award['images']:
-                # 경로 정규화
-                img_path = img_path.lstrip('/')
-                if img_path.startswith('static/images/'):
-                    img_path = img_path[len('static/images/'):]
-                
-                full_path = os.path.join(base_dir, img_path)
-                
-                if os.path.exists(full_path):
-                    img_id = upload_image_to_db(full_path, 'awards', img_path)
-                    if img_id:
-                        image_ids.append(img_id)
-                        image_count += 1
-                        print(f"  ✓ {img_path}")
+
+    total = 0
+
+    # ── Awards ─────────────────────────────────────────────────────
+    print("\n  [Awards 이미지]")
+    try:
+        db_awards = supabase.table('awards').select('id,title,images').execute().data or []
+    except Exception as e:
+        print(f"  ✗ awards 조회 실패: {e}")
+        db_awards = []
+
+    for row in db_awards:
+        old_images = row.get('images') or []
+        new_urls = []
+        for raw in old_images:
+            rel = normalize_img_path(raw)
+            full = os.path.join(base_dir, rel)
+            if os.path.exists(full):
+                img_id = upload_image_to_db(full, 'awards', rel)
+                if img_id:
+                    new_urls.append(f"/api/images/{img_id}")
+                    total += 1
+                    print(f"    ✓ {rel}")
                 else:
-                    print(f"  ✗ 파일 없음: {img_path}")
-            
-            award['images'] = image_ids
-    
-    # ACADEMIC_ITEMS에서 이미지 수집
-    for item in ACADEMIC_ITEMS:
-        if isinstance(item.get('images'), list):
-            image_ids = []
-            for img_path in item['images']:
-                # 경로 정규화
-                img_path = img_path.lstrip('/')
-                if img_path.startswith('static/images/'):
-                    img_path = img_path[len('static/images/'):]
-                
-                full_path = os.path.join(base_dir, img_path)
-                
-                if os.path.exists(full_path):
-                    img_id = upload_image_to_db(full_path, 'academic_items', img_path)
-                    if img_id:
-                        image_ids.append(img_id)
-                        image_count += 1
-                        print(f"  ✓ {img_path}")
+                    new_urls.append(raw)
+            else:
+                print(f"    ✗ 파일 없음: {rel}")
+                new_urls.append(raw)
+        if new_urls != old_images:
+            supabase.table('awards').update({'images': new_urls}).eq('id', row['id']).execute()
+
+    # ── Academic items ─────────────────────────────────────────────
+    print("\n  [Academic 이미지]")
+    try:
+        db_academic = supabase.table('academic_items').select('id,name,images').execute().data or []
+    except Exception as e:
+        print(f"  ✗ academic_items 조회 실패: {e}")
+        db_academic = []
+
+    for row in db_academic:
+        old_images = row.get('images') or []
+        new_urls = []
+        for raw in old_images:
+            rel = normalize_img_path(raw)
+            full = os.path.join(base_dir, rel)
+            if os.path.exists(full):
+                img_id = upload_image_to_db(full, 'academic_items', rel)
+                if img_id:
+                    new_urls.append(f"/api/images/{img_id}")
+                    total += 1
+                    print(f"    ✓ {rel}")
                 else:
-                    print(f"  ✗ 파일 없음: {img_path}")
-            
-            item['images'] = image_ids
-    
-    print(f"  완료: {image_count}개 이미지 업로드")
+                    new_urls.append(raw)
+            else:
+                print(f"    ✗ 파일 없음: {rel}")
+                new_urls.append(raw)
+        if new_urls != old_images:
+            supabase.table('academic_items').update({'images': new_urls}).eq('id', row['id']).execute()
+
+    # ── Certificates ───────────────────────────────────────────────
+    print("\n  [Certificates 이미지]")
+    try:
+        db_certs = supabase.table('certificates').select('id,name,image').execute().data or []
+    except Exception as e:
+        print(f"  ✗ certificates 조회 실패: {e}")
+        db_certs = []
+
+    for row in db_certs:
+        raw = row.get('image') or ''
+        if not raw:
+            continue
+        rel = normalize_img_path(raw)
+        full = os.path.join(base_dir, rel)
+        if os.path.exists(full):
+            img_id = upload_image_to_db(full, 'certificates', rel)
+            if img_id:
+                new_url = f"/api/images/{img_id}"
+                supabase.table('certificates').update({'image': new_url}).eq('id', row['id']).execute()
+                total += 1
+                print(f"    ✓ {rel}")
+        else:
+            print(f"    ✗ 파일 없음: {rel}")
+
+    print(f"\n  완료: {total}개 이미지 업로드 및 DB 업데이트")
 
 
 def upload_image_to_db(file_path, item_type, relative_path):
@@ -710,4 +746,7 @@ def upload_image_to_db(file_path, item_type, relative_path):
 
 
 if __name__ == "__main__":
-    main()
+    if RUN_DATA:
+        run_data_migration()
+    if RUN_IMAGES:
+        migrate_images()
