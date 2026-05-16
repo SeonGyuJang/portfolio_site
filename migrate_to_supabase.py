@@ -631,7 +631,7 @@ def migrate_images():
     # ── Awards ─────────────────────────────────────────────────────
     print("\n  [Awards 이미지]")
     try:
-        db_awards = supabase.table('awards').select('id,title,images').execute().data or []
+        db_awards = supabase.table('awards').select('id,name,images').execute().data or []
     except Exception as e:
         print(f"  ✗ awards 조회 실패: {e}")
         db_awards = []
