@@ -476,9 +476,21 @@ IMAGE_SOURCES = [
 
 
 def public_url(filename: str) -> str:
-    """Construct a Supabase Storage public URL for a flat-named file."""
     base = SUPABASE_URL.rstrip("/")
     return f"{base}/storage/v1/object/public/{BUCKET}/{filename}"
+
+
+def ensure_bucket() -> None:
+    """Create the Storage bucket (public) if it doesn't already exist."""
+    try:
+        supabase.storage.create_bucket(BUCKET, options={'public': True})
+        print(f"  ✓ 버킷 '{BUCKET}' 생성됨")
+    except Exception as e:
+        msg = str(e).lower()
+        if 'already exists' in msg or 'duplicate' in msg or '409' in msg:
+            print(f"  – 버킷 '{BUCKET}' 이미 존재함")
+        else:
+            print(f"  ⚠ 버킷 생성 실패: {e}")
 
 
 def flat_name(prefix: str, original_filename: str, space_to_underscore: bool = False) -> str:
@@ -686,6 +698,7 @@ def migrate_images():
         print("  → DRY RUN: 실제 저장 안 함")
         return
 
+    ensure_bucket()
     base_dir = BASE_DIR
     total = 0
 

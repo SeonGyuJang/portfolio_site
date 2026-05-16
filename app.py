@@ -43,20 +43,34 @@ else:
 # ── helpers ────────────────────────────────────────────────────────────────
 
 STORAGE_BUCKET = 'portfolio-images'
+_bucket_ensured = False
 
 
 def storage_url(filename: str) -> str:
-    """Construct Supabase Storage public URL without relying on get_public_url().
-
-    get_public_url() has version-dependent return types in supabase-py.
-    Manual construction is stable across all versions.
-    """
     base = SUPABASE_URL.rstrip('/')
     return f"{base}/storage/v1/object/public/{STORAGE_BUCKET}/{filename}"
 
 
+def _ensure_bucket() -> None:
+    """Create the Storage bucket if it doesn't exist yet (idempotent)."""
+    global _bucket_ensured
+    if _bucket_ensured:
+        return
+    try:
+        supabase.storage.create_bucket(STORAGE_BUCKET, options={'public': True})
+        logger.info(f"Created Storage bucket '{STORAGE_BUCKET}'")
+    except Exception as e:
+        msg = str(e).lower()
+        if 'already exists' in msg or 'duplicate' in msg or '409' in msg:
+            pass  # bucket already exists, that's fine
+        else:
+            logger.warning(f"Could not create bucket '{STORAGE_BUCKET}': {e}")
+    _bucket_ensured = True
+
+
 def storage_upload(filename: str, content: bytes, content_type: str = 'image/jpeg') -> str:
     """Upload bytes to Supabase Storage and return the public URL."""
+    _ensure_bucket()
     supabase.storage.from_(STORAGE_BUCKET).upload(
         filename, content,
         file_options={'content-type': content_type, 'upsert': 'true'}
