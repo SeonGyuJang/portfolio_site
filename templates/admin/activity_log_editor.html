@@ -1357,6 +1357,11 @@ const NE = (() => {
   }
 
   async function uploadImageFile(file, blockId) {
+    // Show immediately with a local blob URL — no waiting for server
+    const blobUrl = URL.createObjectURL(file);
+    updateField(blockId, 'url', blobUrl);
+    rerenderImageBlock(blockId);
+
     const prog = document.getElementById(`imgprog_${blockId}`);
     if (prog) prog.classList.add('active');
 
@@ -1367,13 +1372,20 @@ const NE = (() => {
       const res = await fetch('/admin/api/upload-image', { method: 'POST', body: formData });
       const data = await res.json();
       if (data.url) {
+        // Swap blob URL → permanent server URL in block data
         updateField(blockId, 'url', data.url);
-        rerenderImageBlock(blockId);
+        // Update just the img src to avoid flicker (don't full-rerender)
+        const imgEl = document.getElementById(`imgprev_${blockId}`);
+        if (imgEl) imgEl.src = data.url;
       } else {
         alert('이미지 업로드 실패: ' + (data.error || '알 수 없는 오류'));
+        updateField(blockId, 'url', '');
+        rerenderImageBlock(blockId);
       }
     } catch (e) {
       alert('업로드 오류: ' + e.message);
+      updateField(blockId, 'url', '');
+      rerenderImageBlock(blockId);
     } finally {
       if (prog) prog.classList.remove('active');
     }

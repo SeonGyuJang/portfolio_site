@@ -617,23 +617,33 @@ def get_image(image_id):
             return "Image not found", 404
         img = result.data[0]
         raw = img['image_data']
-        # Handle both text (base64) and bytea (\xHEX) column types
-        if isinstance(raw, str):
-            if raw.startswith('\\x'):
-                image_bytes = bytes.fromhex(raw[2:])
-            else:
-                image_bytes = _b64.b64decode(raw)
-        elif isinstance(raw, (bytes, bytearray)):
+
+        image_bytes = None
+        if isinstance(raw, (bytes, bytearray)):
+            # Already binary (supabase-py returned raw bytes)
             image_bytes = bytes(raw)
+        elif isinstance(raw, str):
+            raw = raw.strip()
+            if raw.startswith('\\x') or raw.startswith('0x'):
+                # PostgreSQL bytea hex format: \xDEADBEEF
+                image_bytes = bytes.fromhex(raw.lstrip('\\').lstrip('0').lstrip('x') if raw.startswith('0x') else raw[2:])
+            else:
+                # Assume base64 — strip whitespace/newlines that break padding
+                padding = 4 - len(raw) % 4
+                if padding != 4:
+                    raw += '=' * padding
+                image_bytes = _b64.b64decode(raw)
         else:
+            logger.error(f"get_image: unexpected data type {type(raw)} for id={image_id}")
             return "Invalid image data", 500
+
         from flask import make_response
         resp = make_response(image_bytes)
         resp.headers['Content-Type'] = img.get('mime_type') or 'image/jpeg'
         resp.headers['Cache-Control'] = 'public, max-age=86400'
         return resp
     except Exception as e:
-        logger.error(f"get_image error: {e}")
+        logger.error(f"get_image error for id={image_id}: {e}")
         return "Error loading image", 500
 
 
