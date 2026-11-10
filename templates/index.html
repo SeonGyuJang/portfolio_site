@@ -1,1053 +1,182 @@
 {% extends "base.html" %}
 
+{% macro gallery_button(title, images) -%}
+    {%- set imgs = images if images is iterable and images is not string else [] -%}
+    {%- if imgs -%}
+    <button type="button" class="link-btn js-gallery"
+            data-title="{{ title }}"
+            data-images='{{ imgs | map("asset") | list | tojson }}'>
+        <i class="far fa-image"></i> {{ t('view') }}{% if imgs|length > 1 %} ({{ imgs|length }}){% endif %}
+    </button>
+    {%- endif -%}
+{%- endmacro %}
+
 {% block content %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/activity.css') }}">
-    <section id="home">
-        <!-- Particle Background -->
-        <div id="particles-js"></div>
 
-        <!-- Enhanced Background Animation -->
-        <div class="hero-bg-animation">
-            <div class="glow-circle circle-1"></div>
-            <div class="glow-circle circle-2"></div>
-            <div class="glow-circle circle-3"></div>
-            <div class="gradient-overlay"></div>
-        </div>
-
-        <!-- Grid Pattern Background -->
-        <div class="grid-pattern"></div>
-
-        <div class="container hero-content fade-in">
-            <!-- Status Badge -->
-            <div class="status-badge">
-                <span class="pulse-dot"></span>
-                Promising interdisciplinary talent
-            </div>
-
-            <h2 class="hero-greeting">안녕하세요,</h2>
-            <h1 class="hero-title">
-                저는 <span class="highlight-text">장선규</span>입니다<span class="highlight-dot">.</span>
-            </h1>
-
-            <div class="typing-wrapper">
-                <span class="typing-prefix">I'm a </span>
-                <span class="typing-text-container">
-                    <span class="typing-text"></span><span class="cursor">|</span>
-                </span>
-            </div>
-
-            <p class="hero-subtitle">
-                성장과 도전을 멈추지 않으며, 선한 영향력을 주는 <br class="mobile-break"><strong>인공지능 연구자</strong>
-            </p>
-
-            <!-- Stats Display -->
-            <div class="hero-stats">
-                <div class="stat-item">
-                    <div class="stat-number" data-target="3+">0</div>
-                    <div class="stat-label">Projects</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number" data-target="12+">0</div>
-                    <div class="stat-label">Awards</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number" data-target="20+">0</div>
-                    <div class="stat-label">Activities</div>
-                </div>
-            </div>
-
-            <div class="hero-btn-group">
-                <a href="#about" class="btn btn-primary">
-                    <i class="fas fa-user"></i> About Me
-                </a>
-                <a href="#projects" class="btn btn-outline">
-                    <i class="fas fa-code"></i> View Projects
-                </a>
-                <a href="#contact" class="btn btn-glass">
-                    <i class="fas fa-envelope"></i> Contact
-                </a>
-            </div>
-
-            <!-- Tech Stack Icons -->
-            <div class="tech-icons">
-                <!-- Left 3 Icons -->
-                <div class="tech-icons-left">
-                    <i class="fab fa-python" title="Python"></i>
-                    <i class="fas fa-database" title="SQL"></i>
-                    <i class="fab fa-swift" title="Swift"></i>
-                </div>
-
-                <!-- Scroll Animation in Center -->
-                <div class="scroll-emoji-container">
-                    <div class="scroll-mouse-icon">
-                        <div class="scroll-wheel-icon"></div>
-                    </div>
-                    <span class="scroll-explore-text">Scroll to Explore</span>
-                </div>
-
-                <!-- Right 3 Icons -->
-                <div class="tech-icons-right">
-                    <i class="fas fa-chart-line" title="Data Analysis"></i>
-                    <i class="fas fa-brain" title="AI/ML"></i>
-                    <img src="/static/images/fab_ku.png" alt="Korea University" class="ku-logo" title="Korea University">
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <div id="activityModal" class="activity-modal">
-        <div class="activity-modal-content">
-            <div class="activity-controls">
-                <button class="activity-btn close-btn activity-close-btn" onclick="closeActivityModal()">
-                    <i class="fas fa-times"></i> <span>닫기</span>
-                </button>
-            </div>
-            <iframe id="activityIframe" class="activity-frame" src=""></iframe>
-        </div>
-    </div>
-
-    <section id="about">
-        <div class="container">
-            <h2 class="section-title fade-in">About Me</h2>
-            <div class="profile-grid fade-in">
-                <div class="profile-left">
-                    <img src="/static/images/profile.jpg" alt="장선규 프로필 사진" class="profile-img">
-                </div>
-                <div class="profile-right">
-                    <!-- Tab Navigation -->
-                    <div class="tab-navigation">
-                        <button class="tab-button active" onclick="switchTab('basic-info')">
-                            <i class="fas fa-info-circle"></i>
-                            <span>Basic Information</span>
-                        </button>
-                        <button class="tab-button" onclick="switchTab('current-position')">
-                            <i class="fas fa-briefcase"></i>
-                            <span>Current Main Position</span>
-                        </button>
-                    </div>
-
-                    <!-- Tab Content -->
-                    <div class="tab-content-wrapper">
-                        <!-- Basic Info Tab -->
-                        <div id="basic-info" class="tab-panel active">
-                            <div class="position-card">
-                                <div class="position-content">
-                                    <div class="basic-info-item">
-                                        <span class="basic-info-label">국적</span>
-                                        <span class="basic-info-value">대한민국 (Republic of Korea)</span>
-                                    </div>
-                                    <div class="basic-info-item">
-                                        <span class="basic-info-label">대학</span>
-                                        <span class="basic-info-value">고려대학교 세종캠퍼스 디지털경영전공</span>
-                                    </div>
-                                    <div class="basic-info-item">
-                                        <span class="basic-info-label">GPA</span>
-                                        <span class="basic-info-value">3.86 / 4.50</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Current Position Tab -->
-                        <div id="current-position" class="tab-panel">
-                            <div class="position-card">
-                                <div class="position-icon">
-                                    <i class="fas fa-graduation-cap"></i>
-                                </div>
-                                <div class="position-content">
-                                    <h3 class="position-title">부총학생회장</h3>
-                                    <p class="position-org">고려대학교 세종캠퍼스 제38대 총학생회 '비범'</p>
-                                    <p class="position-period">2025.12 ~ 현재</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="info-list">
-                        <div class="info-item">
-                            <i class="far fa-calendar-alt"></i>
-                            <div class="info-text">
-                                <strong>Birth Date</strong>
-                                <span>2004.06.16</span>
-                            </div>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-envelope"></i>
-                            <div class="info-text">
-                                <strong>Email</strong>
-                                <a href="mailto:dsng3419@korea.ac.kr">dsng3419@korea.ac.kr</a>
-                            </div>
-                        </div>
-                        <div class="info-item">
-                            <i class="fab fa-github"></i>
-                            <div class="info-text">
-                                <strong>Github</strong>
-                                <a href="https://github.com/SeonGyuJang" target="_blank">SeonGyuJang</a>
-                            </div>
-                        </div>
-                        <div class="info-item">
-                            <i class="fab fa-kaggle"></i>
-                            <div class="info-text">
-                                <strong>Kaggle</strong>
-                                <a href="https://www.kaggle.com/seongyujang04" target="_blank">seongyujang04</a>
-                            </div>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-blog"></i>
-                            <div class="info-text">
-                                <strong>Blog</strong>
-                                <a href="https://blog.naver.com/ergosphere29" target="_blank">Naver Blog</a>
-                            </div>
-                        </div>
-                        <div class="info-item">
-                            <i class="fab fa-instagram"></i>
-                            <div class="info-text">
-                                <strong>Instagram</strong>
-                                <a href="https://www.instagram.com/ditdah_ditdit_0616" target="_blank">@ditdah_ditdit_0616</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="history">
-        <div class="container">
-            <h2 class="section-title fade-in">Experience & Education</h2>
-
-            <div class="history-grid fade-in">
-                <div class="history-section history-current">
-                    <h3>🚀 Current Activities (Active)</h3>
-                    <div class="timeline">
-                        {% if current_activities %}
-                            {% for item in current_activities %}
-                            <div class="timeline-item">
-                                <span class="timeline-date">{{ item.date_start or '' }}{% if item.is_ongoing %} ~ ing{% elif item.date_end %} ~ {{ item.date_end }}{% endif %}</span>
-                                <div class="timeline-title">{{ item.title }}</div>
-                                {% if item.description %}<div class="timeline-desc">{{ item.description }}</div>{% endif %}
-                            </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="timeline-item">
-                                <span class="timeline-date">2023.03.01 ~ ing</span>
-                                <div class="timeline-title">고려대학교 세종캠퍼스 재학</div>
-                                <div class="timeline-desc">디지털경영전공</div>
-                            </div>
-                            <div class="timeline-item">
-                                <span class="timeline-date">2023.09.01 ~ ing</span>
-                                <div class="timeline-title">Cactusun CTO</div>
-                                <div class="timeline-desc">브랜드 창업 및 기술 총괄</div>
-                            </div>
-                            <div class="timeline-item">
-                                <span class="timeline-date">2025.12.06 ~ ing</span>
-                                <div class="timeline-title">제38대 총학생회 '비범' 부총학생회장</div>
-                                <div class="timeline-desc">고려대학교 세종캠퍼스</div>
-                            </div>
-                            <div class="timeline-item">
-                                <span class="timeline-date">2024.03.12 ~ ing</span>
-                                <div class="timeline-title">One-Stop 서비스센터 근로장학생</div>
-                                <div class="timeline-desc">고려대학교 세종캠퍼스</div>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="history-section history-past">
-                    <h3>🏁 Past Activities</h3>
-                    <div class="timeline">
-                        {% if past_activities %}
-                            {% for item in past_activities %}
-                            <div class="timeline-item">
-                                <span class="timeline-date">{{ item.date_start or '' }}{% if item.date_end %} ~ {{ item.date_end }}{% endif %}</span>
-                                <div class="timeline-title">{{ item.title }}</div>
-                                {% if item.description %}<div class="timeline-desc">{{ item.description }}</div>{% endif %}
-                            </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="timeline-item">
-                                <span class="timeline-date">2025.07.01 ~ 2025.12.20</span>
-                                <div class="timeline-title">중앙동아리 AD-ZONE 2025-02 총무</div>
-                            </div>
-                            <div class="timeline-item">
-                                <span class="timeline-date">2025.01.01 ~ 2025.11.07</span>
-                                <div class="timeline-title">제45대 총동아리연합회 '파란' 기획국 국장</div>
-                            </div>
-                            <div class="timeline-item">
-                                <span class="timeline-date">2025.01.01 ~ 2025.07.01</span>
-                                <div class="timeline-title">중앙동아리 AD-ZONE 2025-01 부회장</div>
-                            </div>
-                            <div class="timeline-item">
-                                <span class="timeline-date">2024.07.01 ~ 2024.12.20</span>
-                                <div class="timeline-title">(주)팜킷 AI Developer 인턴</div>
-                                <div class="timeline-desc">기업부설연구소</div>
-                            </div>
-                            <div class="timeline-item">
-                                <span class="timeline-date">2024.03.27 ~ 2024.12.31</span>
-                                <div class="timeline-title">데이터분석 및 인공지능 학회 'PRISM' 1기 학회장</div>
-                                <div class="timeline-desc">고려대학교 세종캠퍼스 크림슨브레인 소속</div>
-                            </div>
-                            <div class="timeline-item">
-                                <span class="timeline-date">2024.07.07 ~ 2024.12.31</span>
-                                <div class="timeline-title">중앙동아리 AD-ZONE 2024-02 기획 운영진</div>
-                            </div>
-                            <div class="timeline-item">
-                                <span class="timeline-date">2024.03.22 ~ 2024.12.31</span>
-                                <div class="timeline-title">제44대 총동아리연합회 '동심' 홍보국 국원</div>
-                            </div>
-                            <div class="timeline-item">
-                                <span class="timeline-date">2020.03 ~ 2023.02</span>
-                                <div class="timeline-title">서울 선사고등학교 졸업</div>
-                            </div>
-                            <div class="timeline-item">
-                                <span class="timeline-date">2017.03 ~ 2020.01</span>
-                                <div class="timeline-title">대구 경북대학교 사범대학 부설중학교 졸업</div>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="skills">
-        <div class="container">
-            <h2 class="section-title fade-in">Tech Stacks</h2>
-            <p class="section-subtitle fade-in">클릭하여 숙련도를 확인하세요.</p>
-            
-            <div class="skills-wrapper fade-in">
-                {% if tech_stacks %}
-                    {% set categories = [] %}
-                    {% for skill in tech_stacks %}
-                        {% if skill.category not in categories %}
-                            {% set _ = categories.append(skill.category) %}
-                        {% endif %}
-                    {% endfor %}
-                    {% for cat in categories %}
-                    <div class="skill-category">
-                        {% set cat_skills = tech_stacks | selectattr('category', 'equalto', cat) | list %}
-                        <h3>{{ cat_skills[0].category_icon or '⚙️' }} {{ cat }}</h3>
-                        <div class="skill-list">
-                            {% for skill in cat_skills %}
-                            <div class="skill-card" onclick="toggleSkill(this)" data-level="{{ skill.level }}">
-                                <div class="skill-header">
-                                    <i class="{{ skill.icon_class or 'fas fa-circle' }} skill-icon"></i>
-                                    <span class="skill-name">{{ skill.name }}</span>
-                                    <i class="fas fa-chevron-down toggle-icon"></i>
-                                </div>
-                                <div class="skill-progress-area">
-                                    <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
-                                    <span class="progress-text">0%</span>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                <div class="skill-category">
-                    <h3>💻 Coding</h3>
-                    <div class="skill-list">
-                        <div class="skill-card" onclick="toggleSkill(this)" data-level="95">
-                            <div class="skill-header"><i class="fab fa-python skill-icon"></i><span class="skill-name">Python</span><i class="fas fa-chevron-down toggle-icon"></i></div>
-                            <div class="skill-progress-area"><div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div><span class="progress-text">0%</span></div>
-                        </div>
-                        <div class="skill-card" onclick="toggleSkill(this)" data-level="80">
-                            <div class="skill-header"><i class="fas fa-database skill-icon"></i><span class="skill-name">SQL</span><i class="fas fa-chevron-down toggle-icon"></i></div>
-                            <div class="skill-progress-area"><div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div><span class="progress-text">0%</span></div>
-                        </div>
-                        <div class="skill-card" onclick="toggleSkill(this)" data-level="60">
-                            <div class="skill-header"><i class="fab fa-swift skill-icon"></i><span class="skill-name">Swift</span><i class="fas fa-chevron-down toggle-icon"></i></div>
-                            <div class="skill-progress-area"><div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div><span class="progress-text">0%</span></div>
-                        </div>
-                        <div class="skill-card" onclick="toggleSkill(this)" data-level="60">
-                            <div class="skill-header"><i class="fas fa-chart-bar skill-icon"></i><span class="skill-name">R</span><i class="fas fa-chevron-down toggle-icon"></i></div>
-                            <div class="skill-progress-area"><div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div><span class="progress-text">0%</span></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="skill-category">
-                    <h3>📊 Data & Collaboration</h3>
-                    <div class="skill-list">
-                        <div class="skill-card" onclick="toggleSkill(this)" data-level="95">
-                            <div class="skill-header"><i class="fas fa-sticky-note skill-icon"></i><span class="skill-name">Notion</span><i class="fas fa-chevron-down toggle-icon"></i></div>
-                            <div class="skill-progress-area"><div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div><span class="progress-text">0%</span></div>
-                        </div>
-                        <div class="skill-card" onclick="toggleSkill(this)" data-level="90">
-                            <div class="skill-header"><i class="fab fa-slack skill-icon"></i><span class="skill-name">Slack</span><i class="fas fa-chevron-down toggle-icon"></i></div>
-                            <div class="skill-progress-area"><div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div><span class="progress-text">0%</span></div>
-                        </div>
-                        <div class="skill-card" onclick="toggleSkill(this)" data-level="80">
-                            <div class="skill-header"><i class="fas fa-users skill-icon"></i><span class="skill-name">Teams</span><i class="fas fa-chevron-down toggle-icon"></i></div>
-                            <div class="skill-progress-area"><div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div><span class="progress-text">0%</span></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="skill-category">
-                    <h3>🎨 Design & OA</h3>
-                    <div class="skill-list">
-                        <div class="skill-card" onclick="toggleSkill(this)" data-level="80">
-                            <div class="skill-header"><i class="fab fa-figma skill-icon"></i><span class="skill-name">Figma</span><i class="fas fa-chevron-down toggle-icon"></i></div>
-                            <div class="skill-progress-area"><div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div><span class="progress-text">0%</span></div>
-                        </div>
-                        <div class="skill-card" onclick="toggleSkill(this)" data-level="90">
-                            <div class="skill-header"><i class="fas fa-palette skill-icon"></i><span class="skill-name">Miricanvas</span><i class="fas fa-chevron-down toggle-icon"></i></div>
-                            <div class="skill-progress-area"><div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div><span class="progress-text">0%</span></div>
-                        </div>
-                        <div class="skill-card" onclick="toggleSkill(this)" data-level="100">
-                            <div class="skill-header"><i class="fas fa-file-powerpoint skill-icon"></i><span class="skill-name">MS Office</span><i class="fas fa-chevron-down toggle-icon"></i></div>
-                            <div class="skill-progress-area"><div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div><span class="progress-text">0%</span></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="skill-category">
-                    <h3>⚙️ OS</h3>
-                    <div class="skill-list">
-                        <div class="skill-card" onclick="toggleSkill(this)" data-level="100">
-                            <div class="skill-header"><i class="fab fa-windows skill-icon"></i><span class="skill-name">Windows</span><i class="fas fa-chevron-down toggle-icon"></i></div>
-                            <div class="skill-progress-area"><div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div><span class="progress-text">0%</span></div>
-                        </div>
-                        <div class="skill-card" onclick="toggleSkill(this)" data-level="80">
-                            <div class="skill-header"><i class="fab fa-linux skill-icon"></i><span class="skill-name">Linux</span><i class="fas fa-chevron-down toggle-icon"></i></div>
-                            <div class="skill-progress-area"><div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div><span class="progress-text">0%</span></div>
-                        </div>
-                        <div class="skill-card" onclick="toggleSkill(this)" data-level="100">
-                            <div class="skill-header"><i class="fab fa-apple skill-icon"></i><span class="skill-name">macOS</span><i class="fas fa-chevron-down toggle-icon"></i></div>
-                            <div class="skill-progress-area"><div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div><span class="progress-text">0%</span></div>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </section>
-
-    <section id="projects">
-    <div class="container">
-        <h2 class="section-title fade-in">Current Projects</h2>
-        <div class="project-grid fade-in">
-            {% if projects %}
-                {% for proj in projects %}
-                <div class="project-card">
-                    <div class="project-img"><i class="{{ proj.icon_class or 'fas fa-code' }}"></i></div>
-                    <div class="project-info">
-                        <h3>{{ proj.title }}</h3>
-                        <p>{{ proj.description or '' }}</p>
-                        <p class="timeline-date">{{ proj.date_start or '' }}{% if proj.is_ongoing %} ~ ing{% elif proj.date_end %} ~ {{ proj.date_end }}{% endif %}</p>
-                        {% if proj.link %}
-                        <a href="{{ proj.link }}" target="_blank" class="btn">View Project</a>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="project-card">
-                    <div class="project-img"><i class="fas fa-bus"></i></div>
-                    <div class="project-info">
-                        <h3>셔틀버스/식단표 트래킹 웹사이트</h3>
-                        <p>고려대학교 세종캠퍼스 학생들을 위한 실시간 셔틀버스 정보 제공 서비스</p>
-                        <p class="timeline-date">2024.11 ~ ing</p>
-                        <a href="https://kus-bus-app-feb0ef7b8941.herokuapp.com/" target="_blank" class="btn">View Project</a>
-                    </div>
-                </div>
-                <div class="project-card">
-                    <div class="project-img"><i class="fas fa-users-cog"></i></div>
-                    <div class="project-info">
-                        <h3>제38대 총학생회 홈페이지</h3>
-                        <p>고려대학교 세종캠퍼스 총학생회 공식 웹사이트 개발 및 운영</p>
-                        <p class="timeline-date">2025.12.20 ~ ing</p>
-                        <a href="https://koreauniv-38th-website-869fb3bc771c.herokuapp.com/" target="_blank" class="btn">View Project</a>
-                    </div>
-                </div>
-                <div class="project-card">
-                    <div class="project-img"><i class="fas fa-users-cog"></i></div>
-                    <div class="project-info">
-                        <h3>총동아리연합회 홈페이지</h3>
-                        <p>고려대학교 세종캠퍼스 총동아리연합회 공식 웹사이트 개발 및 운영</p>
-                        <p class="timeline-date">2025.07.25 ~ ing</p>
-                        <a href="https://kus-club-union.fly.dev/" target="_blank" class="btn">View Project</a>
-                    </div>
-                </div>
-            {% endif %}
-        </div>
+{# ── About ─────────────────────────────────────────────── #}
+<section id="about" class="hero">
+    <img src="{{ url_for('static', filename='images/profile.jpg') }}" alt="{{ profile.name }}" class="avatar">
+    <div class="hero-text">
+        <h1>{{ profile.name }} <span class="name-alt">{{ profile.name_alt }}</span></h1>
+        <p class="headline">{{ profile.headline }}</p>
+        <p class="intro">{{ profile.intro }}</p>
+        <ul class="links">
+            {% for link in links %}
+            <li><a href="{{ link.href }}"{% if not link.href.startswith('mailto:') %} target="_blank" rel="noopener"{% endif %}>
+                <i class="{{ link.icon }}"></i>{{ link.label }}</a></li>
+            {% endfor %}
+        </ul>
+        <a href="{{ url_for('download_cv') }}" class="btn-primary" download>
+            <i class="fas fa-file-arrow-down"></i> {{ t('download_cv') }} (PDF)
+        </a>
     </div>
 </section>
 
-    <section id="awards">
-        <div class="container">
-            <h2 class="section-title fade-in">Awards</h2>
-            <div class="awards-list fade-in">
-                {% if awards %}
-                    {% for award in awards %}
-                    <div class="award-item" onclick="openAwardModal({{ loop.index0 }})">
-                        <div class="award-content">
-                            <span class="award-name">{{ award.name }}</span>
-                            {% if award.subject %}<p class="award-desc">{{ award.subject }}</p>{% endif %}
-                        </div>
-                        <i class="{{ award.icon_class or 'fas fa-trophy' }} award-icon"></i>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="award-item" onclick="openAwardModal(0)"><div class="award-content"><span class="award-name">충청ICT ML/DL 과정 발표회 (은상)</span><p class="award-desc">Computer Vision을 이용한 도로 상태 판단 AI</p></div><i class="fas fa-trophy award-icon"></i></div>
-                    <div class="award-item" onclick="openAwardModal(1)"><div class="award-content"><span class="award-name">충청ICT ML/DL 과정 발표회 (동상)</span><p class="award-desc">Computer Vision을 이용한 CCTV 영상 분석</p></div><i class="fas fa-trophy award-icon"></i></div>
-                    <div class="award-item" onclick="openAwardModal(2)"><div class="award-content"><span class="award-name">창업경진대회 (고려대학교)</span><p class="award-desc">JooInJang 캐릭터를 이용한 브랜딩 사업</p></div><i class="fas fa-trophy award-icon"></i></div>
-                    <div class="award-item" onclick="openAwardModal(3)"><div class="award-content"><span class="award-name">고려대학교 & 한국발명진흥회 연구 과제 수행</span><p class="award-desc">수직농장 AI제어 시스템 적용 및 생육 이미지 데이터 활용</p></div><i class="fas fa-lightbulb award-icon"></i></div>
-                    <div class="award-item" onclick="openAwardModal(4)"><div class="award-content"><span class="award-name">DB 금융경제 공모전</span><p class="award-desc">블록체인 이상거래 탐지방법 제언</p></div><i class="fas fa-award award-icon"></i></div>
-                    <div class="award-item" onclick="openAwardModal(5)"><div class="award-content"><span class="award-name">2024 T-SUM 데이터분석/인공지능 경진대회</span><p class="award-desc">킥보드 주행 영상 분석을 통한 객체 탐지 AI 개발</p></div><i class="fas fa-trophy award-icon"></i></div>
-                    <div class="award-item" onclick="openAwardModal(6)"><div class="award-content"><span class="award-name">2024 KUS-TUDY</span><p class="award-desc">파이썬을 활용한 Business Data Analytics</p></div><i class="fas fa-trophy award-icon"></i></div>
-                    <div class="award-item" onclick="openAwardModal(7)"><div class="award-content"><span class="award-name">2024 산학협력친화형PBL 수강 후기 공모전</span><p class="award-desc">데이터분석과 AI를 통해 선한 영향력 끼치는 개발자에 다가가다</p></div><i class="fas fa-trophy award-icon"></i></div>
-                    <div class="award-item" onclick="openAwardModal(8)"><div class="award-content"><span class="award-name">2024 세종시 기업분석 경진대회</span><p class="award-desc">주식회사 서북에 대한 분석</p></div><i class="fas fa-trophy award-icon"></i></div>
-                    <div class="award-item" onclick="openAwardModal(9)"><div class="award-content"><span class="award-name">2024 R&SD 성과공유회</span><p class="award-desc">(주)팜킷 - TableOCR 연계 식품 챗봇 프로세스 개발</p></div><i class="fas fa-trophy award-icon"></i></div>
-                    <div class="award-item" onclick="openAwardModal(10)"><div class="award-content"><span class="award-name">2024 기업기술혁신PBL</span><p class="award-desc">(주)팜킷 - TableOCR 연계 식품 챗봇 프로세스 개발</p></div><i class="fas fa-trophy award-icon"></i></div>
-                    <div class="award-item" onclick="openAwardModal(11)"><div class="award-content"><span class="award-name">2025 하계 한국데이터마이닝학회</span><p class="award-desc">Controlling Informational Freedom in Large Language Models</p></div><i class="fas fa-star award-icon"></i></div>
-                {% endif %}
-            </div>
-            <p class="section-note">* 클릭하여 상세 내용 및 증빙 자료를 확인하세요.</p>
-        </div>
-    </section>
-
-    <section id="academic">
-        <div class="container fade-in">
-            <h2 class="section-title">Academic & Certifications</h2>
-
-            <h3 class="academic-subtitle">🧑🏼‍💻 학회 활동 및 논문</h3>
-            <div class="papers-list">
-                {% if academic_items %}
-                    {% for item in academic_items %}
-                    <div class="paper-item" onclick="openPaperModal({{ loop.index0 }})">
-                        <div class="paper-content">
-                            <span class="paper-name">{{ item.name }}</span>
-                            {% if item.description %}<p class="paper-desc">{{ item.description }}</p>{% endif %}
-                        </div>
-                        <div class="paper-meta">
-                            <span class="paper-date">{{ item.date_text or '' }}</span>
-                            <i class="fas fa-chevron-right"></i>
-                        </div>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="paper-item" onclick="openPaperModal(0)"><div class="paper-content"><span class="paper-name">고려대학교(세종) 크림슨브레인소속 데이터분석 및 인공지능학회 'PRISM' 1기 학회장</span><p class="paper-desc">데이터분석 및 인공지능 학회 'PRISM'에서 1기 학회장으로 활동</p></div><div class="paper-meta"><span class="paper-date">2024.03 ~ 2024.12</span><i class="fas fa-chevron-right"></i></div></div>
-                    <div class="paper-item" onclick="openPaperModal(1)"><div class="paper-content"><span class="paper-name">2023 한국IT서비스학회 춘계학술대회 참여 및 교육이수</span><p class="paper-desc">한국IT서비스학회 춘계학술대회 참여</p></div><div class="paper-meta"><span class="paper-date">2023.05.24</span><i class="fas fa-chevron-right"></i></div></div>
-                    <div class="paper-item" onclick="openPaperModal(2)"><div class="paper-content"><span class="paper-name">2024 한국데이터마이닝학회 춘계학술대회 참여</span><p class="paper-desc">한국데이터마이닝학회 춘계학술대회 참여</p></div><div class="paper-meta"><span class="paper-date">2024.05.30</span><i class="fas fa-chevron-right"></i></div></div>
-                    <div class="paper-item" onclick="openPaperModal(3)"><div class="paper-content"><span class="paper-name">2024 한국데이터마이닝학회 추계학술대회 참여</span><p class="paper-desc">한국데이터마이닝학회 추계학술대회 참여</p></div><div class="paper-meta"><span class="paper-date">2024.11.22 ~ 2024.11.23</span><i class="fas fa-chevron-right"></i></div></div>
-                    <div class="paper-item" onclick="openPaperModal(4)"><div class="paper-content"><span class="paper-name">2025 한국데이터마이닝학회 하계학술대회 참여 및 발표</span><p class="paper-desc">한국데이터마이닝학회 하계학술대회 참여</p></div><div class="paper-meta"><span class="paper-date">2025.08.28 ~ 2025.08.30</span><i class="fas fa-chevron-right"></i></div></div>
-                    <div class="paper-item" onclick="openPaperModal(5)"><div class="paper-content"><span class="paper-name">Moral Alignment in Large Language Models</span><p class="paper-desc">KDMS2025 포스터 발표 - 언어적 프레이밍과 도메인 페르소나의 영향</p></div><div class="paper-meta"><span class="paper-date">2025.08.29</span><i class="fas fa-chevron-right"></i></div></div>
-                    <div class="paper-item" onclick="openPaperModal(6)"><div class="paper-content"><span class="paper-name">Controlling Informational Freedom in LLMs</span><p class="paper-desc">KDMS2025 포스터 발표 - 자유도 프롬프팅을 통한 정보 자유도 제어</p></div><div class="paper-meta"><span class="paper-date">2025.08.29</span><i class="fas fa-chevron-right"></i></div></div>
-                    <div class="paper-item" onclick="openPaperModal(7)"><div class="paper-content"><span class="paper-name">Cross-Linguistic Moral Preferences in LLMs</span><p class="paper-desc">MDPI Electronics 게재 논문 - 언어 간 도덕적 선호도 연구</p></div><div class="paper-meta"><span class="paper-date">2025.12.11</span><i class="fas fa-chevron-right"></i></div></div>
-                {% endif %}
-            </div>
-            <p class="section-note">* 클릭하여 상세 내용 및 관련 자료를 확인하세요.</p>
-
-            <h3 class="academic-subtitle">📖 보유 자격증</h3>
-            <div class="cert-table-wrapper">
-                <table class="cert-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Certificate Name</th>
-                            <th>Issuer</th>
-                            <th>증명서</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% if certificates %}
-                            {% for cert in certificates %}
-                            <tr>
-                                <td>{{ cert.date_text or '-' }}</td>
-                                <td>{{ cert.name }}</td>
-                                <td>{{ cert.issuer or '-' }}</td>
-                                <td><button class="cert-btn" onclick="openCertModal({{ loop.index0 }})">증명서 보기</button></td>
-                            </tr>
-                            {% endfor %}
-                        {% else %}
-                            <tr>
-                                <td>2023.09.08</td>
-                                <td>ADsP(데이터분석준전문가)</td>
-                                <td>한국데이터산업진흥원</td>
-                                <td><button class="cert-btn" onclick="openCertModal(0)">증명서 보기</button></td>
-                            </tr>
-                            <tr>
-                                <td>2024.03.29</td>
-                                <td>SQLD(SQL개발자)</td>
-                                <td>한국데이터산업진흥원</td>
-                                <td><button class="cert-btn" onclick="openCertModal(1)">증명서 보기</button></td>
-                            </tr>
-                        {% endif %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </section>
-
-    <section id="gallery">
-        <div class="container">
-            <h2 class="section-title fade-in">Activity Log</h2>
-
-            <div class="gallery-nav fade-in">
-                <div class="gallery-filter active" onclick="filterGallery('all', this)">All</div>
-                <div class="gallery-filter" onclick="filterGallery('paper', this)">논문</div>
-                <div class="gallery-filter" onclick="filterGallery('study', this)">개인공부</div>
-                <div class="gallery-filter" onclick="filterGallery('school', this)">학교생활</div>
-                <div class="gallery-filter" onclick="filterGallery('book', this)">독서</div>
-            </div>
-
-            <div class="gallery-grid fade-in">
-                {% set category_icons = {'paper': 'fas fa-file-alt', 'book': 'fas fa-book', 'school': 'fas fa-university', 'study': 'fas fa-code', 'reading': 'fas fa-book-open'} %}
-                {% if activity_logs %}
-                    {% for log in activity_logs %}
-                    <div class="gallery-card show"
-                         data-category="{{ log.category }}"
-                         style="cursor:pointer"
-                         onclick="openActivityLogModal('{{ log.id }}')">
-                        <div class="card-img" style="font-size:2.5rem;display:flex;align-items:center;justify-content:center;min-height:80px">
-                            {{ log.icon or '📄' }}
-                        </div>
-                        <div class="card-body">
-                            <span class="card-cat">{{ log.category|upper }}</span>
-                            <h4 class="card-title">{{ log.title }}</h4>
-                            <p class="card-date">{{ log.date_text or '' }}</p>
-                        </div>
-                    </div>
-                    {% endfor %}
-                {% endif %}
-                {% if static_activities %}
-                    {% for activity in static_activities %}
-                    <div class="gallery-card show activity-trigger"
-                         data-category="{{ activity.category }}"
-                         data-filename="{{ activity.filename }}">
-                        <div class="card-img">
-                            <i class="{{ activity.icon }} fa-2x"></i>
-                        </div>
-                        <div class="card-body">
-                            <span class="card-cat">{{ activity.category|upper }}</span>
-                            <h4 class="card-title">{{ activity.title }}</h4>
-                            <p class="card-date">{{ activity.date_text or '' }}</p>
-                        </div>
-                    </div>
-                    {% endfor %}
-                {% endif %}
-                {% if not activity_logs and not static_activities %}
-                    <p style="text-align:center; width:100%; color:#666;">등록된 활동이 없습니다.</p>
-                {% endif %}
-            </div>
-        </div>
-    </section>
-
-    <section id="contact">
-        <div class="container">
-            <h2 class="section-title fade-in">Get In Touch</h2>
-            <p class="contact-subtitle fade-in">
-                함께 성장하고 가치를 만들어갈 기회를 기다립니다.
-            </p>
-
-            <div class="contact-grid fade-in">
-                <a href="mailto:dsng3419@korea.ac.kr" class="contact-card-link">
-                    <div class="contact-card">
-                        <div class="contact-icon-wrapper">
-                            <div class="contact-icon-bg email-bg"></div>
-                            <i class="fas fa-envelope contact-icon"></i>
-                        </div>
-                        <h3 class="contact-card-title">Email</h3>
-                        <p class="contact-card-desc">프로젝트 협업 및 문의</p>
-                        <div class="contact-link">
-                            dsng3419@korea.ac.kr
-                            <i class="fas fa-arrow-right"></i>
-                        </div>
-                    </div>
-                </a>
-
-                <a href="https://github.com/SeonGyuJang" target="_blank" class="contact-card-link">
-                    <div class="contact-card">
-                        <div class="contact-icon-wrapper">
-                            <div class="contact-icon-bg github-bg"></div>
-                            <i class="fab fa-github contact-icon"></i>
-                        </div>
-                        <h3 class="contact-card-title">GitHub</h3>
-                        <p class="contact-card-desc">코드와 프로젝트 확인</p>
-                        <div class="contact-link">
-                            @SeonGyuJang
-                            <i class="fas fa-arrow-right"></i>
-                        </div>
-                    </div>
-                </a>
-
-                <a href="https://www.kaggle.com/seongyujang04" target="_blank" class="contact-card-link">
-                    <div class="contact-card">
-                        <div class="contact-icon-wrapper">
-                            <div class="contact-icon-bg kaggle-bg"></div>
-                            <i class="fab fa-kaggle contact-icon"></i>
-                        </div>
-                        <h3 class="contact-card-title">Kaggle</h3>
-                        <p class="contact-card-desc">데이터 분석 포트폴리오</p>
-                        <div class="contact-link">
-                            seongyujang04
-                            <i class="fas fa-arrow-right"></i>
-                        </div>
-                    </div>
-                </a>
-
-                <a href="https://blog.naver.com/ergosphere29" target="_blank" class="contact-card-link">
-                    <div class="contact-card">
-                        <div class="contact-icon-wrapper">
-                            <div class="contact-icon-bg blog-bg"></div>
-                            <i class="fas fa-blog contact-icon"></i>
-                        </div>
-                        <h3 class="contact-card-title">Blog</h3>
-                        <p class="contact-card-desc">학습 기록과 인사이트</p>
-                        <div class="contact-link">
-                            Naver Blog
-                            <i class="fas fa-arrow-right"></i>
-                        </div>
-                    </div>
-                </a>
-
-                <a href="https://www.instagram.com/ditdah_ditdit_0616" target="_blank" class="contact-card-link">
-                    <div class="contact-card">
-                        <div class="contact-icon-wrapper">
-                            <div class="contact-icon-bg instagram-bg"></div>
-                            <i class="fab fa-instagram contact-icon"></i>
-                        </div>
-                        <h3 class="contact-card-title">Instagram</h3>
-                        <p class="contact-card-desc">일상과 활동 공유</p>
-                        <div class="contact-link">
-                            @ditdah_ditdit_0616
-                            <i class="fas fa-arrow-right"></i>
-                        </div>
-                    </div>
-                </a>
-
-                <a href="https://www.google.com/maps/place/고려대학교+세종캠퍼스" target="_blank" class="contact-card-link">
-                    <div class="contact-card">
-                        <div class="contact-icon-wrapper">
-                            <div class="contact-icon-bg location-bg"></div>
-                            <i class="fas fa-map-marker-alt contact-icon"></i>
-                        </div>
-                        <h3 class="contact-card-title">Location</h3>
-                        <p class="contact-card-desc">활동 기반</p>
-                        <div class="contact-location">
-                            <span>고려대학교 세종캠퍼스</span>
-                            <span class="location-detail">세종특별자치시</span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <div class="contact-footer fade-in">
-                <p class="contact-footer-text">
-                    <i class="fas fa-heart" style="color: #ff3b30;"></i>
-                    Made with passion by SeonGyu Jang
-                </p>
-                <p class="contact-footer-copyright">
-                    © 2025 SeonGyu Jang. All rights reserved.
-                </p>
-                <p class="contact-footer-update" style="font-size: 0.85rem; color: #888; margin-bottom: 10px;">
-                    <i class="fas fa-sync-alt"></i> Last Updated : {{ last_updated }}
-                </p>
-            </div>
-        </div>
-    </section>
-
-    <div id="awardModal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeAwardModal()">&times;</span>
-            <h3 id="modalTitle" class="modal-title">Award Title</h3>
-            <hr class="modal-divider">
-
-            <!-- Image Slider -->
-            <div class="modal-image-slider" id="imageSlider">
-                <div class="slider-container">
-                    <button class="slider-btn prev" onclick="changeSlide(-1)">
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-                    <div class="slider-images" id="sliderImages">
-                        <!-- Images will be dynamically inserted here -->
-                    </div>
-                    <button class="slider-btn next" onclick="changeSlide(1)">
-                        <i class="fas fa-chevron-right"></i>
-                    </button>
-                </div>
-                <div class="slider-dots" id="sliderDots">
-                    <!-- Dots will be dynamically inserted here -->
-                </div>
-            </div>
-
-            <div id="modalDesc" class="modal-description">
-                <p><strong>주제:</strong> <span id="m-subject"></span></p>
-                <p><strong>수상:</strong> <span id="m-award"></span></p>
-                <p><strong>날짜:</strong> <span id="m-date"></span></p>
-                <p id="m-org-wrapper" style="display: none;"><strong>수여 기관:</strong> <span id="m-org"></span></p>
-                <div id="m-desc-wrapper" style="display: none;">
-                    <br>
-                    <p><strong>상세 설명:</strong></p>
-                    <p id="m-description"></p>
-                </div>
-            </div>
-        </div>
+<section class="section facts">
+    <div>
+        <h2 class="label">{{ t('sec_education') }}</h2>
+        <p class="strong">{{ profile.edu_school }}</p>
+        <p>{{ profile.edu_degree }}</p>
+        <p class="muted">{{ profile.edu_period }} · {{ profile.edu_gpa }}</p>
+        <p class="muted">{{ profile.edu_note }}</p>
     </div>
-
-    <div id="certModal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeCertModal()">&times;</span>
-            <h3 id="certModalTitle" class="modal-title">자격증 증명서</h3>
-            <hr class="modal-divider">
-
-            <!-- Certificate Image -->
-            <div class="cert-image-container">
-                <img id="certImage" src="" alt="Certificate" style="width: 100%; max-height: 600px; object-fit: contain;">
-            </div>
-        </div>
+    <div>
+        <h2 class="label">{{ t('sec_interests') }}</h2>
+        <ul class="tags">
+            {% for it in profile.interests %}<li>{{ it }}</li>{% endfor %}
+        </ul>
     </div>
+</section>
 
-    <div id="paperModal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closePaperModal()">&times;</span>
-            <h3 id="paperModalTitle" class="modal-title">학회 활동 / 논문</h3>
-            <hr class="modal-divider">
-
-            <!-- Image Slider for Papers -->
-            <div class="modal-image-slider" id="paperImageSlider">
-                <div class="slider-container">
-                    <button class="slider-btn prev" onclick="changePaperSlide(-1)">
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-                    <div class="slider-images" id="paperSliderImages">
-                        <!-- Images will be dynamically inserted here -->
-                    </div>
-                    <button class="slider-btn next" onclick="changePaperSlide(1)">
-                        <i class="fas fa-chevron-right"></i>
-                    </button>
+{# ── Publications ──────────────────────────────────────── #}
+<section id="publications" class="section">
+    <h2>{{ t('sec_publications') }}</h2>
+    {% for key, rows in [('sub_journal', journals), ('sub_presentation', presentations), ('sub_conference', conferences)] if rows %}
+    <h3>{{ t(key) }}</h3>
+    <ul class="entries">
+        {% for item in rows %}
+        <li class="entry">
+            <span class="date">{{ item.date_text or '' }}</span>
+            <div class="body">
+                <p class="title">{{ L(item, 'name') }}</p>
+                {% if item.authors %}<p class="meta">{{ item.authors | replace('SeonGyu Jang', '<b>SeonGyu Jang</b>' | safe) }}</p>{% endif %}
+                {% if L(item, 'venue') %}<p class="meta">{{ L(item, 'venue') }}</p>{% endif %}
+                {% if L(item, 'description') %}<p class="desc">{{ L(item, 'description') }}</p>{% endif %}
+                {% if item.paper_link or item.images %}
+                <div class="actions">
+                    {% if item.paper_link %}<a href="{{ item.paper_link }}" target="_blank" rel="noopener" class="link-btn"><i class="fas fa-arrow-up-right-from-square"></i> {{ t('paper') }}</a>{% endif %}
+                    {{ gallery_button(L(item, 'name'), item.images) }}
                 </div>
-                <div class="slider-dots" id="paperSliderDots">
-                    <!-- Dots will be dynamically inserted here -->
-                </div>
+                {% endif %}
             </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">{{ t('empty') }}</p>
+    {% endfor %}
+</section>
 
-            <div id="paperModalDesc" class="modal-description">
-                <p><strong>기간:</strong> <span id="p-date"></span></p>
-                <p><strong>설명:</strong> <span id="p-description"></span></p>
-                <div id="p-link-wrapper" style="display: none;">
-                    <br>
-                    <p><strong>논문 링크:</strong></p>
-                    <a id="p-link" href="#" target="_blank" class="paper-modal-link">
-                        <i class="fas fa-external-link-alt"></i> 논문 보기
-                    </a>
+{# ── Projects ──────────────────────────────────────────── #}
+<section id="projects" class="section">
+    <h2>{{ t('sec_projects') }}</h2>
+    {% for key, rows in [('sub_research', research_projects), ('sub_software', software_projects)] if rows %}
+    <h3>{{ t(key) }}</h3>
+    <ul class="entries">
+        {% for p in rows %}
+        <li class="entry">
+            <span class="date">{{ period(p.date_start, p.date_end, p.is_ongoing) }}</span>
+            <div class="body">
+                <p class="title">{{ L(p, 'title') }}</p>
+                {% if L(p, 'description') %}<p class="desc">{{ L(p, 'description') }}</p>{% endif %}
+                {% if p.link or p.images %}
+                <div class="actions">
+                    {% if p.link %}<a href="{{ p.link }}" target="_blank" rel="noopener" class="link-btn"><i class="fas fa-arrow-up-right-from-square"></i> {{ t('visit') }}</a>{% endif %}
+                    {{ gallery_button(L(p, 'title'), p.images) }}
                 </div>
+                {% endif %}
             </div>
-        </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">{{ t('empty') }}</p>
+    {% endfor %}
+</section>
+
+{# ── Experience ────────────────────────────────────────── #}
+<section id="experience" class="section">
+    <h2>{{ t('sec_experience') }}</h2>
+    {% for key, rows, ongoing in [('sub_current', current_activities, true), ('sub_past', past_activities, false)] if rows %}
+    <h3>{{ t(key) }}</h3>
+    <ul class="entries">
+        {% for a in rows %}
+        <li class="entry">
+            <span class="date">{{ period(a.date_start, a.date_end, ongoing and (a.is_ongoing is not defined or a.is_ongoing)) }}</span>
+            <div class="body">
+                <p class="title">{{ L(a, 'title') }}</p>
+                {% if L(a, 'description') %}<p class="desc">{{ L(a, 'description') }}</p>{% endif %}
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">{{ t('empty') }}</p>
+    {% endfor %}
+</section>
+
+{# ── Awards ────────────────────────────────────────────── #}
+<section id="awards" class="section">
+    <h2>{{ t('sec_awards') }}</h2>
+    {% if awards %}
+    <ul class="entries">
+        {% for a in awards %}
+        <li class="entry">
+            <span class="date">{{ a.date_text or '' }}</span>
+            <div class="body">
+                <p class="title">
+                    {% if L(a, 'award_result') %}<span class="badge">{{ L(a, 'award_result') }}</span>{% endif %}
+                    {{ L(a, 'name') }}
+                </p>
+                {% if L(a, 'subject') %}<p class="desc">{{ L(a, 'subject') }}</p>{% endif %}
+                {% if L(a, 'organization') %}<p class="meta">{{ L(a, 'organization') }}</p>{% endif %}
+                {% if L(a, 'description') %}<p class="desc">{{ L(a, 'description') }}</p>{% endif %}
+                {% if a.images %}<div class="actions">{{ gallery_button(L(a, 'name'), a.images) }}</div>{% endif %}
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">{{ t('empty') }}</p>
+    {% endif %}
+</section>
+
+{# ── Certifications ────────────────────────────────────── #}
+<section id="certifications" class="section">
+    <h2>{{ t('sec_certs') }}</h2>
+    {% if certificates %}
+    <ul class="entries">
+        {% for c in certificates %}
+        <li class="entry">
+            <span class="date">{{ c.date_text or '' }}</span>
+            <div class="body">
+                <p class="title">{{ L(c, 'name') }}</p>
+                {% if L(c, 'issuer') %}<p class="meta">{{ L(c, 'issuer') }}</p>{% endif %}
+                {% if c.image %}<div class="actions">{{ gallery_button(L(c, 'name'), [c.image]) }}</div>{% endif %}
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">{{ t('empty') }}</p>
+    {% endif %}
+</section>
+
+<dialog id="gallery" class="gallery" aria-labelledby="galleryTitle">
+    <div class="gallery-head">
+        <p id="galleryTitle" class="title"></p>
+        <button type="button" class="gallery-close" aria-label="{{ t('close') }}"><i class="fas fa-xmark"></i></button>
     </div>
-
-    <script>
-        // Awards data - dynamically loaded from Supabase or fallback to hardcoded
-        {% if awards %}
-        const awardsData = {{ awards | tojson }}.map(a => ({
-            name: a.name,
-            subject: a.subject || '',
-            award: a.award_result || '',
-            date: a.date_text || '',
-            organization: a.organization || '',
-            description: a.description || '',
-            images: Array.isArray(a.images) ? a.images : []
-        }));
-        {% else %}
-        const awardsData = [
-            {name:'충청ICT ML/DL 과정 발표회 (은상)',subject:'Computer Vision을 이용한 도로 상태 판단 AI',award:'은상',date:'2023.11.12',organization:'',description:'',images:['static/images/awards/ICT_3.jpg','static/images/awards/ICT_2.png']},
-            {name:'충청ICT ML/DL 과정 발표회 (동상)',subject:'Computer Vision을 이용한 CCTV 영상 분석',award:'동상',date:'2023.11.12',organization:'',description:'',images:['static/images/awards/ICT_3.jpg','static/images/awards/ICT_1.png']},
-            {name:'창업경진대회 (고려대학교)',subject:'JooInJang 캐릭터를 이용한 브랜딩 사업',award:'우수상',date:'2023.12.08',organization:'',description:'',images:['/static/images/awards/JooInJang_2.png','/static/images/awards/JooInJang_5.jpg','/static/images/awards/JooInJang_6.jpg','/static/images/awards/JooInJang_1.jpg']},
-            {name:'고려대학교 & 한국발명진흥회 연구 과제 수행',subject:'수직농장 AI제어 시스템 적용 및 생육 이미지 데이터 활용',award:'사업 진행',date:'2023.08.16 ~ 2023.12.10',organization:'',description:'',images:['/static/images/awards/KIPA.png']},
-            {name:'DB 금융경제 공모전',subject:'종합적 블록체인 이상거래 탐지방법 제언',award:'출품 완료',date:'2024.02.28',organization:'',description:'',images:['/static/images/awards/DB_2.png','/static/images/awards/DB_1.png']},
-            {name:'2024 T-SUM 데이터분석/인공지능 경진대회',subject:'킥보드 주행 영상 분석을 통한 객체 탐지 인공지능 개발',award:'대상 및 우수멘토상',date:'2024.06.07',organization:'',description:'',images:['static/images/awards/TSUM.jpg']},
-            {name:'2024 KUS-TUDY',subject:'파이썬을 활용한 Business Data Analytics',award:'최우수상',date:'2024.06.17',organization:'',description:'',images:['static/images/awards/KUSTUDY.png']},
-            {name:'2024 산학협력친화형PBL 수강 후기 공모전',subject:'데이터분석과 인공지능을 통해 선한 영향력 끼치는 개발자에 다가가다',award:'은상',date:'2024.07.05',organization:'',description:'',images:['static/images/awards/PBL.jpeg']},
-            {name:'2024 세종시 기업분석 경진대회',subject:'주식회사 서북에 대한 분석',award:'최우수상',date:'2024.10.08',organization:'',description:'',images:['static/images/awards/SEJONG_C.jpeg','static/images/awards/SEJONG_A.jpeg','static/images/awards/SEJONG_B.png']},
-            {name:'2024 R&SD 성과공유회',subject:'(주)팜킷 - TableOCR 연계 식품 챗봇 프로세스 개발',award:'우수상',date:'2024.10.25',organization:'',description:'',images:[]},
-            {name:'2024 기업기술혁신PBL',subject:'(주)팜킷 - TableOCR 연계 식품 챗봇 프로세스 개발',award:'우수상',date:'2024.12.20',organization:'',description:'',images:[]},
-            {name:'2025 하계 한국데이터마이닝학회',subject:'Controlling Informational Freedom in Large Language Models via Degree of Freedom Prompting',award:'최우수논문상',date:'2025.08.28',organization:'',description:'',images:['static/images/awards/DATA.png']}
-        ];
-        {% endif %}
-
-        // Certificates data
-        {% if certificates %}
-        const certificatesData = {{ certificates | tojson }}.map(c => ({
-            name: c.name,
-            image: c.image || ''
-        }));
-        {% else %}
-        const certificatesData = [
-            {name:'ADsP(데이터분석준전문가)',image:'/static/images/awards/ADsP.png'},
-            {name:'SQLD(SQL개발자)',image:'/static/images/awards/SQLD.png'}
-        ];
-        {% endif %}
-
-        // Papers data
-        {% if academic_items %}
-        const papersData = {{ academic_items | tojson }}.map(p => ({
-            name: p.name,
-            date: p.date_text || '',
-            description: p.description || '',
-            paperLink: p.paper_link || '',
-            images: Array.isArray(p.images) ? p.images : []
-        }));
-        {% else %}
-        const papersData = [
-            {name:"고려대학교(세종) 크림슨브레인소속 데이터분석 및 인공지능학회 'PRISM' 1기 학회장",date:'2024.03 ~ 2024.12',description:'데이터분석 및 인공지능 학회에서 1기 학회장으로 활동하며 학회원들과 함께 다양한 프로젝트 및 스터디를 진행했습니다.',paperLink:'',images:['static/images/academic/DOF/PRISM.jpeg']},
-            {name:'2023 한국IT서비스학회 춘계학술대회 참여 및 교육이수',date:'2023.05.24',description:'한국IT서비스학회 춘계학술대회에 참여하여 IT 서비스 분야의 최신 연구 동향을 학습하였습니다.',paperLink:'',images:['static/images/academic/DOF/IT_service.png']},
-            {name:'2024 한국데이터마이닝학회 춘계학술대회 참여',date:'2024.05.30',description:'한국데이터마이닝학회 춘계학술대회에 참여하여 데이터마이닝 및 AI 분야의 최신 연구를 접하였습니다.',paperLink:'',images:['static/images/academic/DOF/KDMS2024_C.png']},
-            {name:'2024 한국데이터마이닝학회 추계학술대회 참여',date:'2024.11.22 ~ 2024.11.23',description:'한국데이터마이닝학회 추계학술대회에 참여하여 데이터마이닝 및 AI 분야의 연구 발표를 청강하였습니다.',paperLink:'',images:['static/images/academic/DOF/KDMS2024_CC.png']},
-            {name:'2025 한국데이터마이닝학회 하계학술대회 참여',date:'2025.08.28 ~ 2025.08.30',description:'한국데이터마이닝학회 하계학술대회에 참여하여 최신 데이터마이닝 연구 및 AI 분야를 학습하고, 포스터발표를 진행하였습니다.',paperLink:'',images:['static/images/academic/DOF/KDMS2025_CC.png']},
-            {name:'Moral Alignment in Large Language Models : Effects of Linguistic Framing and Domain Personas',date:'2025.08.29',description:'KDMS2025 포스터 발표 - 대규모 언어 모델에서의 도덕적 정렬에 대한 언어적 프레이밍과 도메인 페르소나의 영향을 연구하였습니다.',paperLink:'',images:['static/images/academic/DOF/MORAL.png']},
-            {name:'Controlling Informational Freedom in Large Language Models via Degree of Freedom Prompting',date:'2025.08.29',description:'KDMS2025 포스터 발표 - 자유도 프롬프팅을 통해 대규모 언어 모델의 정보 자유도를 제어하는 방법론을 제시하였습니다.',paperLink:'',images:['static/images/academic/DOF/DOF.png']},
-            {name:'Cross-Linguistic Moral Preferences in Large Language Models',date:'2025.12.11',description:'MDPI Electronics 게재 논문 - 대규모 언어 모델에서의 언어 간 도덕적 선호도에 대한 분배 정의 시나리오 및 도메인 페르소나 개입 연구를 진행하였습니다.',paperLink:'',images:['static/images/academic/DOF/MDPI-2.png','static/images/academic/DOF/MDPI-1.png']}
-        ];
-        {% endif %}
-
-        // Activity log modal opener
-        function openActivityLogModal(logId) {
-            const modal = document.getElementById('activityModal');
-            const iframe = document.getElementById('activityIframe');
-            iframe.src = `/activity/log/${logId}`;
-            modal.classList.add('show');
-            document.body.style.overflow = 'hidden';
-        }
-
-        // Certificate modal functions
-        function openCertModal(index) {
-            const cert = certificatesData[index];
-            document.getElementById('certModalTitle').textContent = cert.name;
-            document.getElementById('certImage').src = cert.image;
-            document.getElementById('certModal').style.display = 'flex';
-        }
-
-        function closeCertModal() {
-            document.getElementById('certModal').style.display = 'none';
-        }
-
-        // Paper modal functions
-        let currentPaperSlide = 0;
-        let currentPaperImages = [];
-
-        function openPaperModal(index) {
-            const paper = papersData[index];
-
-            // Set title and details
-            document.getElementById('paperModalTitle').textContent = paper.name;
-            document.getElementById('p-date').textContent = paper.date;
-            document.getElementById('p-description').textContent = paper.description;
-
-            // Show/hide paper link if provided
-            const linkWrapper = document.getElementById('p-link-wrapper');
-            if (paper.paperLink && paper.paperLink.trim() !== '') {
-                document.getElementById('p-link').href = paper.paperLink;
-                linkWrapper.style.display = 'block';
-            } else {
-                linkWrapper.style.display = 'none';
-            }
-
-            // Setup image slider
-            currentPaperImages = paper.images || [];
-            currentPaperSlide = 0;
-            setupPaperImageSlider();
-
-            // Show modal
-            document.getElementById('paperModal').style.display = 'flex';
-        }
-
-        function setupPaperImageSlider() {
-            const sliderContainer = document.getElementById('paperImageSlider');
-            const sliderImages = document.getElementById('paperSliderImages');
-            const sliderDots = document.getElementById('paperSliderDots');
-
-            // Clear existing content
-            sliderImages.innerHTML = '';
-            sliderDots.innerHTML = '';
-
-            if (currentPaperImages.length === 0) {
-                // Show default icon if no images
-                sliderImages.innerHTML = `
-                    <div class="slider-image active">
-                        <div class="default-award-icon">
-                            <i class="fas fa-file-alt"></i>
-                            <p>첨부 자료 없음</p>
-                        </div>
-                    </div>
-                `;
-                sliderContainer.style.display = 'block';
-                document.querySelectorAll('#paperImageSlider .slider-btn').forEach(btn => btn.style.display = 'none');
-            } else {
-                // Show images
-                currentPaperImages.forEach((img, index) => {
-                    const imgDiv = document.createElement('div');
-                    imgDiv.className = 'slider-image' + (index === 0 ? ' active' : '');
-                    imgDiv.innerHTML = `<img src="${img}" alt="Paper Image ${index + 1}">`;
-                    sliderImages.appendChild(imgDiv);
-
-                    // Create dot
-                    const dot = document.createElement('span');
-                    dot.className = 'slider-dot' + (index === 0 ? ' active' : '');
-                    dot.onclick = () => goToPaperSlide(index);
-                    sliderDots.appendChild(dot);
-                });
-
-                sliderContainer.style.display = 'block';
-
-                // Show/hide navigation buttons
-                const showButtons = currentPaperImages.length > 1;
-                document.querySelectorAll('#paperImageSlider .slider-btn').forEach(btn => {
-                    btn.style.display = showButtons ? 'flex' : 'none';
-                });
-            }
-        }
-
-        function changePaperSlide(direction) {
-            if (currentPaperImages.length <= 1) return;
-
-            currentPaperSlide += direction;
-
-            if (currentPaperSlide >= currentPaperImages.length) {
-                currentPaperSlide = 0;
-            } else if (currentPaperSlide < 0) {
-                currentPaperSlide = currentPaperImages.length - 1;
-            }
-
-            updatePaperSlider();
-        }
-
-        function goToPaperSlide(index) {
-            currentPaperSlide = index;
-            updatePaperSlider();
-        }
-
-        function updatePaperSlider() {
-            // Update images
-            const images = document.querySelectorAll('#paperSliderImages .slider-image');
-            images.forEach((img, index) => {
-                img.classList.toggle('active', index === currentPaperSlide);
-            });
-
-            // Update dots
-            const dots = document.querySelectorAll('#paperSliderDots .slider-dot');
-            dots.forEach((dot, index) => {
-                dot.classList.toggle('active', index === currentPaperSlide);
-            });
-        }
-
-        function closePaperModal() {
-            document.getElementById('paperModal').style.display = 'none';
-            currentPaperSlide = 0;
-            currentPaperImages = [];
-        }
-
-        // Close modal on outside click
-        window.addEventListener('click', function(event) {
-            const certModal = document.getElementById('certModal');
-            const paperModal = document.getElementById('paperModal');
-
-            if (event.target === certModal) {
-                closeCertModal();
-            }
-            if (event.target === paperModal) {
-                closePaperModal();
-            }
-        });
-    </script>
-    <script src="{{ url_for('static', filename='js/activity.js') }}"></script>
+    <div class="gallery-body" id="galleryBody"></div>
+</dialog>
 {% endblock %}

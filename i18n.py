@@ -1,0 +1,117 @@
+"""UI strings and profile text for the Korean / English versions of the site."""
+
+LANGS = ('ko', 'en')
+
+# Links shown in the header (same for both languages)
+LINKS = [
+    {"label": "Email", "icon": "fas fa-envelope", "href": "mailto:dsng3419@korea.ac.kr", "text": "dsng3419@korea.ac.kr"},
+    {"label": "GitHub", "icon": "fab fa-github", "href": "https://github.com/SeonGyuJang", "text": "SeonGyuJang"},
+    {"label": "LinkedIn", "icon": "fab fa-linkedin", "href": "https://www.linkedin.com/in/seongyu-jang-5b8268297", "text": "seongyu-jang"},
+    {"label": "Kaggle", "icon": "fab fa-kaggle", "href": "https://www.kaggle.com/seongyujang04", "text": "seongyujang04"},
+    {"label": "Blog", "icon": "fas fa-pen", "href": "https://blog.naver.com/ergosphere29", "text": "Naver Blog"},
+    {"label": "Instagram", "icon": "fab fa-instagram", "href": "https://www.instagram.com/ditdah_ditdit_0616", "text": "@ditdah_ditdit_0616"},
+]
+
+PROFILE = {
+    "ko": {
+        "name": "장선규",
+        "name_alt": "SeonGyu Jang",
+        "headline": "LLM과 강화학습을 연구하는 AI 연구자 · 개발자",
+        "intro": "고려대학교 세종캠퍼스 디지털경영전공 학부생으로, 대규모 언어 모델(LLM)의 행동 평가와 정렬(Alignment), "
+                 "비전-언어 모델, 강화학습을 연구하고 있습니다. 연구를 실제 서비스로 구현하는 풀스택 개발 역량을 바탕으로, "
+                 "데이터와 인공지능으로 선한 영향력을 만들고자 합니다.",
+        "location": "대한민국 서울 · 세종",
+        "edu_school": "고려대학교 세종캠퍼스",
+        "edu_degree": "글로벌비즈니스대학 융합경영학부 디지털경영전공 (경영학사)",
+        "edu_period": "2023.03 ~ 2028.02 (졸업 예정)",
+        "edu_gpa": "GPA 3.79 / 4.50",
+        "edu_note": "학부연구생 · 디지털경영전공 강현구 교수 연구실",
+        "interests": ["AI · LLM Alignment", "LLM 행동 평가", "Vision-Language Models", "강화학습"],
+    },
+    "en": {
+        "name": "SeonGyu Jang",
+        "name_alt": "장선규",
+        "headline": "AI & ML Researcher / Developer — LLMs and Reinforcement Learning",
+        "intro": "I am an undergraduate in Digital Business Management at Korea University (Sejong Campus), researching "
+                 "the behavioral evaluation and alignment of large language models, vision-language models, and "
+                 "reinforcement learning. With hands-on full-stack engineering skills, I take projects from research "
+                 "experiments to real-world deployment, aiming to create a positive impact through data and AI.",
+        "location": "Seoul · Sejong, Republic of Korea",
+        "edu_school": "Korea University, Sejong Campus",
+        "edu_degree": "B.B.A. in Digital Business Management, College of Global Business",
+        "edu_period": "Mar 2023 – Feb 2028 (expected)",
+        "edu_gpa": "GPA 3.79 / 4.50",
+        "edu_note": "Undergraduate research with Prof. Hyungu Kahng (Digital Management)",
+        "interests": ["AI & LLM Alignment", "Behavioral Evaluation of LLMs", "Vision-Language Models",
+                      "Reinforcement Learning"],
+    },
+}
+
+UI = {
+    "ko": {
+        "title": "장선규 | Portfolio",
+        "nav_about": "소개",
+        "nav_publications": "논문",
+        "nav_projects": "프로젝트",
+        "nav_experience": "경력",
+        "nav_awards": "수상",
+        "nav_certs": "자격증",
+        "download_cv": "CV 다운로드",
+        "sec_about": "소개",
+        "sec_education": "학력",
+        "sec_interests": "연구 관심 분야",
+        "sec_publications": "논문 및 학술 발표",
+        "sub_journal": "학술지 논문",
+        "sub_presentation": "학술대회 발표",
+        "sub_conference": "학술대회 참가",
+        "sec_projects": "프로젝트",
+        "sub_research": "연구",
+        "sub_software": "소프트웨어",
+        "sec_experience": "경력 및 활동",
+        "sub_current": "현재",
+        "sub_past": "이전",
+        "sec_awards": "수상",
+        "sec_certs": "자격증",
+        "present": "현재",
+        "view": "자료 보기",
+        "visit": "사이트",
+        "paper": "논문",
+        "certificate": "증명서",
+        "empty": "등록된 항목이 없습니다.",
+        "last_updated": "최종 업데이트",
+        "close": "닫기",
+    },
+    "en": {
+        "title": "SeonGyu Jang | Portfolio",
+        "nav_about": "About",
+        "nav_publications": "Publications",
+        "nav_projects": "Projects",
+        "nav_experience": "Experience",
+        "nav_awards": "Awards",
+        "nav_certs": "Certifications",
+        "download_cv": "Download CV",
+        "sec_about": "About",
+        "sec_education": "Education",
+        "sec_interests": "Research Interests",
+        "sec_publications": "Publications & Presentations",
+        "sub_journal": "Journal Articles",
+        "sub_presentation": "Conference Presentations",
+        "sub_conference": "Conferences Attended",
+        "sec_projects": "Projects",
+        "sub_research": "Research",
+        "sub_software": "Software",
+        "sec_experience": "Experience & Leadership",
+        "sub_current": "Current",
+        "sub_past": "Past",
+        "sec_awards": "Honors & Awards",
+        "sec_certs": "Certifications",
+        "present": "Present",
+        "view": "View",
+        "visit": "Website",
+        "paper": "Paper",
+        "certificate": "Certificate",
+        "empty": "Nothing here yet.",
+        "last_updated": "Last updated",
+        "close": "Close",
+    },
+}

@@ -1,0 +1,209 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ spec.label }}{% endblock %}
+{% block topbar_icon %}{{ spec.icon }}{% endblock %}
+{% block topbar_title %}{{ spec.label }}{% endblock %}
+{% block topbar_actions %}
+{% if source == 'db' %}
+<button class="btn-admin btn-primary btn-sm" onclick="openModal(-1)"><i class="fas fa-plus"></i> 추가</button>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if source != 'db' %}
+<div class="admin-alert alert-warning">
+  <i class="fas fa-exclamation-triangle"></i>
+  <div>DB에 연결되지 않아 기본(CV) 데이터를 읽기 전용으로 표시 중입니다. 사이트에도 같은 내용이 보입니다.</div>
+</div>
+{% elif missing %}
+<div class="admin-alert alert-warning">
+  <i class="fas fa-database"></i>
+  <div>이 테이블에는 아직 영어(EN)/구분 컬럼이 없어 해당 항목은 저장되지 않습니다.
+    <a href="{{ url_for('admin_dashboard') }}" style="text-decoration:underline">대시보드</a>의 안내에 따라 마이그레이션 SQL을 실행하세요.</div>
+</div>
+{% endif %}
+
+<div class="admin-card">
+  <div class="card-header">
+    <div class="card-title"><i class="{{ spec.icon }}"></i> {{ spec.label }} ({{ items|length }}개) · 사이트 표시 순서</div>
+    {% if source == 'db' %}
+    <form method="POST" action="{{ url_for('admin_sync_seed') }}"
+          onsubmit="return confirm('{{ spec.label }} 항목 전체를 CV 기준 데이터로 교체합니다. 계속할까요?')">
+      <input type="hidden" name="table" value="{{ table }}">
+      <input type="hidden" name="next" value="{{ request.path }}">
+      <button class="btn-admin btn-ghost btn-sm"><i class="fas fa-file-import"></i> CV 기준 데이터로 교체</button>
+    </form>
+    {% endif %}
+  </div>
+  {% if items %}
+  <div style="overflow-x:auto">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th style="width:50px">순서</th>
+        {% for col in spec.columns %}
+          {% for f in spec.fields if f.name == col %}<th>{{ f.label }}</th>{% endfor %}
+        {% endfor %}
+        <th style="width:60px">EN</th>
+        <th style="width:100px">관리</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td style="color:#94a3b8">{{ item.sort_order or 0 }}</td>
+        {% for col in spec.columns %}
+        <td style="max-width:360px">
+          {% set v = item.get(col) %}
+          {% if loop.first %}<strong>{{ v or '-' }}</strong>
+          {% else %}<span style="color:#94a3b8;font-size:0.85rem">{{ v if v not in [None, ''] else '-' }}</span>{% endif %}
+        </td>
+        {% endfor %}
+        <td>
+          {% if item.get(spec.en_check) %}<span class="badge badge-green">EN</span>
+          {% else %}<span class="badge badge-yellow">KR만</span>{% endif %}
+        </td>
+        <td>
+          {% if source == 'db' %}
+          <div style="display:flex;gap:6px">
+            <button class="btn-admin btn-ghost btn-icon btn-sm" onclick="openModal({{ loop.index0 }})" title="수정"><i class="fas fa-edit"></i></button>
+            <form method="POST" action="{{ url_for('admin_table_delete', slug=slug, row_id=item.id) }}" onsubmit="return confirm('삭제하시겠습니까?')">
+              <button type="submit" class="btn-admin btn-danger btn-icon btn-sm" title="삭제"><i class="fas fa-trash"></i></button>
+            </form>
+          </div>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="card-body" style="text-align:center;padding:40px;color:#64748b">
+    <i class="{{ spec.icon }}" style="font-size:2rem;margin-bottom:12px;display:block"></i>
+    등록된 항목이 없습니다. 위의 <b>CV 기준 데이터로 교체</b> 또는 <b>추가</b>를 눌러 시작하세요.
+  </div>
+  {% endif %}
+</div>
+
+<div class="admin-modal" id="editModal">
+  <div class="admin-modal-box" style="max-width:860px">
+    <div class="modal-header">
+      <div class="modal-title-text" id="modalTitleText">{{ spec.label }}</div>
+      <button class="modal-close" type="button" onclick="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <form method="POST" action="{{ url_for('admin_table_save', slug=slug) }}" id="editForm">
+      <div class="modal-body">
+        <input type="hidden" name="id" id="f_id">
+        <div class="form-grid form-grid-2 edit-grid">
+          {% for f in spec.fields %}
+          <div class="form-group" {% if f.wide or f.type == 'images' or f.type == 'image' %}style="grid-column:1/-1"{% endif %}>
+            {% if f.type == 'checkbox' %}
+              <label class="toggle-label" style="margin-top:26px">
+                <input type="checkbox" name="{{ f.name }}" id="f_{{ f.name }}" class="toggle-checkbox"> {{ f.label }}
+              </label>
+            {% else %}
+              <label class="form-label" for="f_{{ f.name }}">{{ f.label }}{% if f.required %} *{% endif %}</label>
+              {% if f.type == 'textarea' %}
+                <textarea name="{{ f.name }}" id="f_{{ f.name }}" class="form-textarea" rows="4" placeholder="{{ f.placeholder }}"></textarea>
+              {% elif f.type == 'select' %}
+                <select name="{{ f.name }}" id="f_{{ f.name }}" class="form-select">
+                  {% for val, lab in f.options %}<option value="{{ val }}">{{ lab }}</option>{% endfor %}
+                </select>
+              {% elif f.type == 'images' %}
+                <input type="hidden" name="{{ f.name }}" id="f_{{ f.name }}">
+                <div class="img-url-list" id="imgList"></div>
+                <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+                  <button type="button" class="btn-admin btn-ghost btn-sm" onclick="addImg('')"><i class="fas fa-plus"></i> URL 추가</button>
+                  <label class="btn-admin btn-ghost btn-sm" style="cursor:pointer"><i class="fas fa-upload"></i> 이미지 업로드
+                    <input type="file" accept="image/*" multiple hidden onchange="uploadImages(this, url => addImg(url))">
+                  </label>
+                </div>
+              {% elif f.type == 'image' %}
+                <div class="img-url-item">
+                  <input type="text" name="{{ f.name }}" id="f_{{ f.name }}" class="form-input" placeholder="/static/images/... 또는 업로드">
+                  <label class="btn-admin btn-ghost btn-sm" style="cursor:pointer;white-space:nowrap"><i class="fas fa-upload"></i> 업로드
+                    <input type="file" accept="image/*" hidden onchange="uploadImages(this, url => document.getElementById('f_{{ f.name }}').value = url)">
+                  </label>
+                </div>
+              {% else %}
+                <input type="{{ 'number' if f.type == 'number' else 'text' }}" name="{{ f.name }}" id="f_{{ f.name }}"
+                       class="form-input" placeholder="{{ f.placeholder }}" {% if f.required %}required{% endif %}>
+              {% endif %}
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        <p class="form-hint" style="margin-top:14px">EN 항목을 비워두면 영어 사이트에서 국문 내용이 대신 표시됩니다.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-admin btn-ghost" onclick="closeModal()">취소</button>
+        <button type="submit" class="btn-admin btn-primary"><i class="fas fa-save"></i> 저장</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const ITEMS = {{ items | tojson }};
+const FIELDS = {{ spec.fields | tojson }};
+const TABLE = {{ table | tojson }};
+let imgs = [];
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function previewSrc(u) { return /^(https?:|\/|data:)/.test(u) ? u : '/' + u; }
+
+function renderImgs() {
+  document.getElementById('imgList').innerHTML = imgs.map((u, i) => `
+    <div class="img-url-item">
+      <input type="text" class="form-input" value="${esc(u)}" oninput="imgs[${i}]=this.value" placeholder="/static/images/...">
+      ${u ? `<img src="${esc(previewSrc(u))}" class="img-url-preview" onerror="this.style.display='none'">` : ''}
+      <button type="button" class="btn-admin btn-ghost btn-icon btn-sm" onclick="moveImg(${i},-1)" title="위로"><i class="fas fa-arrow-up"></i></button>
+      <button type="button" class="btn-admin btn-danger btn-icon btn-sm" onclick="imgs.splice(${i},1);renderImgs()"><i class="fas fa-times"></i></button>
+    </div>`).join('');
+}
+function addImg(u) { imgs.push(u); renderImgs(); }
+function moveImg(i, d) { const j = i + d; if (j < 0) return; [imgs[i], imgs[j]] = [imgs[j], imgs[i]]; renderImgs(); }
+
+async function uploadImages(input, onDone) {
+  for (const file of input.files) {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('item_type', TABLE);
+    try {
+      const res = await fetch('{{ url_for("admin_upload_image") }}', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.url) onDone(data.url); else alert('업로드 실패: ' + (data.error || res.status));
+    } catch (e) { alert('업로드 실패: ' + e); }
+  }
+  input.value = '';
+}
+
+function openModal(idx) {
+  const item = idx >= 0 ? ITEMS[idx] : {};
+  document.getElementById('f_id').value = item.id || '';
+  FIELDS.forEach(f => {
+    const el = document.getElementById('f_' + f.name);
+    const v = item[f.name];
+    if (f.type === 'checkbox') el.checked = idx >= 0 ? !!v : true;
+    else if (f.type === 'images') { imgs = Array.isArray(v) ? [...v] : []; renderImgs(); }
+    else if (f.type === 'select') el.value = v || f.options[0][0];
+    else if (f.type === 'number') el.value = v ?? (idx >= 0 ? 0 : ITEMS.length + 1);
+    else el.value = v || '';
+  });
+  document.getElementById('modalTitleText').textContent = '{{ spec.label }} ' + (idx >= 0 ? '수정' : '추가');
+  document.getElementById('editModal').classList.add('show');
+}
+function closeModal() { document.getElementById('editModal').classList.remove('show'); }
+
+document.getElementById('editForm').addEventListener('submit', () => {
+  const hidden = FIELDS.find(f => f.type === 'images');
+  if (hidden) document.getElementById('f_' + hidden.name).value = JSON.stringify(imgs.filter(u => u.trim()));
+});
+document.getElementById('editModal').addEventListener('click', e => { if (e.target.id === 'editModal') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+{% endblock %}
