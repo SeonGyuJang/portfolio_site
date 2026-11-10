@@ -55,7 +55,10 @@
 {# ── About ─────────────────────────────────────────────── #}
 <section id="about" class="hero reveal">
     <div class="hero-main">
-        <img src="{{ url_for('static', filename='images/profile.jpg') }}" alt="{{ profile.name }}" class="avatar">
+        <div class="avatar">
+            <img src="{{ photo.url }}" alt="{{ profile.name }}"
+                 style="object-position: {{ photo.x }}% {{ photo.y }}%; transform-origin: {{ photo.x }}% {{ photo.y }}%; transform: scale({{ photo.zoom }});">
+        </div>
         <div class="hero-text">
             <p class="eyebrow"><i class="fas fa-location-dot"></i> {{ profile.location }}</p>
             <h1>{{ profile.name }} <span class="name-alt">{{ profile.name_alt }}</span></h1>

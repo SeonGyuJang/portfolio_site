@@ -147,13 +147,11 @@ PROJECTS = [
     {
         "title": "제38대 총학생회 공식 웹 플랫폼",
         "title_en": "Official Web Platform for the 38th Student Council",
-        "description": "고려대학교 세종캠퍼스 총학생회 공식 웹사이트 개발 및 운영. 자체 CMS·관리자 대시보드, "
-                       "회의록·회칙·공약·아카이브·문의 모듈, 학생회관 회의실 자동 예약 시스템, "
-                       "셔틀버스·학식 등 캠퍼스 생활 정보 제공 (KUS-BUS 통합)",
-        "description_en": "Built and operate the council website with a custom CMS and admin dashboard; governance "
-                          "modules for meeting minutes, bylaws, pledges, archives and inquiries; an automated "
-                          "meeting-room reservation system; campus utilities such as shuttle and cafeteria info "
-                          "(absorbed KUS-BUS)",
+        "description": "고려대학교 세종캠퍼스 총학생회 공식 사이트를 설계·개발하고 운영. 공약 이행률·회의록·회칙 공개, "
+                       "회의실 대관과 서울↔세종 버스 예약(입금 자동 확인), 학식·셔틀버스 정보, 문의 위젯, 관리자 CMS 제공",
+        "description_en": "Designed, built and operate the council's official site: pledge progress, meeting minutes "
+                          "and bylaws in the open; meeting-room and Seoul↔Sejong bus reservations with automatic "
+                          "payment confirmation; cafeteria and shuttle info; an inquiry widget; and an admin CMS",
         "category": "software",
         "date_start": "2026.01",
         "date_end": "",
@@ -166,14 +164,14 @@ PROJECTS = [
     {
         "title": "총동아리연합회 홈페이지",
         "title_en": "General Student Club Association Website",
-        "description": "고려대학교 세종캠퍼스 총동아리연합회 공식 웹사이트 개발 및 운영",
-        "description_en": "Developed and operate the official website of the General Student Club Association, "
-                          "Korea University (Sejong Campus)",
+        "description": "고려대학교 세종캠퍼스 총동아리연합회 공식 웹사이트 개발 및 운영 (서비스 종료)",
+        "description_en": "Developed and operated the official website of the General Student Club Association, "
+                          "Korea University (Sejong Campus) (service concluded)",
         "category": "software",
         "date_start": "2025.07",
         "date_end": "",
-        "is_ongoing": True,
-        "link": "https://kus-club-union.fly.dev/",
+        "is_ongoing": False,
+        "link": "",
         "images": [],
         "icon_class": "fas fa-users",
         "sort_order": 2,
@@ -191,7 +189,7 @@ PROJECTS = [
         "date_start": "2024.11",
         "date_end": "2026.01",
         "is_ongoing": False,
-        "link": "https://www.kus-bus.site/",
+        "link": "",
         "images": [],
         "icon_class": "fas fa-bus",
         "sort_order": 3,
@@ -502,9 +500,11 @@ ACADEMIC_ITEMS = [
         "authors": "Jimin Kim, SeonGyu Jang, Hyungu Kahng",
         "venue": "한국데이터마이닝학회 하계학술대회 (KDMS 2025 Summer) · 포스터 · 최우수논문상",
         "venue_en": "Korean Data Mining Society (KDMS) Summer Conference 2025 · Poster · Best Paper Award",
-        "description": "자유도 프롬프팅(Degree of Freedom Prompting)으로 LLM 출력의 정보 자유도를 제어하는 방법 연구",
-        "description_en": "Controlling how much informational freedom an LLM exercises in its outputs through "
-                          "degree-of-freedom prompting",
+        "description": "자유도 파라미터로 프롬프트의 제약을 조절하는 DoF 프롬프팅 제안. ASAP-AES 기반 에세이 4만 편 생성·평가에서 "
+                       "일관성을 유지하면서 창의성과 어휘 다양성 향상",
+        "description_en": "Proposed DoF prompting, which tunes prompt constraints with a degree parameter; across "
+                          "40,000 generated essays (ASAP-AES) it improved creativity and lexical diversity while "
+                          "preserving coherence",
         "date_text": "2025.08",
         "paper_link": "",
         "images": ["/static/images/academic/DOF/DOF.png"],
@@ -514,11 +514,14 @@ ACADEMIC_ITEMS = [
         "name": "Moral Alignment in Large Language Models: Effects of Linguistic Framing and Domain Personas",
         "name_en": "",
         "category": "presentation",
-        "authors": "SeonGyu Jang",
-        "venue": "한국데이터마이닝학회 하계학술대회 (KDMS 2025 Summer) · 포스터",
-        "venue_en": "Korean Data Mining Society (KDMS) Summer Conference 2025 · Poster",
-        "description": "",
-        "description_en": "",
+        "authors": "SeonGyu Jang, Jimin Kim, Hyungu Kahng",
+        "venue": "한국데이터마이닝학회 하계학술대회 (KDMS 2025 Summer) · 포스터 · 제1저자",
+        "venue_en": "Korean Data Mining Society (KDMS) Summer Conference 2025 · Poster · First author",
+        "description": "Charness & Rabin(2002) 6개 시나리오를 영어·한국어와 10개 도메인 페르소나로 재현(LLM 응답 120만 건). "
+                       "언어에 따라 도덕 추론이 달라지며, 페르소나가 언어 간 격차를 약 63% 줄임을 확인",
+        "description_en": "Replicated six Charness & Rabin (2002) scenarios in English and Korean with ten domain "
+                          "personas (1.2M LLM responses); found language-dependent moral reasoning, with personas "
+                          "reducing cross-linguistic gaps by about 63%",
         "date_text": "2025.08",
         "paper_link": "",
         "images": ["/static/images/academic/DOF/MORAL.png"],

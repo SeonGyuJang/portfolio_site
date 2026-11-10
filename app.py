@@ -329,6 +329,31 @@ def fill_details():
     return updated, errors
 
 
+DEFAULT_PHOTO = {'url': '/static/images/profile.jpg', 'x': 50.0, 'y': 50.0, 'zoom': 1.0}
+
+
+def get_profile_photo():
+    """Profile photo URL and framing (focal point x/y in %, zoom ≥ 1)."""
+    photo = dict(DEFAULT_PHOTO)
+    if supabase:
+        try:
+            res = supabase.table('site_settings').select('value').eq('key', 'profile_photo').execute()
+            if res.data:
+                saved = json.loads(res.data[0]['value'])
+                photo.update({k: saved[k] for k in photo if k in saved})
+        except Exception as e:
+            logger.warning(f"profile photo lookup failed: {e}")
+    photo['custom'] = photo['url'] != DEFAULT_PHOTO['url']
+    return photo
+
+
+def clamp(value, lo, hi, default):
+    try:
+        return max(lo, min(hi, float(value)))
+    except (TypeError, ValueError):
+        return default
+
+
 def get_last_updated():
     if supabase:
         try:
@@ -384,7 +409,7 @@ def require_admin(f):
 @app.after_request
 def no_cache(resp):
     # Always serve fresh data on the site and admin pages (no stale browser cache).
-    if request.path.startswith('/admin') or request.path in ('/', '/en'):
+    if request.path.startswith('/admin') or request.path in ('/', '/ko'):
         resp.headers['Cache-Control'] = 'no-store, max-age=0'
     return resp
 
@@ -462,7 +487,6 @@ def render_site(lang):
     academic = content['academic_items']
     ctx = {
         'lang': lang,
-        'other_lang_url': url_for('index_en') if lang == 'ko' else url_for('index'),
         'profile': PROFILE[lang],
         'links': LINKS,
         'current_activities': content['current_activities'],
@@ -480,6 +504,7 @@ def render_site(lang):
             ('stat_awards', len(content['awards']), '#awards'),
             ('stat_certs', len(content['certificates']), '#certifications'),
         ],
+        'photo': get_profile_photo(),
         'last_updated': get_last_updated(),
         **make_helpers(lang),
     }
@@ -488,18 +513,19 @@ def render_site(lang):
 
 @app.route('/')
 def index():
-    if request.args.get('lang') == 'en':
-        return redirect(url_for('index_en'))
-    return render_site('ko')
-
-
-@app.route('/en')
-def index_en():
+    """English is the default version of the site."""
+    if request.args.get('lang') == 'ko':
+        return redirect(url_for('index_ko'))
     return render_site('en')
 
 
 @app.route('/ko')
 def index_ko():
+    return render_site('ko')
+
+
+@app.route('/en')
+def index_en():
     return redirect(url_for('index'))
 
 
@@ -630,6 +656,49 @@ def admin_sql(name):
     if name not in files:
         abort(404)
     return send_from_directory(app.root_path, files[name], as_attachment=True, mimetype='text/plain')
+
+
+# ── admin: profile photo ───────────────────────────────────────────────────
+
+@app.route('/admin/profile-photo')
+@require_admin
+def admin_profile_photo():
+    return render_template('admin/profile_photo.html', photo=get_profile_photo(),
+                           supabase_ready=supabase is not None)
+
+
+@app.route('/admin/profile-photo/save', methods=['POST'])
+@require_admin
+def admin_profile_photo_save():
+    if not supabase:
+        flash('Supabase가 연결되어 있지 않아 저장할 수 없습니다.', 'error')
+        return redirect(url_for('admin_profile_photo'))
+    url = request.form.get('url', '').strip()
+    if not (url == DEFAULT_PHOTO['url'] or re.fullmatch(r'/api/images/[\w-]+', url)):
+        flash('사진 주소가 올바르지 않습니다. 사진을 다시 업로드해 주세요.', 'error')
+        return redirect(url_for('admin_profile_photo'))
+    photo = {
+        'url': url,
+        'x': round(clamp(request.form.get('x'), 0, 100, 50), 2),
+        'y': round(clamp(request.form.get('y'), 0, 100, 50), 2),
+        'zoom': round(clamp(request.form.get('zoom'), 1, 3, 1), 3),
+    }
+    try:
+        supabase.table('site_settings').upsert(
+            {'key': 'profile_photo', 'value': json.dumps(photo), 'updated_at': 'now()'}).execute()
+    except Exception as e:
+        flash(f'저장 실패: {e} (대시보드의 마이그레이션 SQL로 site_settings 테이블을 만들어 주세요)', 'error')
+        return redirect(url_for('admin_profile_photo'))
+    # remove uploaded photos that are no longer used
+    try:
+        q = supabase.table('portfolio_images').delete().eq('item_type', 'profile')
+        current_id = url.rsplit('/', 1)[-1] if url.startswith('/api/images/') else None
+        (q.neq('id', current_id) if current_id else q).execute()
+    except Exception as e:
+        logger.warning(f"old profile photo cleanup failed: {e}")
+    update_last_updated()
+    flash('프로필 사진을 저장했습니다. 사이트에 바로 반영됩니다.', 'success')
+    return redirect(url_for('admin_profile_photo'))
 
 
 # ── admin: CV ──────────────────────────────────────────────────────────────

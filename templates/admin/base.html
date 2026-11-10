@@ -22,8 +22,12 @@
     <a href="{{ url_for('admin_dashboard') }}" class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
       <i class="fas fa-th-large"></i> Dashboard
     </a>
-    <a href="{{ url_for('index') }}" target="_blank" class="nav-link"><i class="fas fa-external-link-alt"></i> 사이트 보기 (KR)</a>
-    <a href="{{ url_for('index_en') }}" target="_blank" class="nav-link"><i class="fas fa-external-link-alt"></i> 사이트 보기 (EN)</a>
+    <a href="{{ url_for('index') }}" target="_blank" class="nav-link"><i class="fas fa-external-link-alt"></i> 사이트 보기 (EN · 기본)</a>
+    <a href="{{ url_for('index_ko') }}" target="_blank" class="nav-link"><i class="fas fa-external-link-alt"></i> 사이트 보기 (KR)</a>
+
+    <a href="{{ url_for('admin_profile_photo') }}" class="nav-link {% if request.endpoint == 'admin_profile_photo' %}active{% endif %}">
+      <i class="fas fa-user-circle"></i> 프로필 사진
+    </a>
 
     <div class="nav-section" style="margin-top:12px">Contents</div>
     {% for t, d in TABLE_DEFS.items() %}

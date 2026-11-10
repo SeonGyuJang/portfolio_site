@@ -1,13 +1,14 @@
 <!DOCTYPE html>
-<html lang="{{ lang or 'ko' }}">
+<html lang="{{ lang or 'en' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>document.documentElement.classList.add('js')</script>
     <title>{{ t('title') }}</title>
     <meta name="description" content="{{ profile.headline }}">
-    <link rel="alternate" hreflang="ko" href="{{ url_for('index', _external=True) }}">
-    <link rel="alternate" hreflang="en" href="{{ url_for('index_en', _external=True) }}">
+    <link rel="alternate" hreflang="en" href="{{ url_for('index', _external=True) }}">
+    <link rel="alternate" hreflang="ko" href="{{ url_for('index_ko', _external=True) }}">
+    <link rel="alternate" hreflang="x-default" href="{{ url_for('index', _external=True) }}">
 
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/favicon.png') }}">
@@ -29,8 +30,8 @@
             </nav>
             <div class="topbar-actions">
                 <div class="lang-switch" role="group" aria-label="Language">
-                    <a href="{{ url_for('index') }}" class="{{ 'active' if lang == 'ko' }}" hreflang="ko">KR</a>
-                    <a href="{{ url_for('index_en') }}" class="{{ 'active' if lang == 'en' }}" hreflang="en">EN</a>
+                    <a href="{{ url_for('index') }}" class="{{ 'active' if lang == 'en' }}" hreflang="en">EN</a>
+                    <a href="{{ url_for('index_ko') }}" class="{{ 'active' if lang == 'ko' }}" hreflang="ko">KR</a>
                 </div>
                 <a href="{{ url_for('download_cv') }}" class="btn-cv" download>
                     <i class="fas fa-download"></i><span>CV</span>
