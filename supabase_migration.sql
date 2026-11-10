@@ -1,6 +1,6 @@
 -- ============================================================
--- Portfolio v2 migration: English (EN) fields + categories
--- Run once in the Supabase SQL Editor. Safe to run again.
+-- Portfolio migration: English (EN) fields, categories, detail text
+-- Run in the Supabase SQL Editor. Safe to run again (re-run after updates).
 -- ============================================================
 
 ALTER TABLE current_activities ADD COLUMN IF NOT EXISTS title_en text;
@@ -29,6 +29,18 @@ ALTER TABLE academic_items ADD COLUMN IF NOT EXISTS venue_en text;
 
 ALTER TABLE certificates ADD COLUMN IF NOT EXISTS name_en text;
 ALTER TABLE certificates ADD COLUMN IF NOT EXISTS issuer_en text;
+
+-- Long-form detail text shown when an item is clicked
+ALTER TABLE current_activities ADD COLUMN IF NOT EXISTS details text;
+ALTER TABLE current_activities ADD COLUMN IF NOT EXISTS details_en text;
+ALTER TABLE past_activities ADD COLUMN IF NOT EXISTS details text;
+ALTER TABLE past_activities ADD COLUMN IF NOT EXISTS details_en text;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS details text;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS details_en text;
+ALTER TABLE awards ADD COLUMN IF NOT EXISTS details text;
+ALTER TABLE awards ADD COLUMN IF NOT EXISTS details_en text;
+ALTER TABLE academic_items ADD COLUMN IF NOT EXISTS details text;
+ALTER TABLE academic_items ADD COLUMN IF NOT EXISTS details_en text;
 
 -- Key-value settings (last updated date). Created here too in case it is missing.
 CREATE TABLE IF NOT EXISTS site_settings (

@@ -1,74 +1,127 @@
 {% extends "base.html" %}
 
-{% macro gallery_button(title, images) -%}
-    {%- set imgs = images if images is iterable and images is not string else [] -%}
-    {%- if imgs -%}
-    <button type="button" class="link-btn js-gallery"
-            data-title="{{ title }}"
-            data-images='{{ imgs | map("asset") | list | tojson }}'>
-        <i class="far fa-image"></i> {{ t('view') }}{% if imgs|length > 1 %} ({{ imgs|length }}){% endif %}
-    </button>
-    {%- endif -%}
+{# ── macros ─────────────────────────────────────────────────────────── #}
+
+{% macro authors_line(authors) -%}
+    {{ authors | replace('SeonGyu Jang', '<b>SeonGyu Jang</b>' | safe) }}
+{%- endmacro %}
+
+{% macro detail(id, chip, date, title, item, metas=[], authors='', links=[], images=[]) -%}
+<template id="{{ id }}">
+    <div class="d-top">
+        {% if chip %}<span class="chip">{{ chip }}</span>{% endif %}
+        {% if date %}<span class="d-date"><i class="far fa-calendar"></i> {{ date }}</span>{% endif %}
+    </div>
+    <h3 class="d-title">{{ title }}</h3>
+    {% if authors %}<p class="d-meta">{{ authors_line(authors) }}</p>{% endif %}
+    {% for m in metas if m %}<p class="d-meta">{{ m }}</p>{% endfor %}
+    <div class="d-body">{{ (L(item, 'details') or L(item, 'description')) | rich }}</div>
+    {% set real_links = links | selectattr(1) | list %}
+    {% if real_links %}
+    <div class="d-links">
+        {% for label, href, icon in real_links %}
+        <a href="{{ href }}" target="_blank" rel="noopener" class="btn-outline"><i class="{{ icon }}"></i> {{ label }}</a>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% set imgs = images if images is iterable and images is not string else [] %}
+    {% if imgs %}
+    <h4 class="d-sub">{{ t('images') }}</h4>
+    <div class="d-images">
+        {% for img in imgs %}<a href="{{ img | asset }}" target="_blank" rel="noopener"><img src="{{ img | asset }}" alt="{{ title }}" loading="lazy"></a>{% endfor %}
+    </div>
+    {% endif %}
+</template>
+{%- endmacro %}
+
+{% macro open_attrs(id, enabled) -%}
+    {%- if enabled %} class="entry clickable" data-detail="{{ id }}" tabindex="0" role="button" aria-haspopup="dialog"{% else %} class="entry"{% endif -%}
+{%- endmacro %}
+
+{% macro more(enabled) -%}
+    {%- if enabled %}<span class="more">{{ t('details') }} <i class="fas fa-arrow-right"></i></span>{% endif -%}
+{%- endmacro %}
+
+{% macro sec_head(icon, title, count=None) -%}
+<div class="sec-head">
+    <span class="sec-icon"><i class="{{ icon }}"></i></span>
+    <h2>{{ title }}</h2>
+    {% if count %}<span class="sec-count">{{ count }}</span>{% endif %}
+</div>
 {%- endmacro %}
 
 {% block content %}
 
 {# ── About ─────────────────────────────────────────────── #}
-<section id="about" class="hero">
-    <img src="{{ url_for('static', filename='images/profile.jpg') }}" alt="{{ profile.name }}" class="avatar">
-    <div class="hero-text">
-        <h1>{{ profile.name }} <span class="name-alt">{{ profile.name_alt }}</span></h1>
-        <p class="headline">{{ profile.headline }}</p>
-        <p class="intro">{{ profile.intro }}</p>
-        <ul class="links">
-            {% for link in links %}
-            <li><a href="{{ link.href }}"{% if not link.href.startswith('mailto:') %} target="_blank" rel="noopener"{% endif %}>
-                <i class="{{ link.icon }}"></i>{{ link.label }}</a></li>
-            {% endfor %}
-        </ul>
-        <a href="{{ url_for('download_cv') }}" class="btn-primary" download>
-            <i class="fas fa-file-arrow-down"></i> {{ t('download_cv') }} (PDF)
-        </a>
+<section id="about" class="hero reveal">
+    <div class="hero-main">
+        <img src="{{ url_for('static', filename='images/profile.jpg') }}" alt="{{ profile.name }}" class="avatar">
+        <div class="hero-text">
+            <p class="eyebrow"><i class="fas fa-location-dot"></i> {{ profile.location }}</p>
+            <h1>{{ profile.name }} <span class="name-alt">{{ profile.name_alt }}</span></h1>
+            <p class="headline">{{ profile.headline }}</p>
+            <p class="intro">{{ profile.intro }}</p>
+            <div class="hero-cta">
+                <a href="{{ url_for('download_cv') }}" class="btn-primary" download>
+                    <i class="fas fa-file-arrow-down"></i> {{ t('download_cv') }}
+                </a>
+                <ul class="links">
+                    {% for link in links %}
+                    <li><a href="{{ link.href }}" title="{{ link.label }}" aria-label="{{ link.label }}"{% if not link.href.startswith('mailto:') %} target="_blank" rel="noopener"{% endif %}>
+                        <i class="{{ link.icon }}"></i></a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="stats">
+        {% for key, n, href in stats %}
+        <a href="{{ href }}" class="stat"><span class="stat-n">{{ n }}</span><span class="stat-l">{{ t(key) }}</span></a>
+        {% endfor %}
     </div>
 </section>
 
-<section class="section facts">
-    <div>
-        <h2 class="label">{{ t('sec_education') }}</h2>
+<section class="facts reveal">
+    <div class="fact-card">
+        <h2 class="label"><i class="fas fa-graduation-cap"></i> {{ t('sec_education') }}</h2>
         <p class="strong">{{ profile.edu_school }}</p>
         <p>{{ profile.edu_degree }}</p>
         <p class="muted">{{ profile.edu_period }} · {{ profile.edu_gpa }}</p>
         <p class="muted">{{ profile.edu_note }}</p>
     </div>
-    <div>
-        <h2 class="label">{{ t('sec_interests') }}</h2>
+    <div class="fact-card">
+        <h2 class="label"><i class="fas fa-flask"></i> {{ t('sec_interests') }}</h2>
         <ul class="tags">
             {% for it in profile.interests %}<li>{{ it }}</li>{% endfor %}
         </ul>
     </div>
 </section>
 
+<p class="hint reveal"><i class="far fa-hand-pointer"></i> {{ t('click_hint') }}</p>
+
 {# ── Publications ──────────────────────────────────────── #}
-<section id="publications" class="section">
-    <h2>{{ t('sec_publications') }}</h2>
+<section id="publications" class="section reveal">
+    {{ sec_head('fas fa-book-open', t('sec_publications'), journals|length + presentations|length) }}
     {% for key, rows in [('sub_journal', journals), ('sub_presentation', presentations), ('sub_conference', conferences)] if rows %}
     <h3>{{ t(key) }}</h3>
     <ul class="entries">
         {% for item in rows %}
-        <li class="entry">
+        {% set id = 'pub-' ~ key ~ '-' ~ loop.index %}
+        {% set can = L(item, 'details') or item.images %}
+        <li{{ open_attrs(id, can) }}>
             <span class="date">{{ item.date_text or '' }}</span>
             <div class="body">
                 <p class="title">{{ L(item, 'name') }}</p>
-                {% if item.authors %}<p class="meta">{{ item.authors | replace('SeonGyu Jang', '<b>SeonGyu Jang</b>' | safe) }}</p>{% endif %}
+                {% if item.authors %}<p class="meta">{{ authors_line(item.authors) }}</p>{% endif %}
                 {% if L(item, 'venue') %}<p class="meta">{{ L(item, 'venue') }}</p>{% endif %}
                 {% if L(item, 'description') %}<p class="desc">{{ L(item, 'description') }}</p>{% endif %}
-                {% if item.paper_link or item.images %}
                 <div class="actions">
                     {% if item.paper_link %}<a href="{{ item.paper_link }}" target="_blank" rel="noopener" class="link-btn"><i class="fas fa-arrow-up-right-from-square"></i> {{ t('paper') }}</a>{% endif %}
-                    {{ gallery_button(L(item, 'name'), item.images) }}
+                    {{ more(can) }}
                 </div>
-                {% endif %}
             </div>
+            {% if can %}{{ detail(id, t(key), item.date_text, L(item, 'name'), item, [L(item, 'venue')], item.authors,
+                                  [(t('paper'), item.paper_link, 'fas fa-arrow-up-right-from-square')], item.images) }}{% endif %}
         </li>
         {% endfor %}
     </ul>
@@ -78,24 +131,30 @@
 </section>
 
 {# ── Projects ──────────────────────────────────────────── #}
-<section id="projects" class="section">
-    <h2>{{ t('sec_projects') }}</h2>
+<section id="projects" class="section reveal">
+    {{ sec_head('fas fa-diagram-project', t('sec_projects'), research_projects|length + software_projects|length) }}
     {% for key, rows in [('sub_research', research_projects), ('sub_software', software_projects)] if rows %}
     <h3>{{ t(key) }}</h3>
     <ul class="entries">
         {% for p in rows %}
-        <li class="entry">
-            <span class="date">{{ period(p.date_start, p.date_end, p.is_ongoing) }}</span>
+        {% set id = 'prj-' ~ key ~ '-' ~ loop.index %}
+        {% set can = L(p, 'details') or p.images %}
+        {% set when = period(p.date_start, p.date_end, p.is_ongoing) %}
+        <li{{ open_attrs(id, can) }}>
+            <span class="date">{{ when }}</span>
             <div class="body">
-                <p class="title">{{ L(p, 'title') }}</p>
+                <p class="title">
+                    {{ L(p, 'title') }}
+                    {% if p.is_ongoing and not p.date_end %}<span class="pill-live">{{ t('ongoing') }}</span>{% endif %}
+                </p>
                 {% if L(p, 'description') %}<p class="desc">{{ L(p, 'description') }}</p>{% endif %}
-                {% if p.link or p.images %}
                 <div class="actions">
                     {% if p.link %}<a href="{{ p.link }}" target="_blank" rel="noopener" class="link-btn"><i class="fas fa-arrow-up-right-from-square"></i> {{ t('visit') }}</a>{% endif %}
-                    {{ gallery_button(L(p, 'title'), p.images) }}
+                    {{ more(can) }}
                 </div>
-                {% endif %}
             </div>
+            {% if can %}{{ detail(id, t(key), when, L(p, 'title'), p, [],  '',
+                                  [(t('visit'), p.link, 'fas fa-arrow-up-right-from-square')], p.images) }}{% endif %}
         </li>
         {% endfor %}
     </ul>
@@ -105,18 +164,23 @@
 </section>
 
 {# ── Experience ────────────────────────────────────────── #}
-<section id="experience" class="section">
-    <h2>{{ t('sec_experience') }}</h2>
+<section id="experience" class="section reveal">
+    {{ sec_head('fas fa-briefcase', t('sec_experience'), current_activities|length + past_activities|length) }}
     {% for key, rows, ongoing in [('sub_current', current_activities, true), ('sub_past', past_activities, false)] if rows %}
     <h3>{{ t(key) }}</h3>
-    <ul class="entries">
+    <ul class="entries timeline {{ 'is-current' if ongoing }}">
         {% for a in rows %}
-        <li class="entry">
-            <span class="date">{{ period(a.date_start, a.date_end, ongoing and (a.is_ongoing is not defined or a.is_ongoing)) }}</span>
+        {% set id = 'exp-' ~ key ~ '-' ~ loop.index %}
+        {% set can = L(a, 'details') %}
+        {% set when = period(a.date_start, a.date_end, ongoing and (a.is_ongoing is not defined or a.is_ongoing)) %}
+        <li{{ open_attrs(id, can) }}>
+            <span class="date">{{ when }}</span>
             <div class="body">
                 <p class="title">{{ L(a, 'title') }}</p>
                 {% if L(a, 'description') %}<p class="desc">{{ L(a, 'description') }}</p>{% endif %}
+                {% if can %}<div class="actions">{{ more(can) }}</div>{% endif %}
             </div>
+            {% if can %}{{ detail(id, t(key), when, L(a, 'title'), a) }}{% endif %}
         </li>
         {% endfor %}
     </ul>
@@ -126,12 +190,14 @@
 </section>
 
 {# ── Awards ────────────────────────────────────────────── #}
-<section id="awards" class="section">
-    <h2>{{ t('sec_awards') }}</h2>
+<section id="awards" class="section reveal">
+    {{ sec_head('fas fa-trophy', t('sec_awards'), awards|length) }}
     {% if awards %}
     <ul class="entries">
         {% for a in awards %}
-        <li class="entry">
+        {% set id = 'awd-' ~ loop.index %}
+        {% set can = L(a, 'details') or a.images %}
+        <li{{ open_attrs(id, can) }}>
             <span class="date">{{ a.date_text or '' }}</span>
             <div class="body">
                 <p class="title">
@@ -140,9 +206,10 @@
                 </p>
                 {% if L(a, 'subject') %}<p class="desc">{{ L(a, 'subject') }}</p>{% endif %}
                 {% if L(a, 'organization') %}<p class="meta">{{ L(a, 'organization') }}</p>{% endif %}
-                {% if L(a, 'description') %}<p class="desc">{{ L(a, 'description') }}</p>{% endif %}
-                {% if a.images %}<div class="actions">{{ gallery_button(L(a, 'name'), a.images) }}</div>{% endif %}
+                {% if can %}<div class="actions">{{ more(can) }}</div>{% endif %}
             </div>
+            {% if can %}{{ detail(id, L(a, 'award_result'), a.date_text, L(a, 'name'), a,
+                                  [L(a, 'subject'), L(a, 'organization')], '', [], a.images) }}{% endif %}
         </li>
         {% endfor %}
     </ul>
@@ -152,18 +219,20 @@
 </section>
 
 {# ── Certifications ────────────────────────────────────── #}
-<section id="certifications" class="section">
-    <h2>{{ t('sec_certs') }}</h2>
+<section id="certifications" class="section reveal">
+    {{ sec_head('fas fa-certificate', t('sec_certs'), certificates|length) }}
     {% if certificates %}
     <ul class="entries">
         {% for c in certificates %}
-        <li class="entry">
+        {% set id = 'crt-' ~ loop.index %}
+        <li{{ open_attrs(id, c.image) }}>
             <span class="date">{{ c.date_text or '' }}</span>
             <div class="body">
                 <p class="title">{{ L(c, 'name') }}</p>
                 {% if L(c, 'issuer') %}<p class="meta">{{ L(c, 'issuer') }}</p>{% endif %}
-                {% if c.image %}<div class="actions">{{ gallery_button(L(c, 'name'), [c.image]) }}</div>{% endif %}
+                {% if c.image %}<div class="actions">{{ more(true) }}</div>{% endif %}
             </div>
+            {% if c.image %}{{ detail(id, t('certificate'), c.date_text, L(c, 'name'), c, [L(c, 'issuer')], '', [], [c.image]) }}{% endif %}
         </li>
         {% endfor %}
     </ul>
@@ -172,11 +241,8 @@
     {% endif %}
 </section>
 
-<dialog id="gallery" class="gallery" aria-labelledby="galleryTitle">
-    <div class="gallery-head">
-        <p id="galleryTitle" class="title"></p>
-        <button type="button" class="gallery-close" aria-label="{{ t('close') }}"><i class="fas fa-xmark"></i></button>
-    </div>
-    <div class="gallery-body" id="galleryBody"></div>
+<dialog id="detail" class="detail" aria-label="{{ t('details') }}">
+    <button type="button" class="detail-close" aria-label="{{ t('close') }}"><i class="fas fa-xmark"></i></button>
+    <div class="detail-body" id="detailBody"></div>
 </dialog>
 {% endblock %}

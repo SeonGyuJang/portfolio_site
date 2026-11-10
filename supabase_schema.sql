@@ -134,7 +134,7 @@ VALUES ('last_updated', to_char(now() AT TIME ZONE 'Asia/Seoul', 'YYYY.MM.DD'))
 ON CONFLICT (key) DO NOTHING;
 
 
--- v2: English fields and categories (also available separately as supabase_migration_v2.sql)
+-- English fields, categories and detail text (same as supabase_migration.sql)
 
 ALTER TABLE current_activities ADD COLUMN IF NOT EXISTS title_en text;
 ALTER TABLE current_activities ADD COLUMN IF NOT EXISTS description_en text;
@@ -162,5 +162,17 @@ ALTER TABLE academic_items ADD COLUMN IF NOT EXISTS venue_en text;
 
 ALTER TABLE certificates ADD COLUMN IF NOT EXISTS name_en text;
 ALTER TABLE certificates ADD COLUMN IF NOT EXISTS issuer_en text;
+
+-- Long-form detail text shown when an item is clicked
+ALTER TABLE current_activities ADD COLUMN IF NOT EXISTS details text;
+ALTER TABLE current_activities ADD COLUMN IF NOT EXISTS details_en text;
+ALTER TABLE past_activities ADD COLUMN IF NOT EXISTS details text;
+ALTER TABLE past_activities ADD COLUMN IF NOT EXISTS details_en text;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS details text;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS details_en text;
+ALTER TABLE awards ADD COLUMN IF NOT EXISTS details text;
+ALTER TABLE awards ADD COLUMN IF NOT EXISTS details_en text;
+ALTER TABLE academic_items ADD COLUMN IF NOT EXISTS details text;
+ALTER TABLE academic_items ADD COLUMN IF NOT EXISTS details_en text;
 
 NOTIFY pgrst, 'reload schema';

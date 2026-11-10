@@ -1,6 +1,7 @@
 from flask import (Flask, render_template, abort, request, redirect, url_for, session,
                    jsonify, flash, Response, send_from_directory)
 import os
+import re
 import copy
 import json
 import base64
@@ -8,6 +9,7 @@ import logging
 from datetime import datetime
 from functools import wraps
 from dotenv import load_dotenv
+from markupsafe import Markup, escape
 
 from content_seed import SEED
 from i18n import LANGS, UI, PROFILE, LINKS
@@ -50,13 +52,15 @@ else:
 # ── content model ──────────────────────────────────────────────────────────
 # One definition per table drives both the public site and the admin CRUD UI.
 # `legacy` marks columns that exist in the original schema; the rest are added
-# by supabase_migration_v2.sql. Writes fall back to legacy columns if the
+# by supabase_migration.sql. Writes skip columns the DB does not have yet if the
 # migration has not been run yet.
 
 def F(name, label, type='text', legacy=False, required=False, options=None, placeholder='', wide=False):
     return {'name': name, 'label': label, 'type': type, 'legacy': legacy, 'required': required,
             'options': options or [], 'placeholder': placeholder, 'wide': wide}
 
+
+DETAILS_HINT = '문단은 줄바꿈, 목록은 "- "로 시작, 소제목은 [제목]'
 
 TABLE_DEFS = {
     'current_activities': {
@@ -69,6 +73,8 @@ TABLE_DEFS = {
             F('date_start', '시작', legacy=True, placeholder='2025.12'),
             F('date_end', '종료', legacy=True, placeholder='비워두면 진행 중'),
             F('is_ongoing', '진행 중', 'checkbox', legacy=True),
+            F('details', '상세 설명 (KR) — 클릭 시 표시', 'longtext', wide=True, placeholder=DETAILS_HINT),
+            F('details_en', 'Details (EN)', 'longtext', wide=True, placeholder=DETAILS_HINT),
             F('sort_order', '정렬 순서 (작을수록 위)', 'number', legacy=True),
         ],
         'columns': ['title', 'title_en', 'date_start'], 'en_check': 'title_en',
@@ -82,6 +88,8 @@ TABLE_DEFS = {
             F('description_en', 'Description (EN)', 'textarea'),
             F('date_start', '시작', legacy=True, placeholder='2024.03'),
             F('date_end', '종료', legacy=True, placeholder='2024.12'),
+            F('details', '상세 설명 (KR) — 클릭 시 표시', 'longtext', wide=True, placeholder=DETAILS_HINT),
+            F('details_en', 'Details (EN)', 'longtext', wide=True, placeholder=DETAILS_HINT),
             F('sort_order', '정렬 순서 (작을수록 위)', 'number', legacy=True),
         ],
         'columns': ['title', 'title_en', 'date_start'], 'en_check': 'title_en',
@@ -98,6 +106,8 @@ TABLE_DEFS = {
             F('date_start', '시작', legacy=True, placeholder='2024.11'),
             F('date_end', '종료', legacy=True),
             F('is_ongoing', '진행 중', 'checkbox', legacy=True),
+            F('details', '상세 설명 (KR) — 클릭 시 표시', 'longtext', wide=True, placeholder=DETAILS_HINT),
+            F('details_en', 'Details (EN)', 'longtext', wide=True, placeholder=DETAILS_HINT),
             F('sort_order', '정렬 순서 (작을수록 위)', 'number', legacy=True),
             F('images', '이미지', 'images', wide=True),
         ],
@@ -117,6 +127,8 @@ TABLE_DEFS = {
             F('description', '상세 설명 (KR)', 'textarea', legacy=True),
             F('description_en', 'Description (EN)', 'textarea'),
             F('date_text', '날짜', legacy=True, placeholder='2024.12'),
+            F('details', '상세 설명 (KR) — 클릭 시 표시', 'longtext', wide=True, placeholder=DETAILS_HINT),
+            F('details_en', 'Details (EN)', 'longtext', wide=True, placeholder=DETAILS_HINT),
             F('sort_order', '정렬 순서 (작을수록 위)', 'number', legacy=True),
             F('images', '증빙 이미지', 'images', legacy=True, wide=True),
         ],
@@ -136,6 +148,8 @@ TABLE_DEFS = {
             F('description_en', 'Summary (EN)', 'textarea'),
             F('date_text', '날짜', legacy=True, placeholder='2025.12'),
             F('paper_link', '논문 링크', legacy=True, placeholder='https://doi.org/...'),
+            F('details', '상세 설명 (KR) — 클릭 시 표시', 'longtext', wide=True, placeholder=DETAILS_HINT),
+            F('details_en', 'Details (EN)', 'longtext', wide=True, placeholder=DETAILS_HINT),
             F('sort_order', '정렬 순서 (작을수록 위)', 'number', legacy=True),
             F('images', '이미지', 'images', legacy=True, wide=True),
         ],
@@ -196,15 +210,20 @@ def load_content():
 
 
 def _missing_column(err):
-    msg = (err or '').lower()
-    return 'pgrst204' in msg or ('column' in msg and ('not find' in msg or 'does not exist' in msg))
+    """Name of the unknown column in a PostgREST error, '' if unknown, None if not a column error."""
+    msg = err or ''
+    low = msg.lower()
+    if not ('pgrst204' in low or '42703' in low or ('column' in low and ('not find' in low or 'does not exist' in low))):
+        return None
+    m = re.search(r"'(\w+)' column", msg) or re.search(r'column [\w.]*?"?(\w+)"? does not exist', msg)
+    return m.group(1) if m else ''
 
 
 def db_write(table, row_id, data):
-    """Insert/update a row. Returns (error, partial) — partial=True means only
-    legacy columns were saved because the v2 migration has not been run."""
+    """Insert/update a row. Columns the DB does not have yet (migration not run)
+    are dropped and the write retried. Returns (error, skipped_columns)."""
     if not supabase:
-        return 'Supabase가 연결되어 있지 않습니다.', False
+        return 'Supabase가 연결되어 있지 않습니다.', []
 
     def run(payload):
         try:
@@ -217,12 +236,19 @@ def db_write(table, row_id, data):
         except Exception as e:
             return str(e)
 
-    err = run(data)
-    if err and _missing_column(err):
-        legacy = {k: v for k, v in data.items() if k in LEGACY_COLS[table]}
-        err2 = run(legacy)
-        return err2, err2 is None
-    return err, False
+    payload, skipped = dict(data), []
+    for _ in range(len(data) + 1):
+        err = run(payload)
+        col = _missing_column(err) if err else None
+        if col is None:
+            return err, skipped
+        if col and col in payload:
+            payload.pop(col)
+            skipped.append(col)
+        else:  # unknown column name: keep only the original schema
+            skipped += [k for k in payload if k not in LEGACY_COLS[table]]
+            payload = {k: v for k, v in payload.items() if k in LEGACY_COLS[table]}
+    return err, skipped
 
 
 def db_delete(table, row_id):
@@ -235,27 +261,42 @@ def db_delete(table, row_id):
         return str(e)
 
 
-def schema_missing_tables():
-    """Tables that still lack the v2 (English / category) columns."""
+def missing_columns(table):
+    """New (non-legacy) columns this table does not have yet."""
     if not supabase:
         return []
-    missing = []
-    for table, cols in NEW_COLS.items():
+    cols, missing = list(NEW_COLS[table]), []
+    while cols:
         try:
             supabase.table(table).select(','.join(cols)).limit(1).execute()
-        except Exception:
-            missing.append(table)
+            break
+        except Exception as e:
+            col = _missing_column(str(e))
+            if col and col in cols:
+                cols.remove(col)
+                missing.append(col)
+            else:
+                missing += cols
+                break
     return missing
+
+
+def schema_missing():
+    """{table: [missing columns]} for tables that still need the migration."""
+    result = {}
+    for table in TABLE_DEFS:
+        cols = missing_columns(table)
+        if cols:
+            result[table] = cols
+    return result
 
 
 def sync_seed(tables):
     """Replace the given tables with the CV-based default content."""
-    missing = set(schema_missing_tables())
     errors = []
     for table in tables:
-        rows = seed_rows(table)
-        if table in missing:
-            rows = [{k: v for k, v in r.items() if k in LEGACY_COLS[table]} for r in rows]
+        drop = set(missing_columns(table))
+        rows = [{k: v for k, v in r.items() if k not in drop} for r in seed_rows(table)]
         try:
             supabase.table(table).delete().neq('id', '00000000-0000-0000-0000-000000000000').execute()
             if rows:
@@ -263,6 +304,29 @@ def sync_seed(tables):
         except Exception as e:
             errors.append(f'{table}: {e}')
     return errors
+
+
+def fill_details():
+    """Fill empty details/details_en of existing rows from the CV data (matched by title), without
+    touching anything else. Returns (updated_count, errors)."""
+    from content_details import detail_key
+    updated, errors = 0, []
+    for table in TABLE_DEFS:
+        if 'details' not in NEW_COLS[table] or 'details' in missing_columns(table):
+            continue
+        seed = {detail_key(table, r): r for r in seed_rows(table)}
+        for row in db_fetch(table) or []:
+            src = seed.get(detail_key(table, row))
+            if not src:
+                continue
+            patch = {k: src[k] for k in ('details', 'details_en') if src.get(k) and not row.get(k)}
+            if patch:
+                err, _ = db_write(table, row['id'], patch)
+                if err:
+                    errors.append(f'{table}: {err}')
+                else:
+                    updated += 1
+    return updated, errors
 
 
 def get_last_updated():
@@ -361,6 +425,35 @@ app.jinja_env.globals['asset'] = asset
 app.jinja_env.filters['asset'] = asset
 
 
+def rich(text):
+    """Render details text: lines → paragraphs, '- ' → bullets, '[Heading]' → sub-heading."""
+    out, items = [], []
+
+    def flush():
+        if items:
+            out.append('<ul>' + ''.join(f'<li>{i}</li>' for i in items) + '</ul>')
+            items.clear()
+
+    for raw in (text or '').splitlines():
+        line = raw.strip()
+        if not line:
+            flush()
+            continue
+        if line[:2] in ('- ', '• ', '* ', '▶ '):
+            items.append(escape(line[2:].strip()))
+            continue
+        flush()
+        if line.startswith('[') and line.endswith(']') and len(line) < 80:
+            out.append(f'<h4>{escape(line[1:-1].strip())}</h4>')
+        else:
+            out.append(f'<p>{escape(line)}</p>')
+    flush()
+    return Markup(''.join(out))
+
+
+app.jinja_env.filters['rich'] = rich
+
+
 # ── public routes ──────────────────────────────────────────────────────────
 
 def render_site(lang):
@@ -381,6 +474,12 @@ def render_site(lang):
         'conferences': [a for a in academic if a.get('category') == 'conference'],
         'awards': content['awards'],
         'certificates': content['certificates'],
+        'stats': [
+            ('stat_pubs', sum(1 for a in academic if a.get('category') in ('journal', 'presentation')), '#publications'),
+            ('stat_projects', len(projects), '#projects'),
+            ('stat_awards', len(content['awards']), '#awards'),
+            ('stat_certs', len(content['certificates']), '#certifications'),
+        ],
         'last_updated': get_last_updated(),
         **make_helpers(lang),
     }
@@ -474,7 +573,7 @@ def admin_dashboard():
         source=source,
         supabase_ready=supabase is not None,
         supabase_error=_supabase_error,
-        missing_tables=schema_missing_tables(),
+        missing=schema_missing(),
         cv=get_uploaded_cv(),
         last_updated=get_last_updated(),
     )
@@ -498,6 +597,22 @@ def admin_sync_seed():
     return redirect(back if back and back.startswith('/admin') else url_for('admin_dashboard'))
 
 
+@app.route('/admin/fill-details', methods=['POST'])
+@require_admin
+def admin_fill_details():
+    if not supabase:
+        flash('Supabase가 연결되어 있지 않습니다.', 'error')
+        return redirect(url_for('admin_dashboard'))
+    updated, errors = fill_details()
+    if updated:
+        update_last_updated()
+    if errors:
+        flash('일부 항목을 채우지 못했습니다: ' + ' / '.join(errors[:3]), 'error')
+    flash(f'상세 설명이 비어 있던 {updated}개 항목을 CV 내용으로 채웠습니다. (제목이 같은 항목만, 다른 내용은 그대로)',
+          'success' if updated else 'warning')
+    return redirect(url_for('admin_dashboard'))
+
+
 @app.route('/admin/export.json')
 @require_admin
 def admin_export():
@@ -511,7 +626,7 @@ def admin_export():
 @app.route('/admin/<name>.sql')
 @require_admin
 def admin_sql(name):
-    files = {'schema': 'supabase_schema.sql', 'migration': 'supabase_migration_v2.sql'}
+    files = {'schema': 'supabase_schema.sql', 'migration': 'supabase_migration.sql'}
     if name not in files:
         abort(404)
     return send_from_directory(app.root_path, files[name], as_attachment=True, mimetype='text/plain')
@@ -596,7 +711,7 @@ def admin_table(slug):
     content, source = load_content()
     return render_template('admin/table.html', table=table, slug=slug, spec=TABLE_DEFS[table],
                            items=content[table], source=source,
-                           missing=table in schema_missing_tables())
+                           missing=missing_columns(table))
 
 
 @app.route('/admin/<slug>/save', methods=['POST'])
@@ -604,14 +719,14 @@ def admin_table(slug):
 def admin_table_save(slug):
     table = table_for_slug(slug)
     row_id = request.form.get('id', '').strip()
-    err, partial = db_write(table, row_id, parse_form(table))
+    err, skipped = db_write(table, row_id, parse_form(table))
     if err:
         flash(f'저장 실패: {err}', 'error')
     else:
         update_last_updated()
-        if partial:
-            flash('저장했지만 영어(EN)·구분 항목은 저장되지 않았습니다. 대시보드의 안내에 따라 '
-                  'DB 마이그레이션 SQL을 먼저 실행해 주세요.', 'warning')
+        if skipped:
+            flash(f'저장했지만 DB에 아직 없는 항목({", ".join(skipped)})은 저장되지 않았습니다. '
+                  '대시보드의 안내에 따라 DB 마이그레이션 SQL을 먼저 실행해 주세요.', 'warning')
         else:
             flash('저장했습니다.', 'success')
     return redirect(url_for('admin_table', slug=slug))

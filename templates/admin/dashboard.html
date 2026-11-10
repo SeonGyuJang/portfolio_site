@@ -20,14 +20,16 @@
 </div>
 {% endif %}
 
-{% if missing_tables %}
+{% if missing %}
 <div class="admin-alert alert-warning">
   <i class="fas fa-database"></i>
   <div>
     <strong>DB 업데이트가 필요합니다.</strong>
-    영어(EN) 항목과 구분(연구/소프트웨어, 논문 종류) 컬럼이 아직 없습니다
-    ({{ missing_tables | join(', ') }}).<br>
-    Supabase 대시보드 → SQL Editor에서 아래 SQL을 한 번 실행한 뒤 이 페이지를 새로고침하세요.
+    영어(EN)·구분·상세 설명 컬럼 중 일부가 아직 없습니다:
+    <ul style="margin:6px 0 0 18px">
+      {% for t, cols in missing.items() %}<li><b>{{ TABLE_DEFS[t].label }}</b> — {{ cols | join(', ') }}</li>{% endfor %}
+    </ul>
+    Supabase 대시보드 → SQL Editor에서 아래 SQL을 실행한 뒤 이 페이지를 새로고침하세요. (여러 번 실행해도 안전합니다)
     <div style="margin-top:10px">
       <a href="/admin/migration.sql" class="btn-admin btn-ghost btn-sm"><i class="fas fa-download"></i> 마이그레이션 SQL 다운로드</a>
     </div>
@@ -82,11 +84,16 @@
     <p style="color:#94a3b8;font-size:0.875rem;line-height:1.8">
       사이트와 관리자 화면은 항상 같은 DB 데이터를 표시합니다. 마지막 변경: <b style="color:#e2e8f0">{{ last_updated }}</b><br>
       <b>CV 기준 데이터 불러오기</b>는 모든 항목을 최신 CV·LinkedIn 내용(국문/영문)으로 <b>교체</b>합니다.
-      실행 전 백업을 받아 두세요. (마이그레이션 SQL을 먼저 실행해야 영문 내용까지 저장됩니다.)
+      실행 전 백업을 받아 두세요. (마이그레이션 SQL을 먼저 실행해야 영문·상세 설명까지 저장됩니다.)<br>
+      이미 직접 수정한 내용을 유지하려면 <b>상세 설명만 채우기</b>를 사용하세요 — 제목이 같은 항목의 비어 있는 상세 설명만 채웁니다.
     </p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
       <a href="{{ url_for('admin_export') }}" class="btn-admin btn-ghost btn-sm"><i class="fas fa-download"></i> 현재 데이터 백업 (JSON)</a>
       {% if supabase_ready %}
+      <form method="POST" action="{{ url_for('admin_fill_details') }}"
+            onsubmit="return confirm('상세 설명이 비어 있는 항목만 CV 내용으로 채웁니다. 다른 내용은 바뀌지 않습니다. 계속할까요?')">
+        <button class="btn-admin btn-success btn-sm"><i class="fas fa-align-left"></i> 상세 설명만 채우기</button>
+      </form>
       <form method="POST" action="{{ url_for('admin_sync_seed') }}"
             onsubmit="return confirm('모든 항목을 CV 기준 데이터로 교체합니다. 기존 데이터는 삭제됩니다. 계속할까요?')">
         <button class="btn-admin btn-primary btn-sm"><i class="fas fa-file-import"></i> CV 기준 데이터 불러오기 (전체)</button>

@@ -620,3 +620,7 @@ SEED = {
     "academic_items": ACADEMIC_ITEMS,
     "certificates": CERTIFICATES,
 }
+
+# Long-form details shown in the click-through view
+from content_details import apply_details  # noqa: E402
+apply_details(SEED)

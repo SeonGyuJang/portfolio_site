@@ -17,7 +17,7 @@
 {% elif missing %}
 <div class="admin-alert alert-warning">
   <i class="fas fa-database"></i>
-  <div>이 테이블에는 아직 영어(EN)/구분 컬럼이 없어 해당 항목은 저장되지 않습니다.
+  <div>DB에 아직 없는 컬럼({{ missing | join(', ') }})이 있어 해당 항목은 저장되지 않습니다.
     <a href="{{ url_for('admin_dashboard') }}" style="text-decoration:underline">대시보드</a>의 안내에 따라 마이그레이션 SQL을 실행하세요.</div>
 </div>
 {% endif %}
@@ -104,7 +104,9 @@
             {% else %}
               <label class="form-label" for="f_{{ f.name }}">{{ f.label }}{% if f.required %} *{% endif %}</label>
               {% if f.type == 'textarea' %}
-                <textarea name="{{ f.name }}" id="f_{{ f.name }}" class="form-textarea" rows="4" placeholder="{{ f.placeholder }}"></textarea>
+                <textarea name="{{ f.name }}" id="f_{{ f.name }}" class="form-textarea" rows="3" placeholder="{{ f.placeholder }}"></textarea>
+              {% elif f.type == 'longtext' %}
+                <textarea name="{{ f.name }}" id="f_{{ f.name }}" class="form-textarea" rows="9" placeholder="{{ f.placeholder }}" style="font-size:0.85rem;line-height:1.6"></textarea>
               {% elif f.type == 'select' %}
                 <select name="{{ f.name }}" id="f_{{ f.name }}" class="form-select">
                   {% for val, lab in f.options %}<option value="{{ val }}">{{ lab }}</option>{% endfor %}
@@ -133,7 +135,7 @@
           </div>
           {% endfor %}
         </div>
-        <p class="form-hint" style="margin-top:14px">EN 항목을 비워두면 영어 사이트에서 국문 내용이 대신 표시됩니다.</p>
+        <p class="form-hint" style="margin-top:14px">EN 항목을 비워두면 영어 사이트에서 국문 내용이 대신 표시됩니다. 상세 설명을 비워두면 사이트에서 클릭해도 짧은 설명만 보입니다.</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-admin btn-ghost" onclick="closeModal()">취소</button>

@@ -28,10 +28,10 @@ import app  # noqa: E402  (connects to Supabase using .env)
 if not app.supabase:
     sys.exit("❌ Supabase 연결 실패: SUPABASE_URL / SUPABASE_KEY 를 확인하세요.")
 
-missing = app.schema_missing_tables()
+missing = app.schema_missing()
 if missing:
-    print(f"⚠️  EN 컬럼이 없는 테이블: {', '.join(missing)} → 국문 내용만 저장됩니다. "
-          "supabase_migration_v2.sql 을 먼저 실행하세요.")
+    print(f"⚠️  DB에 없는 컬럼이 있어 일부 내용(EN/상세 설명)이 빠집니다: {missing}\n"
+          "   supabase_migration.sql 을 먼저 실행하세요.")
 
 errors = app.sync_seed(targets)
 app.update_last_updated()
