@@ -1,11 +1,18 @@
-from flask import Flask, render_template, abort, request, redirect, url_for, session, jsonify
+from flask import (Flask, render_template, abort, request, redirect, url_for, session,
+                   jsonify, flash, Response, send_from_directory)
 import os
+import re
+import copy
 import json
+import base64
 import logging
-import uuid
 from datetime import datetime
 from functools import wraps
 from dotenv import load_dotenv
+from markupsafe import Markup, escape
+
+from content_seed import SEED
+from i18n import LANGS, UI, PROFILE, LINKS
 
 load_dotenv()
 
@@ -21,6 +28,9 @@ if SUPABASE_URL and not SUPABASE_URL.endswith('/'):
 SUPABASE_KEY = os.environ.get('SUPABASE_KEY', '').strip()
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin1234')
 
+CV_DIR = os.path.join(app.root_path, 'static', 'files')
+CV_FILENAME = 'SeonGyu_Jang_CV.pdf'
+
 supabase = None
 _supabase_error = None
 
@@ -32,7 +42,6 @@ else:
     try:
         from supabase import create_client
         supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-        # Verify connection with a lightweight query
         supabase.table('current_activities').select('id').limit(1).execute()
         logger.info("Supabase connection established successfully")
     except Exception as e:
@@ -40,61 +49,323 @@ else:
         logger.error(f"Supabase connection error: {e}")
 
 
-# ── helpers ────────────────────────────────────────────────────────────────
+# ── content model ──────────────────────────────────────────────────────────
+# One definition per table drives both the public site and the admin CRUD UI.
+# `legacy` marks columns that exist in the original schema; the rest are added
+# by supabase_migration.sql. Writes skip columns the DB does not have yet if the
+# migration has not been run yet.
 
-def db_fetch(table, order_col='sort_order', ascending=True):
+def F(name, label, type='text', legacy=False, required=False, options=None, placeholder='', wide=False):
+    return {'name': name, 'label': label, 'type': type, 'legacy': legacy, 'required': required,
+            'options': options or [], 'placeholder': placeholder, 'wide': wide}
+
+
+DETAILS_HINT = '문단은 줄바꿈, 목록은 "- "로 시작, 소제목은 [제목]'
+
+TABLE_DEFS = {
+    'current_activities': {
+        'slug': 'current-activities', 'label': '현재 활동', 'icon': 'fas fa-rocket',
+        'fields': [
+            F('title', '제목 (KR)', legacy=True, required=True),
+            F('title_en', 'Title (EN)'),
+            F('description', '설명 (KR)', 'textarea', legacy=True),
+            F('description_en', 'Description (EN)', 'textarea'),
+            F('date_start', '시작', legacy=True, placeholder='2025.12'),
+            F('date_end', '종료', legacy=True, placeholder='비워두면 진행 중'),
+            F('is_ongoing', '진행 중', 'checkbox', legacy=True),
+            F('details', '상세 설명 (KR) — 클릭 시 표시', 'longtext', wide=True, placeholder=DETAILS_HINT),
+            F('details_en', 'Details (EN)', 'longtext', wide=True, placeholder=DETAILS_HINT),
+            F('sort_order', '정렬 순서 (작을수록 위)', 'number', legacy=True),
+        ],
+        'columns': ['title', 'title_en', 'date_start'], 'en_check': 'title_en',
+    },
+    'past_activities': {
+        'slug': 'past-activities', 'label': '이전 활동', 'icon': 'fas fa-flag-checkered',
+        'fields': [
+            F('title', '제목 (KR)', legacy=True, required=True),
+            F('title_en', 'Title (EN)'),
+            F('description', '설명 (KR)', 'textarea', legacy=True),
+            F('description_en', 'Description (EN)', 'textarea'),
+            F('date_start', '시작', legacy=True, placeholder='2024.03'),
+            F('date_end', '종료', legacy=True, placeholder='2024.12'),
+            F('details', '상세 설명 (KR) — 클릭 시 표시', 'longtext', wide=True, placeholder=DETAILS_HINT),
+            F('details_en', 'Details (EN)', 'longtext', wide=True, placeholder=DETAILS_HINT),
+            F('sort_order', '정렬 순서 (작을수록 위)', 'number', legacy=True),
+        ],
+        'columns': ['title', 'title_en', 'date_start'], 'en_check': 'title_en',
+    },
+    'projects': {
+        'slug': 'projects', 'label': '프로젝트', 'icon': 'fas fa-folder-open',
+        'fields': [
+            F('title', '제목 (KR)', legacy=True, required=True),
+            F('title_en', 'Title (EN)'),
+            F('description', '설명 (KR)', 'textarea', legacy=True),
+            F('description_en', 'Description (EN)', 'textarea'),
+            F('category', '구분', 'select', options=[('software', '소프트웨어'), ('research', '연구')]),
+            F('link', '링크', legacy=True, placeholder='https://...'),
+            F('date_start', '시작', legacy=True, placeholder='2024.11'),
+            F('date_end', '종료', legacy=True),
+            F('is_ongoing', '진행 중', 'checkbox', legacy=True),
+            F('details', '상세 설명 (KR) — 클릭 시 표시', 'longtext', wide=True, placeholder=DETAILS_HINT),
+            F('details_en', 'Details (EN)', 'longtext', wide=True, placeholder=DETAILS_HINT),
+            F('sort_order', '정렬 순서 (작을수록 위)', 'number', legacy=True),
+            F('images', '이미지', 'images', wide=True),
+        ],
+        'columns': ['title', 'category', 'date_start'], 'en_check': 'title_en',
+    },
+    'awards': {
+        'slug': 'awards', 'label': '수상', 'icon': 'fas fa-trophy',
+        'fields': [
+            F('name', '대회/수상명 (KR)', legacy=True, required=True),
+            F('name_en', 'Award / Event (EN)'),
+            F('award_result', '결과 (KR)', legacy=True, placeholder='최우수상'),
+            F('award_result_en', 'Result (EN)', placeholder='Top Excellence Award'),
+            F('subject', '주제 (KR)', legacy=True),
+            F('subject_en', 'Subject (EN)'),
+            F('organization', '주관 기관 (KR)', legacy=True),
+            F('organization_en', 'Organization (EN)'),
+            F('description', '상세 설명 (KR)', 'textarea', legacy=True),
+            F('description_en', 'Description (EN)', 'textarea'),
+            F('date_text', '날짜', legacy=True, placeholder='2024.12'),
+            F('details', '상세 설명 (KR) — 클릭 시 표시', 'longtext', wide=True, placeholder=DETAILS_HINT),
+            F('details_en', 'Details (EN)', 'longtext', wide=True, placeholder=DETAILS_HINT),
+            F('sort_order', '정렬 순서 (작을수록 위)', 'number', legacy=True),
+            F('images', '증빙 이미지', 'images', legacy=True, wide=True),
+        ],
+        'columns': ['name', 'award_result', 'date_text'], 'en_check': 'name_en',
+    },
+    'academic_items': {
+        'slug': 'academic', 'label': '논문 · 학술', 'icon': 'fas fa-graduation-cap',
+        'fields': [
+            F('name', '제목 (KR 또는 원제)', legacy=True, required=True),
+            F('name_en', 'Title (EN, 원제와 같으면 비움)'),
+            F('category', '구분', 'select',
+              options=[('journal', '학술지 논문'), ('presentation', '학술대회 발표'), ('conference', '학술대회 참가')]),
+            F('authors', '저자', placeholder='SeonGyu Jang, ...'),
+            F('venue', '게재처/학회 (KR)'),
+            F('venue_en', 'Venue (EN)'),
+            F('description', '요약 (KR)', 'textarea', legacy=True),
+            F('description_en', 'Summary (EN)', 'textarea'),
+            F('date_text', '날짜', legacy=True, placeholder='2025.12'),
+            F('paper_link', '논문 링크', legacy=True, placeholder='https://doi.org/...'),
+            F('details', '상세 설명 (KR) — 클릭 시 표시', 'longtext', wide=True, placeholder=DETAILS_HINT),
+            F('details_en', 'Details (EN)', 'longtext', wide=True, placeholder=DETAILS_HINT),
+            F('sort_order', '정렬 순서 (작을수록 위)', 'number', legacy=True),
+            F('images', '이미지', 'images', legacy=True, wide=True),
+        ],
+        'columns': ['name', 'category', 'date_text'], 'en_check': 'venue_en',
+    },
+    'certificates': {
+        'slug': 'certificates', 'label': '자격증', 'icon': 'fas fa-certificate',
+        'fields': [
+            F('name', '자격증명 (KR)', legacy=True, required=True),
+            F('name_en', 'Certificate (EN)'),
+            F('issuer', '발급 기관 (KR)', legacy=True),
+            F('issuer_en', 'Issuer (EN)'),
+            F('date_text', '취득일', legacy=True, placeholder='2024.03'),
+            F('sort_order', '정렬 순서 (작을수록 위)', 'number', legacy=True),
+            F('image', '증명서 이미지', 'image', legacy=True, wide=True),
+        ],
+        'columns': ['name', 'issuer', 'date_text'], 'en_check': 'name_en',
+    },
+}
+SLUG_TO_TABLE = {d['slug']: t for t, d in TABLE_DEFS.items()}
+LEGACY_COLS = {t: {f['name'] for f in d['fields'] if f['legacy']} | {'icon_class'}
+               for t, d in TABLE_DEFS.items()}
+NEW_COLS = {t: [f['name'] for f in d['fields'] if not f['legacy']] for t, d in TABLE_DEFS.items()}
+
+
+# ── db helpers ─────────────────────────────────────────────────────────────
+
+def db_fetch(table):
+    """Rows ordered for display, or None if the database is unavailable."""
     if not supabase:
-        return []
+        return None
     try:
-        res = supabase.table(table).select('*').order(order_col, desc=not ascending).execute()
+        res = (supabase.table(table).select('*')
+               .order('sort_order').order('created_at').execute())
         return res.data or []
     except Exception as e:
-        print(f"DB fetch error ({table}): {e}")
-        return []
+        logger.error(f"DB fetch error ({table}): {e}")
+        return None
 
-def db_insert(table, data):
-    if not supabase:
-        return None, "Supabase not configured"
-    try:
-        res = supabase.table(table).insert(data).execute()
-        return res.data, None
-    except Exception as e:
-        return None, str(e)
 
-def db_update(table, row_id, data):
+def seed_rows(table):
+    rows = copy.deepcopy(SEED.get(table, []))
+    return sorted(rows, key=lambda r: r.get('sort_order', 0))
+
+
+def load_content():
+    """Load every table from one place so the site and admin always agree.
+
+    Returns (content, source) where source is 'db' or 'seed' (fallback).
+    """
+    content, source = {}, 'db'
+    for table in TABLE_DEFS:
+        rows = db_fetch(table)
+        if rows is None:
+            rows, source = seed_rows(table), 'seed'
+        content[table] = rows
+    return content, source
+
+
+def _missing_column(err):
+    """Name of the unknown column in a PostgREST error, '' if unknown, None if not a column error."""
+    msg = err or ''
+    low = msg.lower()
+    if not ('pgrst204' in low or '42703' in low or ('column' in low and ('not find' in low or 'does not exist' in low))):
+        return None
+    m = re.search(r"'(\w+)' column", msg) or re.search(r'column [\w.]*?"?(\w+)"? does not exist', msg)
+    return m.group(1) if m else ''
+
+
+def db_write(table, row_id, data):
+    """Insert/update a row. Columns the DB does not have yet (migration not run)
+    are dropped and the write retried. Returns (error, skipped_columns)."""
     if not supabase:
-        return None, "Supabase not configured"
-    try:
-        res = supabase.table(table).update(data).eq('id', row_id).execute()
-        return res.data, None
-    except Exception as e:
-        return None, str(e)
+        return 'Supabase가 연결되어 있지 않습니다.', []
+
+    def run(payload):
+        try:
+            q = supabase.table(table)
+            if row_id:
+                q.update(payload).eq('id', row_id).execute()
+            else:
+                q.insert(payload).execute()
+            return None
+        except Exception as e:
+            return str(e)
+
+    payload, skipped = dict(data), []
+    for _ in range(len(data) + 1):
+        err = run(payload)
+        col = _missing_column(err) if err else None
+        if col is None:
+            return err, skipped
+        if col and col in payload:
+            payload.pop(col)
+            skipped.append(col)
+        else:  # unknown column name: keep only the original schema
+            skipped += [k for k in payload if k not in LEGACY_COLS[table]]
+            payload = {k: v for k, v in payload.items() if k in LEGACY_COLS[table]}
+    return err, skipped
+
 
 def db_delete(table, row_id):
     if not supabase:
-        return False, "Supabase not configured"
+        return 'Supabase가 연결되어 있지 않습니다.'
     try:
         supabase.table(table).delete().eq('id', row_id).execute()
-        return True, None
+        return None
     except Exception as e:
-        return False, str(e)
+        return str(e)
+
+
+def missing_columns(table):
+    """New (non-legacy) columns this table does not have yet."""
+    if not supabase:
+        return []
+    cols, missing = list(NEW_COLS[table]), []
+    while cols:
+        try:
+            supabase.table(table).select(','.join(cols)).limit(1).execute()
+            break
+        except Exception as e:
+            col = _missing_column(str(e))
+            if col and col in cols:
+                cols.remove(col)
+                missing.append(col)
+            else:
+                missing += cols
+                break
+    return missing
+
+
+def schema_missing():
+    """{table: [missing columns]} for tables that still need the migration."""
+    result = {}
+    for table in TABLE_DEFS:
+        cols = missing_columns(table)
+        if cols:
+            result[table] = cols
+    return result
+
+
+def sync_seed(tables):
+    """Replace the given tables with the CV-based default content."""
+    errors = []
+    for table in tables:
+        drop = set(missing_columns(table))
+        rows = [{k: v for k, v in r.items() if k not in drop} for r in seed_rows(table)]
+        try:
+            supabase.table(table).delete().neq('id', '00000000-0000-0000-0000-000000000000').execute()
+            if rows:
+                supabase.table(table).insert(rows).execute()
+        except Exception as e:
+            errors.append(f'{table}: {e}')
+    return errors
+
+
+def fill_details():
+    """Fill empty details/details_en of existing rows from the CV data (matched by title), without
+    touching anything else. Returns (updated_count, errors)."""
+    from content_details import detail_key
+    updated, errors = 0, []
+    for table in TABLE_DEFS:
+        if 'details' not in NEW_COLS[table] or 'details' in missing_columns(table):
+            continue
+        seed = {detail_key(table, r): r for r in seed_rows(table)}
+        for row in db_fetch(table) or []:
+            src = seed.get(detail_key(table, row))
+            if not src:
+                continue
+            patch = {k: src[k] for k in ('details', 'details_en') if src.get(k) and not row.get(k)}
+            if patch:
+                err, _ = db_write(table, row['id'], patch)
+                if err:
+                    errors.append(f'{table}: {err}')
+                else:
+                    updated += 1
+    return updated, errors
+
+
+DEFAULT_PHOTO = {'url': '/static/images/profile.jpg', 'x': 50.0, 'y': 50.0, 'zoom': 1.0}
+
+
+def get_profile_photo():
+    """Profile photo URL and framing (focal point x/y in %, zoom ≥ 1)."""
+    photo = dict(DEFAULT_PHOTO)
+    if supabase:
+        try:
+            res = supabase.table('site_settings').select('value').eq('key', 'profile_photo').execute()
+            if res.data:
+                saved = json.loads(res.data[0]['value'])
+                photo.update({k: saved[k] for k in photo if k in saved})
+        except Exception as e:
+            logger.warning(f"profile photo lookup failed: {e}")
+    photo['custom'] = photo['url'] != DEFAULT_PHOTO['url']
+    return photo
+
+
+def clamp(value, lo, hi, default):
+    try:
+        return max(lo, min(hi, float(value)))
+    except (TypeError, ValueError):
+        return default
 
 
 def get_last_updated():
-    """Return the stored last-updated date string (YYYY.MM.DD)."""
-    if not supabase:
-        return '2025.12.21'
-    try:
-        res = supabase.table('site_settings').select('value').eq('key', 'last_updated').execute()
-        if res.data:
-            return res.data[0]['value']
-    except Exception:
-        pass
-    return '2025.12.21'
+    if supabase:
+        try:
+            res = supabase.table('site_settings').select('value').eq('key', 'last_updated').execute()
+            if res.data:
+                return res.data[0]['value']
+        except Exception:
+            pass
+    return datetime.now().strftime('%Y.%m.%d')
 
 
 def update_last_updated():
-    """Upsert today's date into site_settings whenever any data changes."""
     if not supabase:
         return
     today = datetime.now().strftime('%Y.%m.%d')
@@ -106,6 +377,26 @@ def update_last_updated():
         logger.warning(f"update_last_updated failed: {e}")
 
 
+def decode_blob(value):
+    """portfolio_images.image_data holds base64 text; a bytea column returns it hex-escaped."""
+    if isinstance(value, str) and value.startswith('\\x'):
+        value = bytes.fromhex(value[2:]).decode('ascii')
+    return base64.b64decode(value)
+
+
+def get_uploaded_cv(with_data=False):
+    if not supabase:
+        return None
+    cols = 'id,filename,created_at' + (',image_data,mime_type' if with_data else '')
+    try:
+        res = (supabase.table('portfolio_images').select(cols).eq('item_type', 'cv')
+               .order('created_at', desc=True).limit(1).execute())
+        return res.data[0] if res.data else None
+    except Exception as e:
+        logger.warning(f"CV lookup failed: {e}")
+        return None
+
+
 def require_admin(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -115,89 +406,164 @@ def require_admin(f):
     return decorated
 
 
-def get_static_activities():
-    """Scan template folders for static HTML activity files (legacy)."""
-    activities = []
-    categories = ['Paper', 'Book', 'School', 'Study', 'reading']
-    icon_map = {
-        'paper': 'fas fa-file-alt', 'book': 'fas fa-book',
-        'school': 'fas fa-university', 'study': 'fas fa-code',
-        'reading': 'fas fa-book-open'
-    }
-    base_dir = os.path.join(app.root_path, 'templates')
-    for cat in categories:
-        cat_dir = os.path.join(base_dir, cat)
-        if os.path.exists(cat_dir):
-            for fname in os.listdir(cat_dir):
-                if fname.endswith('.html'):
-                    activities.append({
-                        'id': None,
-                        'source': 'static',
-                        'category': cat.lower(),
-                        'filename': fname,
-                        'title': fname.replace('.html', '').replace('_', ' '),
-                        'icon': icon_map.get(cat.lower(), 'fas fa-star'),
-                        'date_text': '',
-                        'tags': [],
-                    })
-    return activities
+@app.after_request
+def no_cache(resp):
+    # Always serve fresh data on the site and admin pages (no stale browser cache).
+    if request.path.startswith('/admin') or request.path in ('/', '/ko'):
+        resp.headers['Cache-Control'] = 'no-store, max-age=0'
+    return resp
+
+
+# ── template helpers ───────────────────────────────────────────────────────
+
+def asset(url):
+    if not url:
+        return ''
+    if url.startswith(('http://', 'https://', '/', 'data:')):
+        return url
+    return '/' + url
+
+
+def make_helpers(lang):
+    ui = UI[lang]
+
+    def t(key):
+        return ui.get(key, key)
+
+    def L(item, field):
+        if lang == 'en':
+            return item.get(f'{field}_en') or item.get(field) or ''
+        return item.get(field) or ''
+
+    def period(start, end=None, ongoing=False):
+        start, end = (start or '').strip(), (end or '').strip()
+        if ongoing and not end:
+            return f'{start} – {ui["present"]}' if start else ui['present']
+        if end and end != start:
+            return f'{start} – {end}' if start else end
+        return start
+
+    return {'t': t, 'L': L, 'period': period}
+
+
+app.jinja_env.globals['asset'] = asset
+app.jinja_env.filters['asset'] = asset
+
+
+def rich(text):
+    """Render details text: lines → paragraphs, '- ' → bullets, '[Heading]' → sub-heading."""
+    out, items = [], []
+
+    def flush():
+        if items:
+            out.append('<ul>' + ''.join(f'<li>{i}</li>' for i in items) + '</ul>')
+            items.clear()
+
+    for raw in (text or '').splitlines():
+        line = raw.strip()
+        if not line:
+            flush()
+            continue
+        if line[:2] in ('- ', '• ', '* ', '▶ '):
+            items.append(escape(line[2:].strip()))
+            continue
+        flush()
+        if line.startswith('[') and line.endswith(']') and len(line) < 80:
+            out.append(f'<h4>{escape(line[1:-1].strip())}</h4>')
+        else:
+            out.append(f'<p>{escape(line)}</p>')
+    flush()
+    return Markup(''.join(out))
+
+
+app.jinja_env.filters['rich'] = rich
 
 
 # ── public routes ──────────────────────────────────────────────────────────
 
+def render_site(lang):
+    content, source = load_content()
+    projects = content['projects']
+    academic = content['academic_items']
+    ctx = {
+        'lang': lang,
+        'profile': PROFILE[lang],
+        'links': LINKS,
+        'current_activities': content['current_activities'],
+        'past_activities': content['past_activities'],
+        'research_projects': [p for p in projects if (p.get('category') or 'software') == 'research'],
+        'software_projects': [p for p in projects if (p.get('category') or 'software') != 'research'],
+        'journals': [a for a in academic if a.get('category') == 'journal'],
+        'presentations': [a for a in academic if (a.get('category') or 'presentation') == 'presentation'],
+        'conferences': [a for a in academic if a.get('category') == 'conference'],
+        'awards': content['awards'],
+        'certificates': content['certificates'],
+        'stats': [
+            ('stat_pubs', sum(1 for a in academic if a.get('category') in ('journal', 'presentation')), '#publications'),
+            ('stat_projects', len(projects), '#projects'),
+            ('stat_awards', len(content['awards']), '#awards'),
+            ('stat_certs', len(content['certificates']), '#certifications'),
+        ],
+        'photo': get_profile_photo(),
+        'last_updated': get_last_updated(),
+        **make_helpers(lang),
+    }
+    return render_template('index.html', **ctx)
+
+
 @app.route('/')
 def index():
-    db_logs = db_fetch('activity_logs', order_col='created_at', ascending=False)
-    static_acts = get_static_activities()
-    data = {
-        'current_activities': db_fetch('current_activities'),
-        'past_activities': db_fetch('past_activities'),
-        'tech_stacks': db_fetch('tech_stacks'),
-        'projects': db_fetch('projects'),
-        'awards': db_fetch('awards'),
-        'academic_items': db_fetch('academic_items'),
-        'certificates': db_fetch('certificates'),
-        'activity_logs': db_logs,
-        'static_activities': static_acts,
-        'supabase_ready': supabase is not None,
-        'last_updated': get_last_updated(),
-    }
-    return render_template('index.html', **data)
+    """English is the default version of the site."""
+    if request.args.get('lang') == 'ko':
+        return redirect(url_for('index_ko'))
+    return render_site('en')
 
 
-@app.route('/activity/log/<log_id>')
-def activity_log_view(log_id):
+@app.route('/ko')
+def index_ko():
+    return render_site('ko')
+
+
+@app.route('/en')
+def index_en():
+    return redirect(url_for('index'))
+
+
+@app.route('/cv')
+def download_cv():
+    cv = get_uploaded_cv(with_data=True)
+    if cv:
+        try:
+            data = decode_blob(cv['image_data'])
+            return Response(data, mimetype=cv.get('mime_type') or 'application/pdf', headers={
+                'Content-Disposition': f'attachment; filename="{CV_FILENAME}"',
+                'Cache-Control': 'no-store',
+            })
+        except Exception as e:
+            logger.error(f"CV decode failed: {e}")
+    return send_from_directory(CV_DIR, CV_FILENAME, as_attachment=True,
+                               download_name=CV_FILENAME, max_age=0)
+
+
+@app.route('/api/images/<image_id>')
+def get_image(image_id):
     if not supabase:
-        abort(404)
+        return "Image not available", 404
     try:
-        res = supabase.table('activity_logs').select('*').eq('id', log_id).execute()
-        if not res.data:
-            abort(404)
-        log = res.data[0]
-        blocks = log.get('blocks', [])
-        if isinstance(blocks, str):
-            blocks = json.loads(blocks)
-        return render_template('activity_log_view.html', log=log, blocks=blocks)
-    except Exception:
-        abort(404)
+        result = supabase.table('portfolio_images').select('*').eq('id', image_id).execute()
+        if result.data:
+            img = result.data[0]
+            return decode_blob(img['image_data']), 200, {
+                'Content-Type': img.get('mime_type', 'image/jpeg'),
+                'Cache-Control': 'public, max-age=86400',
+            }
+        return "Image not found", 404
+    except Exception as e:
+        logger.error(f"Get image error: {e}")
+        return "Error loading image", 500
 
 
-@app.route('/activity/<category>/<filename>')
-def activity_detail(category, filename):
-    if category not in ['paper', 'book', 'school', 'study', 'reading']:
-        abort(404)
-    folder_mapping = {
-        'paper': 'Paper', 'book': 'Book', 'school': 'School',
-        'study': 'Study', 'reading': 'reading'
-    }
-    real_folder = folder_mapping.get(category, category)
-    try:
-        return render_template(f'{real_folder}/{filename}')
-    except Exception:
-        abort(404)
-
-
-# ── admin auth ──────────────────────────────────────────────────────────────
+# ── admin auth ─────────────────────────────────────────────────────────────
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -216,462 +582,272 @@ def admin_logout():
     return redirect(url_for('admin_login'))
 
 
-# ── admin dashboard ─────────────────────────────────────────────────────────
+@app.context_processor
+def admin_globals():
+    return {'TABLE_DEFS': TABLE_DEFS}
+
+
+# ── admin dashboard ────────────────────────────────────────────────────────
 
 @app.route('/admin')
 @require_admin
 def admin_dashboard():
-    stats = {}
-    for t in ['current_activities','past_activities','tech_stacks','projects',
-              'awards','academic_items','certificates','activity_logs']:
-        rows = db_fetch(t)
-        stats[t] = len(rows)
-    return render_template('admin/dashboard.html', stats=stats, supabase_ready=supabase is not None)
+    content, source = load_content()
+    return render_template(
+        'admin/dashboard.html',
+        stats={t: len(rows) for t, rows in content.items()},
+        source=source,
+        supabase_ready=supabase is not None,
+        supabase_error=_supabase_error,
+        missing=schema_missing(),
+        cv=get_uploaded_cv(),
+        last_updated=get_last_updated(),
+    )
 
 
-# ── current activities ───────────────────────────────────────────────────────
-
-@app.route('/admin/current-activities')
+@app.route('/admin/sync-seed', methods=['POST'])
 @require_admin
-def admin_current_activities():
-    items = db_fetch('current_activities')
-    return render_template('admin/current_activities.html', items=items)
-
-@app.route('/admin/current-activities/save', methods=['POST'])
-@require_admin
-def admin_current_activities_save():
-    row_id = request.form.get('id', '').strip()
-    data = {
-        'title': request.form.get('title', '').strip(),
-        'description': request.form.get('description', '').strip(),
-        'date_start': request.form.get('date_start', '').strip(),
-        'date_end': request.form.get('date_end', '').strip(),
-        'is_ongoing': request.form.get('is_ongoing') == 'on',
-        'sort_order': int(request.form.get('sort_order', 0) or 0),
-    }
-    if row_id:
-        db_update('current_activities', row_id, data)
-    else:
-        db_insert('current_activities', data)
-    update_last_updated()
-    return redirect(url_for('admin_current_activities'))
-
-@app.route('/admin/current-activities/delete/<row_id>', methods=['POST'])
-@require_admin
-def admin_current_activities_delete(row_id):
-    db_delete('current_activities', row_id)
-    update_last_updated()
-    return redirect(url_for('admin_current_activities'))
-
-
-# ── past activities ──────────────────────────────────────────────────────────
-
-@app.route('/admin/past-activities')
-@require_admin
-def admin_past_activities():
-    items = db_fetch('past_activities')
-    return render_template('admin/past_activities.html', items=items)
-
-@app.route('/admin/past-activities/save', methods=['POST'])
-@require_admin
-def admin_past_activities_save():
-    row_id = request.form.get('id', '').strip()
-    data = {
-        'title': request.form.get('title', '').strip(),
-        'description': request.form.get('description', '').strip(),
-        'date_start': request.form.get('date_start', '').strip(),
-        'date_end': request.form.get('date_end', '').strip(),
-        'sort_order': int(request.form.get('sort_order', 0) or 0),
-    }
-    if row_id:
-        db_update('past_activities', row_id, data)
-    else:
-        db_insert('past_activities', data)
-    update_last_updated()
-    return redirect(url_for('admin_past_activities'))
-
-@app.route('/admin/past-activities/delete/<row_id>', methods=['POST'])
-@require_admin
-def admin_past_activities_delete(row_id):
-    db_delete('past_activities', row_id)
-    update_last_updated()
-    return redirect(url_for('admin_past_activities'))
-
-
-# ── tech stacks ──────────────────────────────────────────────────────────────
-
-@app.route('/admin/tech-stacks')
-@require_admin
-def admin_tech_stacks():
-    items = db_fetch('tech_stacks')
-    return render_template('admin/tech_stacks.html', items=items)
-
-@app.route('/admin/tech-stacks/save', methods=['POST'])
-@require_admin
-def admin_tech_stacks_save():
-    row_id = request.form.get('id', '').strip()
-    data = {
-        'category': request.form.get('category', '').strip(),
-        'category_icon': request.form.get('category_icon', '').strip(),
-        'name': request.form.get('name', '').strip(),
-        'icon_class': request.form.get('icon_class', '').strip(),
-        'level': int(request.form.get('level', 50) or 50),
-        'sort_order': int(request.form.get('sort_order', 0) or 0),
-    }
-    if row_id:
-        db_update('tech_stacks', row_id, data)
-    else:
-        db_insert('tech_stacks', data)
-    update_last_updated()
-    return redirect(url_for('admin_tech_stacks'))
-
-@app.route('/admin/tech-stacks/delete/<row_id>', methods=['POST'])
-@require_admin
-def admin_tech_stacks_delete(row_id):
-    db_delete('tech_stacks', row_id)
-    update_last_updated()
-    return redirect(url_for('admin_tech_stacks'))
-
-
-# ── projects ──────────────────────────────────────────────────────────────────
-
-@app.route('/admin/projects')
-@require_admin
-def admin_projects():
-    items = db_fetch('projects')
-    return render_template('admin/projects.html', items=items)
-
-@app.route('/admin/projects/save', methods=['POST'])
-@require_admin
-def admin_projects_save():
-    row_id = request.form.get('id', '').strip()
-    data = {
-        'title': request.form.get('title', '').strip(),
-        'description': request.form.get('description', '').strip(),
-        'icon_class': request.form.get('icon_class', 'fas fa-code').strip(),
-        'date_start': request.form.get('date_start', '').strip(),
-        'date_end': request.form.get('date_end', '').strip(),
-        'is_ongoing': request.form.get('is_ongoing') == 'on',
-        'link': request.form.get('link', '').strip(),
-        'sort_order': int(request.form.get('sort_order', 0) or 0),
-    }
-    if row_id:
-        db_update('projects', row_id, data)
-    else:
-        db_insert('projects', data)
-    update_last_updated()
-    return redirect(url_for('admin_projects'))
-
-@app.route('/admin/projects/delete/<row_id>', methods=['POST'])
-@require_admin
-def admin_projects_delete(row_id):
-    db_delete('projects', row_id)
-    update_last_updated()
-    return redirect(url_for('admin_projects'))
-
-
-# ── awards ────────────────────────────────────────────────────────────────────
-
-@app.route('/admin/awards')
-@require_admin
-def admin_awards():
-    items = db_fetch('awards')
-    return render_template('admin/awards.html', items=items)
-
-@app.route('/admin/awards/save', methods=['POST'])
-@require_admin
-def admin_awards_save():
-    row_id = request.form.get('id', '').strip()
-    images_raw = request.form.get('images', '[]').strip()
-    try:
-        images = json.loads(images_raw) if images_raw else []
-    except Exception:
-        images = [u.strip() for u in images_raw.split('\n') if u.strip()]
-    data = {
-        'name': request.form.get('name', '').strip(),
-        'subject': request.form.get('subject', '').strip(),
-        'award_result': request.form.get('award_result', '').strip(),
-        'date_text': request.form.get('date_text', '').strip(),
-        'organization': request.form.get('organization', '').strip(),
-        'description': request.form.get('description', '').strip(),
-        'images': images,
-        'icon_class': request.form.get('icon_class', 'fas fa-trophy').strip(),
-        'sort_order': int(request.form.get('sort_order', 0) or 0),
-    }
-    if row_id:
-        db_update('awards', row_id, data)
-    else:
-        db_insert('awards', data)
-    update_last_updated()
-    return redirect(url_for('admin_awards'))
-
-@app.route('/admin/awards/delete/<row_id>', methods=['POST'])
-@require_admin
-def admin_awards_delete(row_id):
-    db_delete('awards', row_id)
-    update_last_updated()
-    return redirect(url_for('admin_awards'))
-
-
-# ── academic items ────────────────────────────────────────────────────────────
-
-@app.route('/admin/academic')
-@require_admin
-def admin_academic():
-    items = db_fetch('academic_items')
-    return render_template('admin/academic.html', items=items)
-
-@app.route('/admin/academic/save', methods=['POST'])
-@require_admin
-def admin_academic_save():
-    row_id = request.form.get('id', '').strip()
-    images_raw = request.form.get('images', '[]').strip()
-    try:
-        images = json.loads(images_raw) if images_raw else []
-    except Exception:
-        images = [u.strip() for u in images_raw.split('\n') if u.strip()]
-    data = {
-        'name': request.form.get('name', '').strip(),
-        'description': request.form.get('description', '').strip(),
-        'date_text': request.form.get('date_text', '').strip(),
-        'paper_link': request.form.get('paper_link', '').strip(),
-        'images': images,
-        'sort_order': int(request.form.get('sort_order', 0) or 0),
-    }
-    if row_id:
-        db_update('academic_items', row_id, data)
-    else:
-        db_insert('academic_items', data)
-    update_last_updated()
-    return redirect(url_for('admin_academic'))
-
-@app.route('/admin/academic/delete/<row_id>', methods=['POST'])
-@require_admin
-def admin_academic_delete(row_id):
-    db_delete('academic_items', row_id)
-    update_last_updated()
-    return redirect(url_for('admin_academic'))
-
-
-# ── certificates ──────────────────────────────────────────────────────────────
-
-@app.route('/admin/certificates')
-@require_admin
-def admin_certificates():
-    items = db_fetch('certificates')
-    return render_template('admin/certificates.html', items=items)
-
-@app.route('/admin/certificates/save', methods=['POST'])
-@require_admin
-def admin_certificates_save():
-    row_id = request.form.get('id', '').strip()
-    data = {
-        'name': request.form.get('name', '').strip(),
-        'issuer': request.form.get('issuer', '').strip(),
-        'date_text': request.form.get('date_text', '').strip(),
-        'image': request.form.get('image', '').strip(),
-        'sort_order': int(request.form.get('sort_order', 0) or 0),
-    }
-    if row_id:
-        db_update('certificates', row_id, data)
-    else:
-        db_insert('certificates', data)
-    update_last_updated()
-    return redirect(url_for('admin_certificates'))
-
-@app.route('/admin/certificates/delete/<row_id>', methods=['POST'])
-@require_admin
-def admin_certificates_delete(row_id):
-    db_delete('certificates', row_id)
-    update_last_updated()
-    return redirect(url_for('admin_certificates'))
-
-
-# ── activity logs ─────────────────────────────────────────────────────────────
-
-@app.route('/admin/activity-logs')
-@require_admin
-def admin_activity_logs():
-    items = db_fetch('activity_logs', order_col='created_at', ascending=False)
-    return render_template('admin/activity_logs.html', items=items)
-
-@app.route('/admin/activity-logs/new')
-@require_admin
-def admin_activity_log_new():
-    return render_template('admin/activity_log_editor.html', log=None)
-
-@app.route('/admin/activity-logs/edit/<log_id>')
-@require_admin
-def admin_activity_log_edit(log_id):
+def admin_sync_seed():
     if not supabase:
-        return redirect(url_for('admin_activity_logs'))
-    try:
-        res = supabase.table('activity_logs').select('*').eq('id', log_id).execute()
-        log = res.data[0] if res.data else None
-    except Exception:
-        log = None
-    if not log:
-        return redirect(url_for('admin_activity_logs'))
-    return render_template('admin/activity_log_editor.html', log=log)
-
-@app.route('/admin/activity-logs/save', methods=['POST'])
-@require_admin
-def admin_activity_log_save():
-    row_id = request.form.get('id', '').strip()
-    blocks_raw = request.form.get('blocks', '[]')
-    try:
-        blocks = json.loads(blocks_raw)
-    except Exception:
-        blocks = []
-    tags_raw = request.form.get('tags', '')
-    tags = [t.strip() for t in tags_raw.split(',') if t.strip()]
-    data = {
-        'title': request.form.get('title', '').strip(),
-        'category': request.form.get('category', 'study').strip(),
-        'date_text': request.form.get('date_text', '').strip(),
-        'icon': request.form.get('icon', '📄').strip(),
-        'cover_image': request.form.get('cover_image', '').strip(),
-        'tags': tags,
-        'blocks': blocks,
-        'sort_order': int(request.form.get('sort_order', 0) or 0),
-    }
-    if row_id:
-        data['updated_at'] = datetime.utcnow().isoformat()
-        db_update('activity_logs', row_id, data)
+        flash('Supabase가 연결되어 있지 않아 불러올 수 없습니다.', 'error')
+        return redirect(url_for('admin_dashboard'))
+    table = request.form.get('table', '')
+    tables = [table] if table in TABLE_DEFS else list(TABLE_DEFS)
+    errors = sync_seed(tables)
+    update_last_updated()
+    if errors:
+        flash('일부 테이블을 불러오지 못했습니다: ' + ' / '.join(errors), 'error')
     else:
-        db_insert('activity_logs', data)
-    update_last_updated()
-    return redirect(url_for('admin_activity_logs'))
+        flash('CV 기준 데이터로 교체했습니다.', 'success')
+    back = request.form.get('next')
+    return redirect(back if back and back.startswith('/admin') else url_for('admin_dashboard'))
 
-@app.route('/admin/activity-logs/delete/<log_id>', methods=['POST'])
+
+@app.route('/admin/fill-details', methods=['POST'])
 @require_admin
-def admin_activity_log_delete(log_id):
-    db_delete('activity_logs', log_id)
+def admin_fill_details():
+    if not supabase:
+        flash('Supabase가 연결되어 있지 않습니다.', 'error')
+        return redirect(url_for('admin_dashboard'))
+    updated, errors = fill_details()
+    if updated:
+        update_last_updated()
+    if errors:
+        flash('일부 항목을 채우지 못했습니다: ' + ' / '.join(errors[:3]), 'error')
+    flash(f'상세 설명이 비어 있던 {updated}개 항목을 CV 내용으로 채웠습니다. (제목이 같은 항목만, 다른 내용은 그대로)',
+          'success' if updated else 'warning')
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/admin/export.json')
+@require_admin
+def admin_export():
+    content, _ = load_content()
+    body = json.dumps(content, ensure_ascii=False, indent=2, default=str)
+    stamp = datetime.now().strftime('%Y%m%d_%H%M')
+    return Response(body, mimetype='application/json', headers={
+        'Content-Disposition': f'attachment; filename="portfolio_backup_{stamp}.json"'})
+
+
+@app.route('/admin/<name>.sql')
+@require_admin
+def admin_sql(name):
+    files = {'schema': 'supabase_schema.sql', 'migration': 'supabase_migration.sql'}
+    if name not in files:
+        abort(404)
+    return send_from_directory(app.root_path, files[name], as_attachment=True, mimetype='text/plain')
+
+
+# ── admin: profile photo ───────────────────────────────────────────────────
+
+@app.route('/admin/profile-photo')
+@require_admin
+def admin_profile_photo():
+    return render_template('admin/profile_photo.html', photo=get_profile_photo(),
+                           supabase_ready=supabase is not None)
+
+
+@app.route('/admin/profile-photo/save', methods=['POST'])
+@require_admin
+def admin_profile_photo_save():
+    if not supabase:
+        flash('Supabase가 연결되어 있지 않아 저장할 수 없습니다.', 'error')
+        return redirect(url_for('admin_profile_photo'))
+    url = request.form.get('url', '').strip()
+    if not (url == DEFAULT_PHOTO['url'] or re.fullmatch(r'/api/images/[\w-]+', url)):
+        flash('사진 주소가 올바르지 않습니다. 사진을 다시 업로드해 주세요.', 'error')
+        return redirect(url_for('admin_profile_photo'))
+    photo = {
+        'url': url,
+        'x': round(clamp(request.form.get('x'), 0, 100, 50), 2),
+        'y': round(clamp(request.form.get('y'), 0, 100, 50), 2),
+        'zoom': round(clamp(request.form.get('zoom'), 1, 3, 1), 3),
+    }
+    try:
+        supabase.table('site_settings').upsert(
+            {'key': 'profile_photo', 'value': json.dumps(photo), 'updated_at': 'now()'}).execute()
+    except Exception as e:
+        flash(f'저장 실패: {e} (대시보드의 마이그레이션 SQL로 site_settings 테이블을 만들어 주세요)', 'error')
+        return redirect(url_for('admin_profile_photo'))
+    # remove uploaded photos that are no longer used
+    try:
+        q = supabase.table('portfolio_images').delete().eq('item_type', 'profile')
+        current_id = url.rsplit('/', 1)[-1] if url.startswith('/api/images/') else None
+        (q.neq('id', current_id) if current_id else q).execute()
+    except Exception as e:
+        logger.warning(f"old profile photo cleanup failed: {e}")
     update_last_updated()
-    return redirect(url_for('admin_activity_logs'))
+    flash('프로필 사진을 저장했습니다. 사이트에 바로 반영됩니다.', 'success')
+    return redirect(url_for('admin_profile_photo'))
 
 
-# ── API for admin (JSON) ──────────────────────────────────────────────────────
+# ── admin: CV ──────────────────────────────────────────────────────────────
+
+@app.route('/admin/cv/upload', methods=['POST'])
+@require_admin
+def admin_cv_upload():
+    file = request.files.get('file')
+    if not supabase:
+        flash('Supabase가 연결되어 있지 않습니다. static/files/ 의 PDF를 교체해 주세요.', 'error')
+    elif not file or not file.filename.lower().endswith('.pdf'):
+        flash('PDF 파일을 선택해 주세요.', 'error')
+    else:
+        try:
+            content = file.read()
+            supabase.table('portfolio_images').insert({
+                'filename': file.filename,
+                'mime_type': 'application/pdf',
+                'image_data': base64.b64encode(content).decode('utf-8'),
+                'item_type': 'cv',
+            }).execute()
+            latest = get_uploaded_cv()
+            if latest:
+                supabase.table('portfolio_images').delete().eq('item_type', 'cv').neq('id', latest['id']).execute()
+            update_last_updated()
+            flash(f'CV를 업로드했습니다: {file.filename}', 'success')
+        except Exception as e:
+            flash(f'CV 업로드 실패: {e}', 'error')
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/admin/cv/reset', methods=['POST'])
+@require_admin
+def admin_cv_reset():
+    if supabase:
+        try:
+            supabase.table('portfolio_images').delete().eq('item_type', 'cv').execute()
+            flash('기본 CV 파일로 되돌렸습니다.', 'success')
+        except Exception as e:
+            flash(f'실패: {e}', 'error')
+    return redirect(url_for('admin_dashboard'))
+
+
+# ── admin: generic CRUD ────────────────────────────────────────────────────
+
+def table_for_slug(slug):
+    table = SLUG_TO_TABLE.get(slug)
+    if not table:
+        abort(404)
+    return table
+
+
+def parse_form(table):
+    data = {}
+    for f in TABLE_DEFS[table]['fields']:
+        raw = request.form.get(f['name'], '')
+        if f['type'] == 'checkbox':
+            data[f['name']] = request.form.get(f['name']) == 'on'
+        elif f['type'] == 'number':
+            try:
+                data[f['name']] = int(raw or 0)
+            except ValueError:
+                data[f['name']] = 0
+        elif f['type'] == 'images':
+            try:
+                images = json.loads(raw) if raw.strip() else []
+            except ValueError:
+                images = [u.strip() for u in raw.splitlines() if u.strip()]
+            data[f['name']] = [u for u in images if isinstance(u, str) and u.strip()]
+        else:
+            data[f['name']] = raw.strip()
+    return data
+
+
+@app.route('/admin/<slug>')
+@require_admin
+def admin_table(slug):
+    table = table_for_slug(slug)
+    content, source = load_content()
+    return render_template('admin/table.html', table=table, slug=slug, spec=TABLE_DEFS[table],
+                           items=content[table], source=source,
+                           missing=missing_columns(table))
+
+
+@app.route('/admin/<slug>/save', methods=['POST'])
+@require_admin
+def admin_table_save(slug):
+    table = table_for_slug(slug)
+    row_id = request.form.get('id', '').strip()
+    err, skipped = db_write(table, row_id, parse_form(table))
+    if err:
+        flash(f'저장 실패: {err}', 'error')
+    else:
+        update_last_updated()
+        if skipped:
+            flash(f'저장했지만 DB에 아직 없는 항목({", ".join(skipped)})은 저장되지 않았습니다. '
+                  '대시보드의 안내에 따라 DB 마이그레이션 SQL을 먼저 실행해 주세요.', 'warning')
+        else:
+            flash('저장했습니다.', 'success')
+    return redirect(url_for('admin_table', slug=slug))
+
+
+@app.route('/admin/<slug>/delete/<row_id>', methods=['POST'])
+@require_admin
+def admin_table_delete(slug, row_id):
+    table = table_for_slug(slug)
+    err = db_delete(table, row_id)
+    if err:
+        flash(f'삭제 실패: {err}', 'error')
+    else:
+        update_last_updated()
+        flash('삭제했습니다.', 'success')
+    return redirect(url_for('admin_table', slug=slug))
+
 
 @app.route('/admin/api/upload-image', methods=['POST'])
 @require_admin
 def admin_upload_image():
-    """Upload image to database and return public URL."""
     if not supabase:
         return jsonify({'error': 'Supabase not configured'}), 400
     file = request.files.get('file')
     if not file:
         return jsonify({'error': 'No file provided'}), 400
-    
     try:
-        import base64
         content = file.read()
-        filename = file.filename or 'image.jpg'
-        
-        # MIME 타입 결정
-        mime_type = file.content_type or 'image/jpeg'
-        
-        # Base64 인코딩
-        image_data_b64 = base64.b64encode(content).decode('utf-8')
-        
-        # 데이터베이스에 저장
         result = supabase.table('portfolio_images').insert({
-            'filename': filename,
-            'mime_type': mime_type,
-            'image_data': image_data_b64,
-            'item_type': 'activity_logs'
+            'filename': file.filename or 'image.jpg',
+            'mime_type': file.content_type or 'image/jpeg',
+            'image_data': base64.b64encode(content).decode('utf-8'),
+            'item_type': (request.form.get('item_type') or 'portfolio')[:40],
         }).execute()
-        
-        if result.data and len(result.data) > 0:
+        if result.data:
             image_id = result.data[0]['id']
-            # 이미지를 제공할 URL 생성
-            url = f"/api/images/{image_id}"
-            return jsonify({'url': url, 'image_id': image_id})
-        else:
-            return jsonify({'error': 'Failed to save image'}), 500
+            return jsonify({'url': f'/api/images/{image_id}', 'image_id': image_id})
+        return jsonify({'error': 'Failed to save image'}), 500
     except Exception as e:
         logger.error(f"Image upload error: {e}")
         return jsonify({'error': str(e)}), 500
 
 
-@app.route('/api/images/<image_id>')
-def get_image(image_id):
-    """Get image by ID from database."""
-    if not supabase:
-        return "Image not available", 404
-    try:
-        import base64
-        result = supabase.table('portfolio_images').select('*').eq('id', image_id).execute()
-        if result.data and len(result.data) > 0:
-            img = result.data[0]
-            # Base64 디코딩
-            image_data = base64.b64decode(img['image_data'])
-            return image_data, 200, {
-                'Content-Type': img.get('mime_type', 'image/jpeg'),
-                'Cache-Control': 'public, max-age=86400'
-            }
-        return "Image not found", 404
-    except Exception as e:
-        logger.error(f"Get image error: {e}")
-        return "Error loading image", 500
-
-
-@app.route('/admin/api/images')
-@require_admin
-def admin_list_images():
-    """List images from database activity_logs folder."""
-    if not supabase:
-        return jsonify({'images': []})
-    try:
-        result = supabase.table('portfolio_images').select('*').eq('item_type', 'activity_logs').order('created_at', desc=True).execute()
-        images = []
-        for img in (result.data or []):
-            images.append({
-                'id': img['id'],
-                'url': f"/api/images/{img['id']}",
-                'name': img.get('filename', 'image'),
-                'size': len(img.get('image_data', b'')),
-            })
-        return jsonify({'images': images})
-    except Exception as e:
-        logger.error(f"admin_list_images error: {e}")
-        return jsonify({'images': [], 'error': str(e)})
-
-
-@app.route('/admin/api/images/delete', methods=['POST'])
-@require_admin
-def admin_delete_image():
-    """Delete an image from database."""
-    if not supabase:
-        return jsonify({'error': 'Supabase not configured'}), 400
-    data = request.get_json(silent=True) or {}
-    image_id = data.get('image_id', '')
-    if not image_id:
-        return jsonify({'error': 'Invalid image_id'}), 400
-    try:
-        supabase.table('portfolio_images').delete().eq('id', image_id).execute()
-        return jsonify({'ok': True})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-
 @app.route('/health')
 def health():
-    url_set = bool(SUPABASE_URL)
-    key_set = bool(SUPABASE_KEY)
     connected = supabase is not None
-
-    status = {
-        'supabase_url_set': url_set,
-        'supabase_key_set': key_set,
-        'supabase_url_prefix': SUPABASE_URL[:30] + '...' if url_set else None,
-        'supabase_key_prefix': SUPABASE_KEY[:20] + '...' if key_set else None,
-        'supabase_key_length': len(SUPABASE_KEY) if key_set else 0,
+    return jsonify({
+        'supabase_url_set': bool(SUPABASE_URL),
+        'supabase_key_set': bool(SUPABASE_KEY),
         'supabase_connected': connected,
         'supabase_error': _supabase_error,
-    }
-    http_status = 200 if connected else 503
-    return jsonify(status), http_status
+    }), 200 if connected else 503
 
 
 if __name__ == '__main__':
